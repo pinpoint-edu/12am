@@ -569,15 +569,22 @@
         injectMinimalFooter();
     }
 
-    // Injected Minimal Footer: Positioned at bottom right of the page (in normal flow, NOT fixed/floating)
+    // Injected Minimal Footer: Positioned under the UI content, avoiding horizontal flex interference
     function injectMinimalFooter() {
         let footer = document.getElementById('minimal-footer-cluster');
         if (!footer) {
             footer = document.createElement('footer');
             footer.id = 'minimal-footer-cluster';
             footer.className = 'minimal-footer-cluster';
-            const host = document.getElementById('page-content') || document.querySelector('main') || document.body;
-            host.appendChild(footer);
+            
+            // Append under content section so it never sits in a flex-row to the right of the UI
+            const isSoundboard = window.location.pathname.includes('soundboard');
+            if (isSoundboard) {
+                document.body.appendChild(footer);
+            } else {
+                const target = document.querySelector('.max-w-\\[1200px\\]') || document.querySelector('section') || document.getElementById('page-content') || document.body;
+                target.appendChild(footer);
+            }
         }
         const prefix = window.location.pathname.includes('/logged-in/') ? '../' : '';
 

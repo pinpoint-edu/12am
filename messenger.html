@@ -239,15 +239,21 @@
     <div class="messenger-frame" id="app-container">
         <!-- 1. CONTACTS VIEW -->
         <div id="contacts-view" class="w-full md:w-96 md:border-r md:border-[var(--border-main)] h-full flex flex-col view-transition flex-shrink-0 bg-[var(--bg-card)]">
-            <!-- Header with Battery & Time (Exact V6 Style) -->
+            <!-- Header with Battery & Time -->
             <header class="p-4 border-b border-[var(--border-main)] flex-shrink-0">
                 <div class="flex justify-between items-center">
                     <span class="text-xl font-medium text-[var(--text-main)] tracking-tight">Messenger</span>
                     <div class="flex items-center gap-3">
-                        <div id="status-icons" class="text-xs font-mono flex items-center gap-2 text-[var(--text-muted)] opacity-70">
-                            <span id="battery-status">--%</span>
-                            <span>|</span>
-                            <span id="local-time">--:--</span>
+                        <div class="status-capsule flex items-center gap-2 px-3 py-1 rounded-xl bg-[var(--bg-page)] border border-[var(--border-main)] text-xs font-mono text-[var(--text-muted)]">
+                            <span class="battery-wrap flex items-center gap-1.5" title="Battery">
+                                <i class="fa-solid fa-battery-full battery-icon text-emerald-400"></i>
+                                <span class="battery-status">--%</span>
+                            </span>
+                            <span class="opacity-30">•</span>
+                            <span class="time-wrap flex items-center gap-1.5" title="Local Time">
+                                <i class="fa-regular fa-clock opacity-60"></i>
+                                <span class="local-time">--:--</span>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -307,9 +313,22 @@
                             <span id="chat-partner-id" class="text-[11px] font-mono text-[var(--text-muted)] opacity-60">ID: ----</span>
                         </div>
                     </div>
-                    <button id="clear-local-history-btn" class="btn-icon" title="Clear local chat messages">
-                        <i class="fa-solid fa-broom"></i>
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <div class="status-capsule hidden sm:flex items-center gap-2 px-3 py-1 rounded-xl bg-[var(--bg-page)] border border-[var(--border-main)] text-xs font-mono text-[var(--text-muted)]">
+                            <span class="battery-wrap flex items-center gap-1.5" title="Battery">
+                                <i class="fa-solid fa-battery-full battery-icon text-emerald-400"></i>
+                                <span class="battery-status">--%</span>
+                            </span>
+                            <span class="opacity-30">•</span>
+                            <span class="time-wrap flex items-center gap-1.5" title="Local Time">
+                                <i class="fa-regular fa-clock opacity-60"></i>
+                                <span class="local-time">--:--</span>
+                            </span>
+                        </div>
+                        <button id="clear-local-history-btn" class="btn-icon" title="Clear local chat messages">
+                            <i class="fa-solid fa-broom"></i>
+                        </button>
+                    </div>
                 </header>
 
                 <!-- Messages Container -->
@@ -967,25 +986,52 @@
 
         function startStatusUpdates() {
             function updateTime() {
-                dom.localTime.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                document.querySelectorAll('.local-time').forEach(el => el.textContent = timeStr);
             }
+
+            function applyBatteryState(level, isCharging) {
+                const pct = Math.round(level * 100);
+                document.querySelectorAll('.battery-status').forEach(el => {
+                    el.textContent = `${pct}%`;
+                });
+
+                document.querySelectorAll('.battery-icon').forEach(icon => {
+                    icon.className = 'fa-solid battery-icon';
+                    if (isCharging) {
+                        icon.className += ' fa-bolt text-yellow-400 animate-pulse';
+                    } else if (level > 0.8) {
+                        icon.className += ' fa-battery-full text-emerald-400';
+                    } else if (level > 0.5) {
+                        icon.className += ' fa-battery-three-quarters text-emerald-400';
+                    } else if (level > 0.2) {
+                        icon.className += ' fa-battery-half text-amber-400';
+                    } else if (level > 0.1) {
+                        icon.className += ' fa-battery-quarter text-orange-400';
+                    } else {
+                        icon.className += ' fa-battery-empty text-red-500 animate-pulse';
+                    }
+                });
+            }
+
             function updateBattery() {
                 if (navigator.getBattery) {
                     navigator.getBattery().then(b => {
-                        dom.batteryStatus.textContent = `${Math.round(b.level * 100)}%`;
+                        applyBatteryState(b.level, b.charging);
+                        b.onlevelchange = () => applyBatteryState(b.level, b.charging);
+                        b.onchargingchange = () => applyBatteryState(b.level, b.charging);
                     }).catch(() => {
-                        dom.batteryStatus.textContent = '100%';
+                        applyBatteryState(1.0, false);
                     });
                 } else {
-                    dom.batteryStatus.textContent = '100%';
+                    applyBatteryState(1.0, false);
                 }
             }
+
             updateTime();
             updateBattery();
-            setInterval(() => {
-                updateTime();
-                updateBattery();
-            }, 10000);
+            setInterval(updateTime, 1000);
         }
 
         function formatTime(isoStr) {

@@ -2238,7 +2238,7 @@
         }
 
         /* 3. Left-Dock Squircle Roundness Scale Across Entire Music UI */
-        /* Large containers / cards: 18px squircle */
+        /* Large containers / bars / cards: 26px squircle (matching left floating dock) */
         #top-nav-bar,
         #bottom-player,
         #search-block,
@@ -2247,20 +2247,20 @@
         .bg-white\/85,
         .dark\:bg-zinc-900\/85,
         div[class*="rounded-3xl"] {
-            border-radius: 18px !important;
+            border-radius: 26px !important;
         }
 
-        /* Medium elements (cards, song rows, dialogs): 14px squircle */
+        /* Medium elements (cards, song rows, dialogs, search bar): 20px squircle */
         .search-result-card,
         .song-item,
         .library-card,
         .eq-preset-row,
         div[class*="rounded-2xl"],
         #searchInput {
-            border-radius: 14px !important;
+            border-radius: 20px !important;
         }
 
-        /* Buttons & interactive items: 12px squircle (NO pills / NO circular buttons) */
+        /* Buttons & interactive items: 16px squircle (NO pills / NO circular buttons) */
         #top-nav-bar a,
         #bp-desktop-nav a,
         #play-pause-btn,
@@ -2272,22 +2272,22 @@
         button[class*="rounded-full"],
         a[class*="rounded-full"],
         .settings-icon-box {
-            border-radius: 12px !important;
+            border-radius: 16px !important;
         }
 
-        /* Artwork & media thumbnails: 10px squircle */
+        /* Artwork & media thumbnails: 16px squircle */
         #bottom-player-artwork,
         .song-artwork,
         .track-artwork,
         img[class*="rounded-"],
         div[class*="rounded-xl"] {
-            border-radius: 10px !important;
+            border-radius: 16px !important;
         }
 
-        /* Small badges: 8px squircle */
+        /* Small badges: 12px squircle */
         span[class*="rounded-full"],
         .badge {
-            border-radius: 8px !important;
+            border-radius: 12px !important;
         }
 
         /* 4. Complete Theme Styling & Overrides for Music Components */

@@ -1166,49 +1166,81 @@
                     <h3 class="text-xl font-bold text-[var(--text-main)] mb-2">Create Custom Theme</h3>
                     <div id="customThemeSection" class="settings-box transition-all duration-300 p-6">
                         <p class="text-sm font-light text-[var(--text-muted)] opacity-70 mb-5">
-                            Craft your own custom theme by choosing 1 to 3 colors. Primary accent is required, while background shade and glow are optional.
+                            Craft your own custom theme with interactive color wheels. Choose 1 to 3 colors: primary accent is required, while background shade and secondary glow are optional.
                         </p>
                         
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
                             <!-- Color 1: Primary Accent (Required) -->
-                            <div class="flex flex-col gap-2.5 p-4 rounded-2xl border border-[var(--border-main)] bg-[var(--bg-page)]">
-                                <label class="text-xs font-semibold text-[var(--text-main)] flex items-center justify-between">
-                                    <span>1. Primary Accent <span class="text-[var(--accent-color)]">*</span></span>
-                                    <span id="hexLabel1" class="font-mono text-[11px] text-[var(--text-muted)]">#ff8800</span>
-                                </label>
-                                <div class="flex items-center gap-3">
-                                    <input type="color" id="customColor1" value="#ff8800" class="w-10 h-10 rounded-xl cursor-pointer bg-transparent border-0">
-                                    <span class="text-xs text-[var(--text-muted)]">Buttons, icons &amp; highlights</span>
+                            <div class="relative rounded-2xl border border-[var(--border-main)] bg-[var(--bg-page)] p-4 flex flex-col items-center gap-3">
+                                <div class="w-full flex items-center justify-between">
+                                    <span class="text-xs font-semibold text-[var(--text-main)]">1. Primary Accent <span class="text-[var(--accent-color)]">*</span></span>
+                                    <span id="hexLabel1" class="font-mono text-[11px] text-[var(--text-muted)] px-2 py-0.5 rounded-lg bg-black/40 border border-white/5">#ff8800</span>
+                                </div>
+                                <div class="relative flex flex-col items-center justify-center py-1">
+                                    <canvas id="wheelCanvas1" width="130" height="130" class="cursor-crosshair rounded-full touch-none shadow-inner"></canvas>
+                                    <div id="wheelCursor1" class="pointer-events-none absolute w-4 h-4 rounded-full border-2 border-white shadow-md -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"></div>
+                                </div>
+                                <div class="w-full flex items-center justify-between text-xs text-[var(--text-muted)] pt-2 border-t border-[var(--border-main)]">
+                                    <span>Buttons &amp; Highlights</span>
+                                    <div id="previewSwatch1" class="w-5 h-5 rounded-lg border border-white/10" style="background-color: #ff8800;"></div>
                                 </div>
                             </div>
 
                             <!-- Color 2: Background Shade (Optional) -->
-                            <div class="flex flex-col gap-2.5 p-4 rounded-2xl border border-[var(--border-main)] bg-[var(--bg-page)]">
-                                <div class="flex items-center justify-between">
-                                    <label class="text-xs font-semibold text-[var(--text-main)]">2. Background Tint</label>
-                                    <div class="flex items-center gap-1.5">
-                                        <input type="checkbox" id="enableColor2" class="cursor-pointer">
-                                        <label for="enableColor2" class="text-[11px] text-[var(--text-muted)] cursor-pointer">Enable</label>
+                            <div class="relative rounded-2xl border border-[var(--border-main)] bg-[var(--bg-page)] p-4 flex flex-col items-center gap-3 overflow-hidden">
+                                <div class="w-full flex items-center justify-between z-20">
+                                    <span class="text-xs font-semibold text-[var(--text-main)]">2. Background Tint</span>
+                                    <div class="flex items-center gap-2">
+                                        <span id="hexLabel2" class="font-mono text-[11px] text-[var(--text-muted)] px-2 py-0.5 rounded-lg bg-black/40 border border-white/5">#0a0a0f</span>
+                                        <button type="button" id="disableColor2Btn" class="hidden text-[11px] px-2 py-0.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 cursor-pointer transition-all items-center gap-1">
+                                            <i class="fa-solid fa-xmark text-[10px]"></i> Disable
+                                        </button>
                                     </div>
                                 </div>
-                                <div class="flex items-center gap-3">
-                                    <input type="color" id="customColor2" value="#0a0a0f" disabled class="w-10 h-10 rounded-xl cursor-pointer bg-transparent border-0 opacity-40">
-                                    <span id="descColor2" class="text-xs text-[var(--text-muted)] opacity-60">Defaults to deep carbon black</span>
+                                <div class="relative flex flex-col items-center justify-center py-1">
+                                    <canvas id="wheelCanvas2" width="130" height="130" class="cursor-crosshair rounded-full touch-none shadow-inner"></canvas>
+                                    <div id="wheelCursor2" class="pointer-events-none absolute w-4 h-4 rounded-full border-2 border-white shadow-md -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"></div>
+                                </div>
+                                <div class="w-full flex items-center justify-between text-xs text-[var(--text-muted)] pt-2 border-t border-[var(--border-main)]">
+                                    <span>Custom Background</span>
+                                    <div id="previewSwatch2" class="w-5 h-5 rounded-lg border border-white/10" style="background-color: #0a0a0f;"></div>
+                                </div>
+
+                                <!-- Disabled Overlay with Big Enable Button -->
+                                <div id="overlayColor2" class="absolute inset-0 bg-[var(--bg-page)]/95 backdrop-blur-sm flex flex-col items-center justify-center p-4 z-10 rounded-2xl text-center">
+                                    <button type="button" id="enableColor2Btn" class="px-4 py-2.5 rounded-xl bg-[var(--accent-color)]/20 hover:bg-[var(--accent-color)]/30 border border-[var(--accent-color)] text-[var(--text-main)] font-medium text-xs flex items-center gap-2 cursor-pointer transition-all shadow-md active:scale-95">
+                                        <i class="fa-solid fa-plus text-[var(--accent-color)]"></i> Enable Background Tint
+                                    </button>
+                                    <span class="text-[11px] text-[var(--text-muted)] opacity-60 mt-2">Defaults to deep carbon black</span>
                                 </div>
                             </div>
 
                             <!-- Color 3: Secondary Glow (Optional) -->
-                            <div class="flex flex-col gap-2.5 p-4 rounded-2xl border border-[var(--border-main)] bg-[var(--bg-page)]">
-                                <div class="flex items-center justify-between">
-                                    <label class="text-xs font-semibold text-[var(--text-main)]">3. Glow / Secondary</label>
-                                    <div class="flex items-center gap-1.5">
-                                        <input type="checkbox" id="enableColor3" class="cursor-pointer">
-                                        <label for="enableColor3" class="text-[11px] text-[var(--text-muted)] cursor-pointer">Enable</label>
+                            <div class="relative rounded-2xl border border-[var(--border-main)] bg-[var(--bg-page)] p-4 flex flex-col items-center gap-3 overflow-hidden">
+                                <div class="w-full flex items-center justify-between z-20">
+                                    <span class="text-xs font-semibold text-[var(--text-main)]">3. Secondary Glow</span>
+                                    <div class="flex items-center gap-2">
+                                        <span id="hexLabel3" class="font-mono text-[11px] text-[var(--text-muted)] px-2 py-0.5 rounded-lg bg-black/40 border border-white/5">#ffd700</span>
+                                        <button type="button" id="disableColor3Btn" class="hidden text-[11px] px-2 py-0.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 cursor-pointer transition-all items-center gap-1">
+                                            <i class="fa-solid fa-xmark text-[10px]"></i> Disable
+                                        </button>
                                     </div>
                                 </div>
-                                <div class="flex items-center gap-3">
-                                    <input type="color" id="customColor3" value="#ffd700" disabled class="w-10 h-10 rounded-xl cursor-pointer bg-transparent border-0 opacity-40">
-                                    <span id="descColor3" class="text-xs text-[var(--text-muted)] opacity-60">Defaults to primary glow</span>
+                                <div class="relative flex flex-col items-center justify-center py-1">
+                                    <canvas id="wheelCanvas3" width="130" height="130" class="cursor-crosshair rounded-full touch-none shadow-inner"></canvas>
+                                    <div id="wheelCursor3" class="pointer-events-none absolute w-4 h-4 rounded-full border-2 border-white shadow-md -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"></div>
+                                </div>
+                                <div class="w-full flex items-center justify-between text-xs text-[var(--text-muted)] pt-2 border-t border-[var(--border-main)]">
+                                    <span>Glow &amp; Highlights</span>
+                                    <div id="previewSwatch3" class="w-5 h-5 rounded-lg border border-white/10" style="background-color: #ffd700;"></div>
+                                </div>
+
+                                <!-- Disabled Overlay with Big Enable Button -->
+                                <div id="overlayColor3" class="absolute inset-0 bg-[var(--bg-page)]/95 backdrop-blur-sm flex flex-col items-center justify-center p-4 z-10 rounded-2xl text-center">
+                                    <button type="button" id="enableColor3Btn" class="px-4 py-2.5 rounded-xl bg-[var(--accent-color)]/20 hover:bg-[var(--accent-color)]/30 border border-[var(--accent-color)] text-[var(--text-main)] font-medium text-xs flex items-center gap-2 cursor-pointer transition-all shadow-md active:scale-95">
+                                        <i class="fa-solid fa-plus text-[var(--accent-color)]"></i> Enable Secondary Glow
+                                    </button>
+                                    <span class="text-[11px] text-[var(--text-muted)] opacity-60 mt-2">Defaults to primary glow</span>
                                 </div>
                             </div>
                         </div>
@@ -3685,12 +3717,9 @@
                     }
                     
                     const isActive = (theme.name.toLowerCase() === activeThemeName.toLowerCase());
-                    let activeText = theme['text-primary'] || theme['tab-active-text'] || '#ffffff';
-                    if (lightThemeNames.includes(theme.name)) activeText = '#12131c';
-
+                    const themeTextColor = theme['accent-primary'] || (lightThemeNames.includes(theme.name) ? '#0f172a' : '#ffffff');
                     const activeBorder = theme['accent-primary'] || theme['tab-active-border'] || '#ff8c00';
                     const activeBg = theme['bg-primary'] || '#08080a';
-                    const hoverText = lightThemeNames.includes(theme.name) ? '#12131c' : (theme['text-primary'] || '#ffffff');
                     const hoverBorder = theme['accent-primary'] || '#ff8c00';
                     const hoverBg = theme['button-bg'] || 'rgba(255, 140, 0, 0.2)';
 
@@ -3701,17 +3730,17 @@
                                 class="theme-button ${isActive ? 'active' : ''}" 
                                 data-theme-name="${escapeHtml(theme.name)}" 
                                 style="
-                                    color: ${activeText} !important; 
+                                    color: ${themeTextColor} !important; 
                                     font-weight: 500;
                                     border-color: ${activeBorder}; 
                                     background: ${activeBg};
-                                    --hover-color: ${hoverText};
+                                    --hover-color: ${themeTextColor};
                                     --hover-border: ${hoverBorder};
                                     --hover-bg: ${hoverBg};
                                     position: relative;
                                 "
                             >
-                                <span>${escapeHtml(theme.name)}</span>
+                                <span style="color: ${themeTextColor} !important; font-weight: 500;">${escapeHtml(theme.name)}</span>
                             </button>
                             ${theme.isCustom ? `
                                 <button type="button" class="delete-custom-theme-btn absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500/80 hover:bg-red-600 text-white flex items-center justify-center text-[10px] cursor-pointer shadow-md transition-all" data-delete-name="${escapeHtml(theme.name)}" title="Delete custom theme">
@@ -3764,47 +3793,210 @@
 
             renderThemesGrid();
 
-            // Wire up Custom Theme Creator (1 to 3 colors)
-            const customColor1 = document.getElementById('customColor1');
-            const customColor2 = document.getElementById('customColor2');
-            const customColor3 = document.getElementById('customColor3');
-            const enableColor2 = document.getElementById('enableColor2');
-            const enableColor3 = document.getElementById('enableColor3');
-            const hexLabel1 = document.getElementById('hexLabel1');
+            // Color Wheel Canvas Engine
+            function initCanvasColorWheel(canvasId, cursorId, labelId, swatchId, initialHex) {
+                const canvas = document.getElementById(canvasId);
+                const cursor = document.getElementById(cursorId);
+                const label = document.getElementById(labelId);
+                const swatch = document.getElementById(swatchId);
+                if (!canvas) return { getHex: () => initialHex, setHex: () => {} };
+
+                const ctx = canvas.getContext('2d');
+                const size = canvas.width;
+                const center = size / 2;
+                const radius = center - 4;
+
+                function drawWheel() {
+                    ctx.clearRect(0, 0, size, size);
+                    for (let angle = 0; angle < 360; angle += 1) {
+                        const radStart = ((angle - 1) * Math.PI) / 180;
+                        const radEnd = ((angle + 1) * Math.PI) / 180;
+                        ctx.beginPath();
+                        ctx.moveTo(center, center);
+                        ctx.arc(center, center, radius, radStart, radEnd);
+                        ctx.closePath();
+                        const grad = ctx.createRadialGradient(center, center, 0, center, center, radius);
+                        grad.addColorStop(0, '#ffffff');
+                        grad.addColorStop(1, `hsl(${angle}, 100%, 50%)`);
+                        ctx.fillStyle = grad;
+                        ctx.fill();
+                    }
+                }
+                drawWheel();
+
+                let currentHex = initialHex;
+
+                function hslToHex(h, s, l) {
+                    h = h % 360;
+                    s /= 100;
+                    l /= 100;
+                    const c = (1 - Math.abs(2 * l - 1)) * s;
+                    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+                    const m = l - c / 2;
+                    let r = 0, g = 0, b = 0;
+                    if (0 <= h && h < 60) { r = c; g = x; }
+                    else if (60 <= h && h < 120) { r = x; g = c; }
+                    else if (120 <= h && h < 180) { g = c; b = x; }
+                    else if (180 <= h && h < 240) { g = x; b = c; }
+                    else if (240 <= h && h < 300) { r = x; b = c; }
+                    else if (300 <= h && h < 360) { r = c; b = x; }
+                    const toHex = n => Math.round((n + m) * 255).toString(16).padStart(2, '0');
+                    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+                }
+
+                function hexToHsl(hex) {
+                    let c = hex.replace('#', '');
+                    if (c.length === 3) c = c.split('').map(x => x + x).join('');
+                    const r = parseInt(c.substr(0, 2), 16) / 255;
+                    const g = parseInt(c.substr(2, 2), 16) / 255;
+                    const b = parseInt(c.substr(4, 2), 16) / 255;
+                    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+                    let h = 0, s = 0, l = (max + min) / 2;
+                    if (max !== min) {
+                        const d = max - min;
+                        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                        switch (max) {
+                            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                            case g: h = (b - r) / d + 2; break;
+                            case b: h = (r - g) / d + 4; break;
+                        }
+                        h *= 60;
+                    }
+                    return { h, s: s * 100, l: l * 100 };
+                }
+
+                function setFromHex(hex) {
+                    currentHex = hex;
+                    if (label) label.textContent = hex;
+                    if (swatch) swatch.style.backgroundColor = hex;
+                    const hsl = hexToHsl(hex);
+                    const rad = (hsl.h * Math.PI) / 180;
+                    const dist = (hsl.s / 100) * radius;
+                    const curX = center + dist * Math.cos(rad);
+                    const curY = center + dist * Math.sin(rad);
+                    if (cursor) {
+                        cursor.style.left = `${curX}px`;
+                        cursor.style.top = `${curY}px`;
+                    }
+                }
+
+                function pick(e) {
+                    const rect = canvas.getBoundingClientRect();
+                    const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+                    const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+                    const x = clientX - rect.left - center;
+                    const y = clientY - rect.top - center;
+                    const dist = Math.min(Math.hypot(x, y), radius);
+                    const angle = (Math.atan2(y, x) * 180) / Math.PI;
+                    const hue = (angle + 360) % 360;
+                    const sat = (dist / radius) * 100;
+                    const hex = hslToHex(hue, sat, 50);
+                    currentHex = hex;
+                    if (label) label.textContent = hex;
+                    if (swatch) swatch.style.backgroundColor = hex;
+                    const curX = center + dist * Math.cos((angle * Math.PI) / 180);
+                    const curY = center + dist * Math.sin((angle * Math.PI) / 180);
+                    if (cursor) {
+                        cursor.style.left = `${curX}px`;
+                        cursor.style.top = `${curY}px`;
+                    }
+                }
+
+                let isDragging = false;
+                canvas.addEventListener('mousedown', (e) => { isDragging = true; pick(e); });
+                window.addEventListener('mousemove', (e) => { if (isDragging) pick(e); });
+                window.addEventListener('mouseup', () => { isDragging = false; });
+
+                canvas.addEventListener('touchstart', (e) => { isDragging = true; pick(e); e.preventDefault(); }, { passive: false });
+                window.addEventListener('touchmove', (e) => { if (isDragging) pick(e); });
+                window.addEventListener('touchend', () => { isDragging = false; });
+
+                setFromHex(initialHex);
+                return {
+                    getHex: () => currentHex,
+                    setHex: setFromHex
+                };
+            }
+
+            // Initialize the 3 Color Wheels
+            const wheel1 = initCanvasColorWheel('wheelCanvas1', 'wheelCursor1', 'hexLabel1', 'previewSwatch1', '#ff8800');
+            const wheel2 = initCanvasColorWheel('wheelCanvas2', 'wheelCursor2', 'hexLabel2', 'previewSwatch2', '#0a0a0f');
+            const wheel3 = initCanvasColorWheel('wheelCanvas3', 'wheelCursor3', 'hexLabel3', 'previewSwatch3', '#ffd700');
+
+            // Wire up Enable / Disable for Color 2 (Background Tint)
+            let color2Enabled = false;
+            const overlay2 = document.getElementById('overlayColor2');
+            const enableBtn2 = document.getElementById('enableColor2Btn');
+            const disableBtn2 = document.getElementById('disableColor2Btn');
+
+            if (enableBtn2 && overlay2) {
+                enableBtn2.addEventListener('click', () => {
+                    color2Enabled = true;
+                    overlay2.classList.add('hidden');
+                    if (disableBtn2) {
+                        disableBtn2.classList.remove('hidden');
+                        disableBtn2.classList.add('flex');
+                    }
+                });
+            }
+
+            if (disableBtn2 && overlay2) {
+                disableBtn2.addEventListener('click', () => {
+                    color2Enabled = false;
+                    overlay2.classList.remove('hidden');
+                    disableBtn2.classList.add('hidden');
+                    disableBtn2.classList.remove('flex');
+                });
+            }
+
+            // Wire up Enable / Disable for Color 3 (Secondary Glow)
+            let color3Enabled = false;
+            const overlay3 = document.getElementById('overlayColor3');
+            const enableBtn3 = document.getElementById('enableColor3Btn');
+            const disableBtn3 = document.getElementById('disableColor3Btn');
+
+            if (enableBtn3 && overlay3) {
+                enableBtn3.addEventListener('click', () => {
+                    color3Enabled = true;
+                    overlay3.classList.add('hidden');
+                    if (disableBtn3) {
+                        disableBtn3.classList.remove('hidden');
+                        disableBtn3.classList.add('flex');
+                    }
+                });
+            }
+
+            if (disableBtn3 && overlay3) {
+                disableBtn3.addEventListener('click', () => {
+                    color3Enabled = false;
+                    overlay3.classList.remove('hidden');
+                    disableBtn3.classList.add('hidden');
+                    disableBtn3.classList.remove('flex');
+                });
+            }
+
+            // Save Custom Theme Button
             const customThemeNameInput = document.getElementById('customThemeNameInput');
             const saveCustomThemeBtn = document.getElementById('saveCustomThemeBtn');
             const customThemeMessage = document.getElementById('customThemeMessage');
 
-            if (customColor1 && hexLabel1) {
-                customColor1.addEventListener('input', () => {
-                    hexLabel1.textContent = customColor1.value;
-                });
-            }
-
-            if (enableColor2 && customColor2) {
-                enableColor2.addEventListener('change', () => {
-                    customColor2.disabled = !enableColor2.checked;
-                    customColor2.classList.toggle('opacity-40', !enableColor2.checked);
-                    const desc2 = document.getElementById('descColor2');
-                    if (desc2) desc2.textContent = enableColor2.checked ? 'Custom background tint' : 'Defaults to deep carbon black';
-                });
-            }
-
-            if (enableColor3 && customColor3) {
-                enableColor3.addEventListener('change', () => {
-                    customColor3.disabled = !enableColor3.checked;
-                    customColor3.classList.toggle('opacity-40', !enableColor3.checked);
-                    const desc3 = document.getElementById('descColor3');
-                    if (desc3) desc3.textContent = enableColor3.checked ? 'Custom secondary glow' : 'Defaults to primary glow';
-                });
-            }
-
             if (saveCustomThemeBtn) {
                 saveCustomThemeBtn.addEventListener('click', () => {
-                    const c1 = customColor1 ? customColor1.value : '#ff8800';
-                    const c2 = (enableColor2 && enableColor2.checked && customColor2) ? customColor2.value : null;
-                    const c3 = (enableColor3 && enableColor3.checked && customColor3) ? customColor3.value : null;
+                    const c1 = wheel1.getHex();
+                    const c2 = color2Enabled ? wheel2.getHex() : null;
+                    const c3 = color3Enabled ? wheel3.getHex() : null;
                     const name = (customThemeNameInput && customThemeNameInput.value.trim()) ? customThemeNameInput.value.trim() : 'Custom Theme';
+
+                    if (window.createCustomTheme) {
+                        const created = window.createCustomTheme(name, c1, c2, c3);
+                        renderThemesGrid();
+                        showMessage(customThemeMessage, `Theme "${created.name}" created and applied!`, 'success');
+                        if (customThemeNameInput) customThemeNameInput.value = '';
+                    } else {
+                        showMessage(customThemeMessage, 'Theme engine not ready.', 'error');
+                    }
+                });
+            }
 
                     if (window.createCustomTheme) {
                         const created = window.createCustomTheme(name, c1, c2, c3);

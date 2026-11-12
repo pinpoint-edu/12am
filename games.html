@@ -200,254 +200,321 @@
       letter-spacing: 0.04em;
     }
 
-    /* V6 Section Switcher (Slider) */
-    #category-viewer {
-      width: 100%;
-      margin-bottom: 2rem;
-    }
-
-    .category-slider-container {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      max-width: 640px;
-      margin: 0 auto 0.75rem;
-    }
-
-    .cat-nav-btn {
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      border: 1px solid var(--border-main);
-      background: rgba(15, 15, 20, 0.7);
-      backdrop-filter: blur(10px);
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 1.1rem;
-      transition: all 0.2s ease;
-      z-index: 10;
-      flex-shrink: 0;
-    }
-
-    .cat-nav-btn:hover:not(:disabled) {
-      color: #ffffff;
-      border-color: var(--accent-color);
-      background: var(--btn-bg);
-      transform: scale(1.05);
-    }
-
-    .cat-nav-btn:disabled {
-      opacity: 0.25;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .category-slider-window {
-      overflow: hidden;
-      width: 100%;
-      max-width: 440px;
-      text-align: center;
-      margin: 0 1rem;
-    }
-
-    .category-slider {
-      display: flex;
-      align-items: center;
-      width: 100%;
-      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .category-slide {
-      width: 100%;
-      min-width: 100%;
-      max-width: 100%;
-      flex: 0 0 100%;
-      padding: 0.5rem 0.75rem;
-      user-select: none;
-      box-sizing: border-box;
-    }
-
-    .category-slide h2 {
-      font-size: 2.1rem;
-      font-weight: 500;
-      letter-spacing: -0.03em;
-      line-height: 1.1;
-      margin-bottom: 0.25rem;
-      cursor: pointer;
-    }
-
-    .category-slide p {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
     /* Category Specific Colors */
     .color-vault { color: #8b5cf6 !important; }
     .color-strongdog { color: #FFA500 !important; }
     .color-gnmath { color: #FB2651 !important; }
-    .color-tglsc { color: #3B82F6 !important; } /* Blue category */
+    .color-tglsc { color: #3B82F6 !important; }
 
-    /* Category Navigation Dots */
-    .category-dots-row {
+    /* Segmented Squircle Sliding Pill Switcher Track */
+    .pill-switcher-container {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      margin-bottom: 1.5rem;
+      margin: 1.5rem auto 1.75rem;
+      width: 100%;
     }
 
-    .cat-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 9999px;
-      background: var(--border-main);
+    .pill-switcher-track {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      background: rgba(14, 14, 18, 0.75);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid var(--border-main);
+      border-radius: 20px;
+      padding: 5px;
+      gap: 4px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+      user-select: none;
+    }
+
+    .pill-tab-btn {
+      position: relative;
+      z-index: 2;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 9px 20px;
+      border-radius: 16px;
+      font-size: 0.88rem;
+      font-weight: 500;
       cursor: pointer;
-      transition: all 0.25s ease;
+      transition: color 0.25s ease;
+      outline: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
     }
 
-    .cat-dot.active {
-      width: 24px;
+    .pill-tab-btn.active {
+      color: #ffffff !important;
+    }
+
+    .pill-tab-btn:hover:not(.active) {
+      color: var(--text-main);
+    }
+
+    .pill-slider-indicator {
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      height: calc(100% - 10px);
       background: var(--accent-color);
-      box-shadow: 0 0 10px var(--accent-glow);
+      border-radius: 16px;
+      box-shadow: 0 0 18px var(--accent-glow);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1;
     }
 
-    /* Centered sub-bar showing active count and clear metadata */
+    /* Sub-bar showing active count and clear metadata */
     .catalog-bar {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 12px;
-      padding: 0.75rem 0.5rem;
-      border-bottom: 1px solid var(--border-faint);
-      margin-bottom: 1.5rem;
+      padding: 0.5rem 0.5rem;
+      margin-top: 0.75rem;
       text-align: center;
     }
 
-    .catalog-bar-left {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-
     .catalog-tag {
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       font-weight: 500;
       padding: 3px 10px;
-      border-radius: 9999px;
+      border-radius: 10px;
       border: 1px solid var(--border-faint);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-main);
     }
 
     .catalog-count {
       font-size: 0.82rem;
       color: var(--text-muted);
+      opacity: 0.8;
     }
 
-    /* Games Grid / Row Layout (pinpoint-mini reference-3.9.36 style) */
+    /* Multi-column responsive Bento Squircle Grid */
     .games-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      transition: opacity 0.2s ease;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
       width: 100%;
-      max-width: 860px;
-      margin: 0 auto;
+      margin: 0 auto 3rem;
+      transition: opacity 0.2s ease;
     }
 
-    /* Game Card Row */
+    /* Each game card: 16:11 squircle */
     .game-card {
+      position: relative;
+      aspect-ratio: 16 / 11;
+      border-radius: 20px;
+      overflow: hidden;
       background: var(--bg-card);
       border: 1px solid var(--border-main);
-      border-radius: 14px;
-      padding: 12px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       cursor: pointer;
-      position: relative;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
     }
 
     .game-card:hover {
-      background: rgba(255, 255, 255, 0.03);
+      transform: scale(1.03);
       border-color: var(--accent-color);
-      transform: translateY(-2px);
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5), 0 0 18px var(--accent-glow);
-      z-index: 2;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7), 0 0 20px var(--accent-glow);
+      z-index: 10;
     }
 
-    .game-left {
+    /* Featured / Continue Playing Hero Card (spans 2 columns, 16:7 aspect ratio) */
+    .game-card.hero-card {
+      grid-column: span 2;
+      aspect-ratio: 16 / 7;
+      border-color: rgba(255, 255, 255, 0.15);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.8));
+    }
+
+    @media (max-width: 640px) {
+      .game-card.hero-card {
+        grid-column: span 1;
+        aspect-ratio: 16 / 11;
+      }
+    }
+
+    /* Card Artwork background */
+    .card-bg-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+      z-index: 1;
+    }
+
+    .game-card:hover .card-bg-img {
+      transform: scale(1.06);
+    }
+
+    .card-fallback-art {
+      position: absolute;
+      inset: 0;
       display: flex;
       align-items: center;
-      min-width: 0;
-      flex: 1;
+      justify-content: center;
+      background: radial-gradient(circle at 50% 35%, rgba(139, 92, 246, 0.15), #08080c 80%);
+      color: rgba(255, 255, 255, 0.12);
+      font-size: 52px;
+      z-index: 0;
     }
 
-    .game-details {
-      min-width: 0;
-      flex: 1;
+    /* Dark gradient overlay at the bottom */
+    .card-gradient-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.96) 0%, rgba(0, 0, 0, 0.6) 50%, rgba(0, 0, 0, 0.05) 100%);
+      z-index: 2;
+      pointer-events: none;
     }
 
-    .game-title {
-      font-size: 15px;
+    /* Bottom-left title and pill category */
+    .card-info {
+      position: relative;
+      z-index: 3;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      pointer-events: none;
+      min-width: 0;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
       font-weight: 500;
-      color: var(--text-main, #ffffff) !important;
+      color: #ffffff;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      display: block;
-      transition: color 0.15s ease;
+      letter-spacing: -0.01em;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
     }
 
-    .game-card:hover .game-title {
-      color: var(--accent-color) !important;
+    .hero-card .card-title {
+      font-size: 1.25rem;
     }
 
-    .game-meta {
+    .card-tag {
+      align-self: flex-start;
+      font-size: 0.68rem;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .card-tag.hero-tag {
+      background: var(--accent-color);
+      color: #ffffff;
+      border-color: transparent;
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    /* Slide-up Frosted Squircle Action Buttons on Hover */
+    .card-hover-actions {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 4;
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 12px;
-      color: var(--text-muted, #a1a1aa) !important;
-      margin-top: 3px;
+      justify-content: center;
+      gap: 10px;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+      padding: 12px;
     }
 
-    .badge-cat {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 2px 7px;
-      border-radius: 6px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border-faint);
-      font-size: 11px;
-      font-weight: 500;
+    .game-card:hover .card-hover-actions {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
     }
 
-    .badge-pinned {
+    .card-btn-play {
+      background: var(--accent-color);
+      color: #ffffff;
+      border: none;
+      border-radius: 14px;
+      height: 38px;
+      padding: 0 16px;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      padding: 2px 7px;
-      border-radius: 6px;
-      background: rgba(251, 191, 36, 0.12);
-      border: 1px solid rgba(251, 191, 36, 0.3);
-      font-size: 11px;
+      gap: 6px;
+      font-size: 0.82rem;
       font-weight: 500;
+      cursor: pointer;
+      box-shadow: 0 4px 14px var(--accent-glow);
+      transition: transform 0.15s ease, filter 0.15s ease;
+      outline: none;
+    }
+
+    .card-btn-play:hover {
+      filter: brightness(1.12);
+      transform: scale(1.05);
+    }
+
+    .card-btn-star {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      border-radius: 14px;
+      width: 38px;
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      outline: none;
+    }
+
+    .card-btn-star:hover {
+      background: rgba(255, 255, 255, 0.22);
+      transform: scale(1.05);
+    }
+
+    .card-btn-star.pinned {
+      background: rgba(251, 191, 36, 0.25);
+      border-color: #fbbf24;
       color: #fbbf24;
     }
 
-    .game-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-shrink: 0;
+    .card-info-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 14px;
+      cursor: pointer;
+      padding: 4px;
+      transition: color 0.15s ease;
+    }
+
+    .card-info-btn:hover {
+      color: #ffffff;
     }
 
     .btn-sharp {
@@ -738,61 +805,36 @@
       <div id="searchDropdown"></div>
     </div>
 
-    <!-- Favorites Section -->
-    <section id="favoritesSection">
-      <div class="favorites-header">
-        <i class="fa-solid fa-star"></i>
-        <span>Favorites</span>
-      </div>
-      <div class="games-grid" id="favoritesGrid"></div>
-    </section>
-
-    <!-- V6 Section Switcher -->
-    <div id="category-viewer">
-      <div class="category-slider-container">
-        <button id="prev-category" class="cat-nav-btn" aria-label="Previous Category">
-          <i class="fa-solid fa-chevron-left"></i>
+    <!-- Segmented Squircle Sliding Pill Switcher Track -->
+    <div class="pill-switcher-container">
+      <div class="pill-switcher-track" id="categorySwitcherTrack">
+        <div class="pill-slider-indicator" id="pillSliderIndicator"></div>
+        <button type="button" class="pill-tab-btn active" data-tab="vault">
+          <i class="fa-solid fa-cube"></i>
+          <span>12AM Vault</span>
         </button>
-
-        <div class="category-slider-window">
-          <div id="category-slider" class="category-slider">
-            <div class="category-slide" data-index="0">
-              <h2 class="color-vault">12AM Vault</h2>
-              <p>Offline IndexedDB &amp; Local Originals</p>
-            </div>
-            <div class="category-slide" data-index="1">
-              <h2 class="color-strongdog">StrongdogXP</h2>
-              <p>Core Flash, HTML5 &amp; Web Classics by Josh P</p>
-            </div>
-            <div class="category-slide" data-index="2">
-              <h2 class="color-tglsc">TGLSC</h2>
-              <p>Ultra-Fast High-Speed CDN Catalog (199 Games)</p>
-            </div>
-          </div>
-        </div>
-
-        <button id="next-category" class="cat-nav-btn" aria-label="Next Category">
-          <i class="fa-solid fa-chevron-right"></i>
+        <button type="button" class="pill-tab-btn" data-tab="arcade">
+          <i class="fa-solid fa-gamepad"></i>
+          <span>Web Arcade</span>
         </button>
-      </div>
-
-      <!-- Navigation Dots -->
-      <div class="category-dots-row" id="categoryDots">
-        <div class="cat-dot active" data-index="0"></div>
-        <div class="cat-dot" data-index="1"></div>
-        <div class="cat-dot" data-index="2"></div>
+        <button type="button" class="pill-tab-btn" data-tab="favorites">
+          <i class="fa-solid fa-star"></i>
+          <span>Favorites</span>
+        </button>
+        <button type="button" class="pill-tab-btn" data-tab="all">
+          <i class="fa-solid fa-grip"></i>
+          <span>All Games</span>
+        </button>
       </div>
 
       <!-- Catalog Count & Badge Bar -->
       <div class="catalog-bar">
-        <div class="catalog-bar-left">
-          <span class="catalog-tag color-vault" id="categoryTag">12AM Vault</span>
-          <span class="catalog-count" id="catalogCount">Loading games...</span>
-        </div>
+        <span class="catalog-tag color-vault" id="categoryTag">12AM Vault</span>
+        <span class="catalog-count" id="catalogCount">Loading games...</span>
       </div>
     </div>
 
-    <!-- Active Category Games Grid -->
+    <!-- Active Games Bento Grid -->
     <div class="games-grid" id="gamesGrid"></div>
   </div>
 
@@ -828,14 +870,7 @@
 
 
   <script>
-    // Categories definition
-    const CATEGORIES = [
-      { name: '12AM Vault', colorClass: 'color-vault', desc: 'Offline IndexedDB & Local Originals' },
-      { name: 'StrongdogXP', colorClass: 'color-strongdog', desc: 'Core Flash, HTML5 & Web Classics by Josh P' },
-      { name: 'TGLSC', colorClass: 'color-tglsc', desc: 'Ultra-Fast High-Speed CDN Catalog (199 Games)' }
-    ];
-
-    let currentCategoryIndex = 0;
+    let currentTab = 'vault';
     let categoryGames = {
       '12AM Vault': [],
       'StrongdogXP': [],
@@ -851,7 +886,7 @@
 
     // Initialize & Load all Categories
     async function initGamesHub() {
-      setupSliderControls();
+      setupSwitcherControls();
       setupSearch();
 
       // 1. Load 12AM Vault
@@ -913,93 +948,137 @@
         console.warn('Failed loading TGLSC games:', e);
       }
 
-
-
       // Assemble all searchable games
       allSearchableGames = [];
       Object.keys(categoryGames).forEach(cat => {
         allSearchableGames.push(...categoryGames[cat]);
       });
 
-      // Render default category
-      renderCurrentCategory();
-      renderFavorites();
+      // Render default tab
+      renderActiveTab();
     }
 
-    // Slider Controls
-    function setupSliderControls() {
-      const prevBtn = document.getElementById('prev-category');
-      const nextBtn = document.getElementById('next-category');
-      const slider = document.getElementById('category-slider');
-      const dots = document.querySelectorAll('.cat-dot');
+    // Segmented Squircle Sliding Pill Switcher Controls
+    function setupSwitcherControls() {
+      const track = document.getElementById('categorySwitcherTrack');
+      const indicator = document.getElementById('pillSliderIndicator');
+      if (!track) return;
+      const buttons = track.querySelectorAll('.pill-tab-btn');
 
-      function goToCategory(index) {
-        if (index < 0 || index >= CATEGORIES.length) return;
-        currentCategoryIndex = index;
-        slider.style.transform = `translateX(-${currentCategoryIndex * 100}%)`;
-
-        // Update dots
-        dots.forEach((dot, idx) => {
-          dot.classList.toggle('active', idx === currentCategoryIndex);
-        });
-
-        // Update buttons
-        prevBtn.disabled = currentCategoryIndex === 0;
-        nextBtn.disabled = currentCategoryIndex === CATEGORIES.length - 1;
-
-        // Update tag
-        const tag = document.getElementById('categoryTag');
-        const cat = CATEGORIES[currentCategoryIndex];
-        tag.className = `catalog-tag ${cat.colorClass}`;
-        tag.textContent = cat.name;
-
-        renderCurrentCategory();
+      function updateIndicator(btn) {
+        if (!indicator || !btn) return;
+        indicator.style.left = `${btn.offsetLeft}px`;
+        indicator.style.width = `${btn.offsetWidth}px`;
       }
 
-      prevBtn.addEventListener('click', () => goToCategory(currentCategoryIndex - 1));
-      nextBtn.addEventListener('click', () => goToCategory(currentCategoryIndex + 1));
-
-      dots.forEach(dot => {
-        dot.addEventListener('click', () => {
-          goToCategory(parseInt(dot.dataset.index, 10));
+      buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          buttons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          updateIndicator(btn);
+          currentTab = btn.dataset.tab;
+          renderActiveTab();
         });
       });
 
-      // Keyboard arrow keys left/right when not in inputs
-      window.addEventListener('keydown', (e) => {
-        if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
-        if (e.key === 'ArrowLeft') goToCategory(currentCategoryIndex - 1);
-        if (e.key === 'ArrowRight') goToCategory(currentCategoryIndex + 1);
+      window.addEventListener('resize', () => {
+        const active = track.querySelector('.pill-tab-btn.active');
+        if (active) updateIndicator(active);
       });
 
-      goToCategory(0);
+      // Initial indicator layout
+      setTimeout(() => {
+        const active = track.querySelector('.pill-tab-btn.active');
+        if (active) updateIndicator(active);
+      }, 50);
     }
 
-    // Render Active Category Games
-    async function renderCurrentCategory() {
-      const cat = CATEGORIES[currentCategoryIndex];
+    // Render Active Bento Grid
+    async function renderActiveTab() {
       const grid = document.getElementById('gamesGrid');
       const countEl = document.getElementById('catalogCount');
+      const tagEl = document.getElementById('categoryTag');
       if (!grid) return;
 
-      const games = categoryGames[cat.name] || [];
-      if (countEl) countEl.textContent = `${games.length.toLocaleString()} games available`;
+      let games = [];
+      let tagText = '12AM Vault';
+      let tagClass = 'color-vault';
+
+      if (currentTab === 'vault') {
+        games = categoryGames['12AM Vault'] || [];
+        tagText = '12AM Vault';
+        tagClass = 'color-vault';
+      } else if (currentTab === 'arcade') {
+        games = [...(categoryGames['StrongdogXP'] || []), ...(categoryGames['TGLSC'] || [])];
+        tagText = 'Web Arcade';
+        tagClass = 'color-strongdog';
+      } else if (currentTab === 'favorites') {
+        games = allSearchableGames.filter(g => pinnedGames.has(g.name));
+        tagText = 'Favorites';
+        tagClass = 'color-vault';
+      } else if (currentTab === 'all') {
+        games = allSearchableGames;
+        tagText = 'All Games';
+        tagClass = 'color-tglsc';
+      }
+
+      if (tagEl) {
+        tagEl.className = `catalog-tag ${tagClass}`;
+        tagEl.textContent = tagText;
+      }
+      if (countEl) {
+        countEl.textContent = `${games.length.toLocaleString()} games available`;
+      }
 
       grid.style.opacity = '0';
-      await new Promise(r => setTimeout(r, 120));
+      await new Promise(r => setTimeout(r, 100));
 
       if (games.length === 0) {
-        grid.innerHTML = `
-          <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
-            <i class="fa-solid fa-spinner fa-spin" style="font-size: 32px; margin-bottom: 12px; color: var(--accent-color);"></i>
-            <h3 style="color: var(--text-main); margin-bottom: 6px;">Loading games...</h3>
-          </div>
-        `;
+        if (currentTab === 'favorites') {
+          grid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
+              <i class="fa-regular fa-star" style="font-size: 32px; margin-bottom: 12px; color: var(--accent-color); opacity: 0.7;"></i>
+              <h3 style="color: var(--text-main); margin-bottom: 6px; font-weight: 500;">No favorite games yet</h3>
+              <p style="font-size: 0.85rem; opacity: 0.7;">Hover any game card and click the star to pin your favorites here.</p>
+            </div>
+          `;
+        } else {
+          grid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
+              <i class="fa-solid fa-spinner fa-spin" style="font-size: 32px; margin-bottom: 12px; color: var(--accent-color);"></i>
+              <h3 style="color: var(--text-main); margin-bottom: 6px; font-weight: 500;">Loading games...</h3>
+            </div>
+          `;
+        }
         grid.style.opacity = '1';
         return;
       }
 
-      grid.innerHTML = games.map(game => createGameCardHTML(game)).join('');
+      // Check for Recent Game or Curated Featured Game for Bento Hero Card
+      let recentGame = null;
+      try {
+        recentGame = JSON.parse(localStorage.getItem('12am_recent_game'));
+      } catch (e) {}
+
+      let heroIndex = -1;
+      if (recentGame && recentGame.name) {
+        heroIndex = games.findIndex(g => g.name === recentGame.name);
+      }
+      if (heroIndex === -1 && games.length > 0) {
+        heroIndex = 0;
+      }
+
+      const heroGame = games[heroIndex];
+      const otherGames = games.filter((_, idx) => idx !== heroIndex);
+
+      let cardsHtml = '';
+      if (heroGame) {
+        const isRecent = recentGame && recentGame.name === heroGame.name;
+        cardsHtml += createGameCardHTML(heroGame, true, isRecent ? 'Continue Playing' : 'Featured Game');
+      }
+      cardsHtml += otherGames.map(game => createGameCardHTML(game, false)).join('');
+
+      grid.innerHTML = cardsHtml;
       grid.style.opacity = '1';
     }
 
@@ -1022,42 +1101,42 @@
       }[tag] || tag));
     }
 
-    // Game Card Generator (Row view without images, pinpoint-mini reference-3.9.36)
-    function createGameCardHTML(game) {
+    // Bento Squircle Card Generator
+    function createGameCardHTML(game, isHero = false, heroBadge = 'Featured Game') {
       const isPinned = pinnedGames.has(game.name);
       let catColorClass = 'color-vault';
       if (game.category === 'StrongdogXP') catColorClass = 'color-strongdog';
       if (game.category === 'TGLSC') catColorClass = 'color-tglsc';
 
-      const metaText = game.sizeBytes 
-        ? formatBytes(game.sizeBytes) 
+      const sizeTip = game.sizeBytes 
+        ? `Size: ${formatBytes(game.sizeBytes)}` 
         : (game.status || (game.isLocal ? 'Offline Ready' : 'Fast Mirror'));
 
+      const heroClass = isHero ? 'hero-card' : '';
+      const tagLabel = isHero ? heroBadge : (game.category === '12AM Vault' ? 'Vault' : (game.category === 'StrongdogXP' ? 'Classic' : 'Arcade'));
+
       return `
-        <div class="game-card" onclick="launchGame('${encodeURIComponent(game.url)}', '${encodeURIComponent(game.name)}', ${game.isLocal || false}, '${game.category || ''}')">
-          <div class="game-left">
-            <div class="game-details">
-              <span class="game-title">${escapeHTML(game.name)}</span>
-              <div class="game-meta">
-                <span class="badge-cat ${catColorClass}">${game.category}</span>
-                <span>${metaText}</span>
-                ${isPinned ? `
-                  <span class="badge-pinned">
-                    <i class="fa-solid fa-star" style="font-size: 11px;"></i>
-                    Pinned
-                  </span>
-                ` : ''}
-              </div>
-            </div>
+        <div class="game-card ${heroClass}" onclick="launchGame('${encodeURIComponent(game.url)}', '${encodeURIComponent(game.name)}', ${game.isLocal || false}, '${game.category || ''}')">
+          <div class="card-fallback-art"><i class="fa-solid fa-gamepad"></i></div>
+          ${game.imgSrc ? `
+            <img src="${escapeHTML(game.imgSrc)}" alt="${escapeHTML(game.name)}" class="card-bg-img" loading="lazy" onerror="this.style.display='none';">
+          ` : ''}
+          <div class="card-gradient-overlay"></div>
+          <div class="card-info">
+            <span class="card-tag ${isHero ? 'hero-tag' : catColorClass}">${tagLabel}</span>
+            <span class="card-title">${escapeHTML(game.name)}</span>
           </div>
-          <div class="game-actions">
-            <button class="btn-icon-sharp ${isPinned ? 'pinned-active' : ''}" onclick="event.stopPropagation(); togglePin('${encodeURIComponent(game.name)}')" title="${isPinned ? 'Unpin game' : 'Pin to top'}">
-              <i class="fa-solid fa-star"></i>
-            </button>
-            <button class="btn-sharp btn-primary-sharp" onclick="event.stopPropagation(); launchGame('${encodeURIComponent(game.url)}', '${encodeURIComponent(game.name)}', ${game.isLocal || false}, '${game.category || ''}')">
+          <div class="card-hover-actions">
+            <button type="button" class="card-btn-play" onclick="event.stopPropagation(); launchGame('${encodeURIComponent(game.url)}', '${encodeURIComponent(game.name)}', ${game.isLocal || false}, '${game.category || ''}')" title="Play ${escapeHTML(game.name)}">
               <i class="fa-solid fa-play"></i>
               <span>Play</span>
             </button>
+            <button type="button" class="card-btn-star ${isPinned ? 'pinned' : ''}" onclick="event.stopPropagation(); togglePin('${encodeURIComponent(game.name)}')" title="${isPinned ? 'Unstar' : 'Add to Favorites'}">
+              <i class="fa-solid fa-star"></i>
+            </button>
+            <span class="card-info-btn" title="${sizeTip}" onclick="event.stopPropagation();">
+              <i class="fa-solid fa-circle-info"></i>
+            </span>
           </div>
         </div>
       `;
@@ -1084,24 +1163,7 @@
         localStorage.setItem('12am_pinned_games', JSON.stringify([...pinnedGames]));
       } catch (e) {}
 
-      renderFavorites();
-      renderCurrentCategory();
-    }
-
-    // Render Favorites
-    function renderFavorites() {
-      const favSec = document.getElementById('favoritesSection');
-      const favGrid = document.getElementById('favoritesGrid');
-      if (!favSec || !favGrid) return;
-
-      const favGames = allSearchableGames.filter(g => pinnedGames.has(g.name));
-      if (favGames.length === 0) {
-        favSec.style.display = 'none';
-        return;
-      }
-
-      favSec.style.display = 'block';
-      favGrid.innerHTML = favGames.map(game => createGameCardHTML(game)).join('');
+      renderActiveTab();
     }
 
     // Search Box & Dropdown Handling
@@ -1200,6 +1262,18 @@
 
       currentGameUrl = url;
       currentGameTitle = title;
+
+      // Track recently played game for the Bento Hero Card
+      try {
+        const found = allSearchableGames.find(g => g.name === title);
+        localStorage.setItem('12am_recent_game', JSON.stringify({
+          name: title,
+          url: url,
+          imgSrc: found ? (found.imgSrc || '') : '',
+          category: category,
+          isLocal: isLocal
+        }));
+      } catch (e) {}
 
       const player = document.getElementById('player-view');
       const titleEl = document.getElementById('currentPlayerTitle');
