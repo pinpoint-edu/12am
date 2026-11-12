@@ -1210,7 +1210,7 @@
       player.style.display = 'flex';
       document.body.style.overflow = 'hidden';
 
-      if (isLocal && window.playGame) {
+      if ((isLocal || url.includes('pinpoint-edu.github.io')) && window.playGame) {
         window.playGame(encodeURIComponent(url), encodeURIComponent(title));
         return;
       }

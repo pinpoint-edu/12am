@@ -273,6 +273,17 @@ function prepareGameHtml(html, fileUrl) {
   html = html.replace(/<script[^>]*src=["']blob:https?:[^"']*["'][^>]*>\s*<\/script>/gi, '');
   html = html.replace(/<script[^>]*src=["'][^"']*(?:all\.js|settings\/js\/index\.js)[^"']*["'][^>]*>\s*<\/script>/gi, '');
 
+  // Fix broken relative Ruffle scripts on Strongdog / GitHub Pages
+  html = html.replace(/<script[^>]*src=["'][^"']*\/ruffle\/ruffle\.js["'][^>]*>\s*<\/script>/gi, '<script src="https://unpkg.com/@ruffle-rs/ruffle"><\/script>');
+
+  // Fix Awesome Tanks and similar bundled game missing asset errors
+  html = html.replace(
+    /return\s+blobUrlss\[trimmed\]\s*\|\|\s*original;/g,
+    `if (trimmed === 'keyboard_moving.png') return blobUrlss['touch_moving.png'] || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+     if (trimmed === 'keyboard_shooting.png') return blobUrlss['touch_shooting.png'] || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+     return blobUrlss[trimmed] || (trimmed.endsWith('.png') ? 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' : original);`
+  );
+
   // Base Origin Neutralization for Flash/Ruffle
   html = html.replace(/let\s+baseOrigin\s*=\s*[^;]+;/g, 'let baseOrigin = ' + JSON.stringify(repoBase.replace(/\/+$/, '')) + ';');
   html = html.replace(/var\s+baseOrigin\s*=\s*[^;]+;/g, 'var baseOrigin = ' + JSON.stringify(repoBase.replace(/\/+$/, '')) + ';');
@@ -312,7 +323,28 @@ function prepareGameHtml(html, fileUrl) {
     'window.ytgame = window.ytgame || {',
     '  game: { firstFrameReady: function(){}, gameReady: function(){}, pause: function(){}, resume: function(){} },',
     '  engagement: { sendScore: function(){} }',
-    '};'
+    '};',
+    '(function() {',
+    '  var px = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";',
+    '  try {',
+    '    var origImg = window.Image;',
+    '    if (origImg && origImg.prototype) {',
+    '      var desc = Object.getOwnPropertyDescriptor(origImg.prototype, "src");',
+    '      if (desc && desc.set) {',
+    '        Object.defineProperty(origImg.prototype, "src", {',
+    '          set: function(val) {',
+    '            if (typeof val === "string" && (val.indexOf("keyboard_moving") !== -1 || val.indexOf("keyboard_shooting") !== -1)) {',
+    '              val = px;',
+    '            }',
+    '            return desc.set.call(this, val);',
+    '          },',
+    '          get: desc.get,',
+    '          configurable: true',
+    '        });',
+    '      }',
+    '    }',
+    '  } catch(e){}',
+    '})();'
   ].join('\n');
 
   const shimScript = `<script>${innerScriptBody}<\/script>`;
@@ -424,6 +456,11 @@ async function playGame(encodedFile, encodedTitle) {
     const fullResolved = resolvedUrl + (fileQuery && !resolvedUrl.includes('?') && !resolvedUrl.includes('#') ? fileQuery : '');
     writeGameIntoFrame(iframe, html, fullResolved);
   } catch (err) {
+    if (file.startsWith('http')) {
+      iframe.removeAttribute('srcdoc');
+      iframe.src = file;
+      return;
+    }
     console.error('Play game error:', err);
     iframe.srcdoc = `
       <!DOCTYPE html>

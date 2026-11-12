@@ -1,5 +1,5 @@
 /**
- * 12AM Navigation Bar
+ * 12AM Floating Sidebar Navigation
  * Fully compatible with file:/// and http(s):// protocols
  */
 
@@ -7,20 +7,26 @@
     if (window.__12am_nav_loaded) return;
     window.__12am_nav_loaded = true;
 
-    const NAV_PAGES = [
+    // Top section: primary daily tabs (AI, Proxy, Music, Movies, Games, Dashboard)
+    const TOP_NAV_PAGES = [
         { id: "dashboard", name: "Dashboard", icon: "fa-solid fa-house-user", url: "dashboard.html" },
-        { id: "games", name: "Games", icon: "fa-solid fa-gamepad", url: "games.html" },
+        { id: "ai", name: "AI Chat", icon: "fa-solid fa-robot", url: "ai.html" },
+        { id: "proxy", name: "Web Proxy", icon: "fa-solid fa-globe", url: "proxy.html" },
+        { id: "music", name: "12 Music", icon: "fa-solid fa-music", url: "music.html" },
         { id: "movies", name: "Movies", icon: "fa-solid fa-film", url: "movies.html" },
-        { id: "music", name: "Music", icon: "fa-solid fa-music", url: "music.html" },
+        { id: "games", name: "Games", icon: "fa-solid fa-gamepad", url: "games.html" }
+    ];
+
+    // Bottom section: utilities & communications
+    const BOTTOM_NAV_PAGES = [
         { id: "messenger", name: "Messenger", icon: "fa-solid fa-comments", url: "messenger.html" },
         { id: "soundboard", name: "Soundboard", icon: "fa-solid fa-volume-high", url: "soundboard.html" },
         { id: "notes", name: "Notes", icon: "fa-solid fa-note-sticky", url: "notes.html" },
         { id: "dictionary", name: "Dictionary", icon: "fa-solid fa-book-bookmark", url: "dictionary.html" },
-        { id: "ai", name: "AI", icon: "fa-solid fa-robot", url: "ai.html" },
-        { id: "proxy", name: "Proxy", icon: "fa-solid fa-globe", url: "proxy.html" },
         { id: "settings", name: "Settings", icon: "fa-solid fa-gear", url: "settings.html" }
     ];
 
+    const ALL_NAV_PAGES = [...TOP_NAV_PAGES, ...BOTTOM_NAV_PAGES];
     const lightThemeNames = ['Light', 'Lavender', 'Rose Gold', 'Mint', 'Pink', 'Birthday'];
 
     function getActivePageId() {
@@ -31,11 +37,8 @@
         const cleanName = path.split('/').filter(Boolean).pop() || '';
         const base = cleanName.replace(/\.html$/, '');
 
-        // If on landing or legal, no tab is active
-        if (base === 'index' || base === 'legal' || base === '') return '';
-
-        // Direct matching against NAV_PAGES
-        for (const p of NAV_PAGES) {
+        // Direct matching against ALL_NAV_PAGES
+        for (const p of ALL_NAV_PAGES) {
             if (base === p.id) return p.id;
         }
 
@@ -78,9 +81,10 @@
     } catch(e) {}
 
     function getLogoSrc(theme) {
+        const prefix = window.location.pathname.includes('/logged-in/') ? '../' : '';
         const t = theme || (typeof window.getCurrentTheme === 'function' ? window.getCurrentTheme() : null);
         const isLight = t && lightThemeNames.includes(t.name);
-        return isLight ? 'images/logo-black.png' : 'images/logo-white.png';
+        return isLight ? `${prefix}images/logo-black.png` : `${prefix}images/logo-white.png`;
     }
 
     function escapeHtml(str) {
@@ -89,10 +93,10 @@
     }
 
     window.open12AMAuth = function() {
-        const menu = document.getElementById('auth-menu-container');
-        if (menu) {
-            menu.classList.remove('open');
-            menu.classList.add('closed');
+        const cluster = document.getElementById('sidebarAuthCluster');
+        if (cluster) {
+            cluster.classList.remove('open');
+            cluster.classList.add('closed');
         }
         if (window.TwelveAMAuth && typeof window.TwelveAMAuth.showAuthModal === 'function') {
             window.TwelveAMAuth.showAuthModal();
@@ -135,12 +139,12 @@
     }
     ensureIconFonts();
 
-    function renderNavAvatar(user, size = 32, fontSize = '13px', radius = '10px') {
+    function renderNavAvatar(user, size = 30, fontSize = '12px', radius = '10px') {
         if (typeof window.render12AMAvatar === 'function') {
             return window.render12AMAvatar(user, size, fontSize, radius);
         }
         if (!user) {
-            return `<div style="width:${size}px; height:${size}px; border-radius:${radius}; background:#000000; color:#ffffff; border:1px solid rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize};">?</div>`;
+            return `<div style="width:${size}px; height:${size}px; border-radius:${radius}; background:#000000; color:#ffffff; border:1px solid rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize};"><i class="fa-solid fa-user" style="font-size:12px;"></i></div>`;
         }
         const type = user.avatar_type || user.pfpType || (user.mibiConfig ? 'mibi' : (user.avatar_url || user.avatar || user.pfp || localStorage.getItem('12am_profile_picture') ? 'image' : 'letter'));
         const imgUrl = user.avatar_url || user.avatar || user.pfp || user.photoURL || localStorage.getItem('12am_profile_picture');
@@ -178,7 +182,8 @@
         return `<div style="width:${size}px; height:${size}px; border-radius:${radius}; background:${bg}; color:${color}; border:1px solid rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize}; text-transform:uppercase; letter-spacing:0.5px; user-select:none; flex-shrink:0;">${letters}</div>`;
     }
 
-    function getRightControlsHtml() {
+    function renderAuthControlsHtml() {
+        const prefix = window.location.pathname.includes('/logged-in/') ? '../' : '';
         let currentUser = null;
         try {
             if (window.TwelveAMAuth && typeof window.TwelveAMAuth.getCurrentUser === 'function') {
@@ -190,211 +195,166 @@
             currentUser = null;
         }
 
-        if (currentUser && (currentUser.nickname || currentUser.firstName)) {
-            const displayName = currentUser.firstName ? `${currentUser.firstName} ${currentUser.lastName || ''}`.trim() : currentUser.nickname;
-            const handle = currentUser.nickname || 'user';
-            const avatarHtml = renderNavAvatar(currentUser, 32, '13px', '10px');
-            const menuAvatarHtml = renderNavAvatar(currentUser, 42, '16px', '12px');
+        const isSignedIn = !!(currentUser && (currentUser.nickname || currentUser.firstName));
+        const handle = isSignedIn ? (currentUser.nickname || 'user') : '';
+        const userTooltip = isSignedIn ? `@${handle}` : 'Account';
+        const avatarHtml = renderNavAvatar(currentUser, 28, '11px', '9px');
 
-            return `
-                <div class="nav-right-controls" id="navRightControls">
-                    <div id="auth-button-container" class="auth-btn-container">
-                        <button id="auth-toggle" class="auth-toggle-btn" title="@${escapeHtml(handle)}">
-                            ${avatarHtml}
-                        </button>
-                        <div id="auth-menu-container" class="auth-menu-container closed">
-                            <div class="auth-menu-header" style="display: flex; align-items: center; gap: 12px; padding: 6px 4px 10px;">
-                                <div style="flex-shrink: 0;">${menuAvatarHtml}</div>
-                                <div style="min-width: 0; flex: 1;">
-                                    <p class="auth-menu-displayname" style="margin: 0; font-size: 0.95rem; font-weight: 500; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(displayName)}</p>
-                                    <p class="auth-menu-handle" style="margin: 2px 0 0; font-size: 0.78rem; color: #888896;">@${escapeHtml(handle)}</p>
-                                </div>
-                            </div>
-                            <div class="auth-menu-divider"></div>
-                            <a href="settings.html" class="auth-menu-link">
-                                <i class="fa-solid fa-gear"></i>
-                                <span>Settings</span>
-                            </a>
-                            <a href="legal.html" class="auth-menu-link">
-                                <i class="fa-solid fa-shield-halved"></i>
-                                <span>Terms &amp; Policies</span>
-                            </a>
-                            <button type="button" onclick="window.logOut12AM()" class="auth-menu-button auth-menu-logout">
-                                <i class="fa-solid fa-right-from-bracket"></i>
-                                <span>Log Out</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+        let clusterButtonsHtml = '';
+        if (isSignedIn) {
+            clusterButtonsHtml = `
+                <a href="${prefix}settings.html" class="cluster-btn" aria-label="Settings">
+                    <i class="fa-solid fa-gear"></i>
+                    <span class="cluster-tooltip-top">Settings</span>
+                </a>
+                <button type="button" onclick="window.open12AMAuth()" class="cluster-btn" aria-label="Switch Account">
+                    <i class="fa-solid fa-user-gear"></i>
+                    <span class="cluster-tooltip-top">Switch Account</span>
+                </button>
+                <a href="${prefix}legal.html" class="cluster-btn" aria-label="Terms &amp; Policies">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span class="cluster-tooltip-top">Legal</span>
+                </a>
+                <button type="button" onclick="window.logOut12AM()" class="cluster-btn cluster-btn-logout" aria-label="Log Out">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span class="cluster-tooltip-top">Log Out</span>
+                </button>
             `;
         } else {
-            return `
-                <div class="nav-right-controls" id="navRightControls">
-                    <div id="auth-button-container" class="auth-btn-container">
-                        <button id="auth-toggle" class="auth-toggle-btn" title="Account">
-                            <i class="fa-solid fa-user"></i>
-                        </button>
-                        <div id="auth-menu-container" class="auth-menu-container closed">
-                            <div class="auth-menu-header">
-                                <p class="auth-menu-displayname">Guest</p>
-                                <p class="auth-menu-handle">Not signed in</p>
-                            </div>
-                            <div class="auth-menu-divider"></div>
-                            <button type="button" onclick="window.open12AMAuth()" class="auth-menu-button auth-menu-primary">
-                                <i class="fa-solid fa-lock"></i>
-                                <span>Authenticate</span>
-                            </button>
-                            <a href="settings.html" class="auth-menu-link">
-                                <i class="fa-solid fa-gear"></i>
-                                <span>Settings</span>
-                            </a>
-                            <a href="legal.html" class="auth-menu-link">
-                                <i class="fa-solid fa-shield-halved"></i>
-                                <span>Terms &amp; Policies</span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
+            clusterButtonsHtml = `
+                <button type="button" onclick="window.open12AMAuth()" class="cluster-btn cluster-btn-primary" aria-label="Authenticate">
+                    <i class="fa-solid fa-lock"></i>
+                    <span class="cluster-tooltip-top">Authenticate</span>
+                </button>
+                <a href="${prefix}settings.html" class="cluster-btn" aria-label="Settings">
+                    <i class="fa-solid fa-gear"></i>
+                    <span class="cluster-tooltip-top">Settings</span>
+                </a>
+                <a href="${prefix}legal.html" class="cluster-btn" aria-label="Terms &amp; Policies">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span class="cluster-tooltip-top">Legal</span>
+                </a>
             `;
         }
+
+        return `
+            <div class="sidebar-auth-wrapper" id="sidebarAuthWrapper">
+                <button type="button" class="sidebar-btn sidebar-auth-toggle" id="sidebarAuthToggle" aria-label="${escapeHtml(userTooltip)}">
+                    ${avatarHtml}
+                    <span class="sidebar-tooltip" id="sidebarAuthTooltip">${escapeHtml(userTooltip)}</span>
+                </button>
+                <div class="sidebar-auth-cluster closed" id="sidebarAuthCluster">
+                    ${clusterButtonsHtml}
+                </div>
+            </div>
+        `;
     }
 
-    function setupAuthMenuListeners() {
-        const toggleBtn = document.getElementById('auth-toggle');
-        const menu = document.getElementById('auth-menu-container');
-        if (!toggleBtn || !menu) return;
+    function setupAuthClusterListeners() {
+        const toggleBtn = document.getElementById('sidebarAuthToggle');
+        const cluster = document.getElementById('sidebarAuthCluster');
+        if (!toggleBtn || !cluster) return;
 
-        toggleBtn.addEventListener('click', (e) => {
+        toggleBtn.onclick = (e) => {
             e.stopPropagation();
-            const isOpen = menu.classList.contains('open');
+            const isOpen = cluster.classList.contains('open');
             if (isOpen) {
-                menu.classList.remove('open');
-                menu.classList.add('closed');
+                cluster.classList.remove('open');
+                cluster.classList.add('closed');
+                toggleBtn.classList.remove('active');
             } else {
-                menu.classList.remove('closed');
-                menu.classList.add('open');
+                cluster.classList.remove('closed');
+                cluster.classList.add('open');
+                toggleBtn.classList.add('active');
             }
-        });
+        };
 
         // Close on click outside
         document.addEventListener('click', (e) => {
-            if (!menu.contains(e.target) && e.target !== toggleBtn && !toggleBtn.contains(e.target)) {
-                if (menu.classList.contains('open')) {
-                    menu.classList.remove('open');
-                    menu.classList.add('closed');
+            if (!cluster.contains(e.target) && !toggleBtn.contains(e.target)) {
+                if (cluster.classList.contains('open')) {
+                    cluster.classList.remove('open');
+                    cluster.classList.add('closed');
+                    toggleBtn.classList.remove('active');
                 }
             }
         });
     }
 
     window.__updateNavbarUser = function() {
-        const ctrl = document.getElementById('navRightControls');
-        if (ctrl && ctrl.parentElement) {
+        const wrapper = document.getElementById('sidebarAuthWrapper');
+        if (wrapper && wrapper.parentElement) {
             const temp = document.createElement('div');
-            temp.innerHTML = getRightControlsHtml();
+            temp.innerHTML = renderAuthControlsHtml();
             const newChild = temp.firstElementChild;
             if (newChild) {
-                ctrl.replaceWith(newChild);
-                setupAuthMenuListeners();
+                wrapper.replaceWith(newChild);
+                setupAuthClusterListeners();
             }
         }
     };
 
-    function createNavbar() {
-        let container = document.getElementById('navbar-container');
+    function renderPageButton(p, activeId, prefix) {
+        const isActive = p.id === activeId;
+        return `
+            <a href="${prefix}${p.url}" class="sidebar-btn nav-tab ${isActive ? 'active' : ''}" data-page="${p.id}" aria-label="${escapeHtml(p.name)}">
+                <i class="${p.icon}"></i>
+                <span class="sidebar-tooltip">${escapeHtml(p.name)}</span>
+            </a>
+        `;
+    }
+
+    function createFloatingSidebar() {
+        let container = document.getElementById('floating-sidebar');
         if (!container) {
-            container = document.createElement('div');
-            container.id = 'navbar-container';
-            document.body.prepend(container);
+            const existingNav = document.getElementById('navbar-container');
+            if (existingNav) {
+                existingNav.id = 'floating-sidebar';
+                existingNav.className = 'floating-sidebar';
+                container = existingNav;
+            } else {
+                container = document.createElement('nav');
+                container.id = 'floating-sidebar';
+                container.className = 'floating-sidebar';
+                document.body.prepend(container);
+            }
         }
 
         const activeId = getActivePageId();
         const logoSrc = getLogoSrc();
+        const prefix = window.location.pathname.includes('/logged-in/') ? '../' : '';
 
-        // Check if page is simplified navbar (index.html or legal.html: no center tabs)
-        const path = (window.location.pathname || '').toLowerCase();
-        const cleanName = path.split('/').filter(Boolean).pop() || '';
-        const base = cleanName.replace(/\.html$/, '');
-        const isSimplifiedNav = base === 'index' || base === 'legal' || path.endsWith('/index.html') || path.endsWith('/legal.html') || path === '/' || path === '';
-
-        // 1. Brand Logo
-        const brandHtml = `
-            <a href="index.html" class="nav-brand-group" title="12AM">
-                <img src="${logoSrc}" alt="12AM Logo" class="navbar-logo" id="navbar-logo">
+        // 1. Logo button (Top Left Logo clicking goes to index.html)
+        const logoBtnHtml = `
+            <a href="${prefix}index.html" class="sidebar-btn sidebar-logo-btn" aria-label="12AM Home">
+                <img src="${logoSrc}" alt="12AM Logo" class="sidebar-logo-img navbar-logo" id="sidebar-logo">
+                <span class="sidebar-tooltip">12AM Home</span>
             </a>
         `;
 
-        // 2. Right Controls: v6 Auth Dropdown
-        const rightControlsHtml = getRightControlsHtml();
+        // 2. Top section: AI, Proxy, Music, Movies, Games, Dashboard
+        const topButtonsHtml = TOP_NAV_PAGES.map(p => renderPageButton(p, activeId, prefix)).join('');
 
-        if (isSimplifiedNav) {
-            container.innerHTML = `
-                ${brandHtml}
-                ${rightControlsHtml}
-            `;
-            setupPanicKey();
-            setupAuthMenuListeners();
-            return;
-        }
+        // 3. Bottom section: Messenger, Soundboard, Notes, Dictionary, Settings
+        const bottomButtonsHtml = BOTTOM_NAV_PAGES.map(p => renderPageButton(p, activeId, prefix)).join('');
 
-        // 3. Tabs with relative URLs
-        const tabsHtml = NAV_PAGES.map(p => {
-            const isActive = p.id === activeId;
-            return `
-                <a href="${p.url}" class="nav-tab ${isActive ? 'active' : ''}" data-page="${p.id}">
-                    <i class="${p.icon}"></i>
-                    <span class="tab-title">${p.name}</span>
-                </a>
-            `;
-        }).join('');
+        // 4. Auth expandable cluster button
+        const authControlsHtml = renderAuthControlsHtml();
 
         container.innerHTML = `
-            ${brandHtml}
-            <div class="tab-wrapper">
-                <button id="glide-left" class="scroll-glide-button hidden" title="Scroll left">
-                    <i class="fa-solid fa-chevron-left"></i>
-                </button>
-                <div class="tab-scroll-container" id="tabScrollContainer">
-                    ${tabsHtml}
-                </div>
-                <button id="glide-right" class="scroll-glide-button hidden" title="Scroll right">
-                    <i class="fa-solid fa-chevron-right"></i>
-                </button>
+            <div class="sidebar-section sidebar-section-top">
+                ${logoBtnHtml}
+                ${topButtonsHtml}
             </div>
-            ${rightControlsHtml}
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section sidebar-section-bottom">
+                ${bottomButtonsHtml}
+                ${authControlsHtml}
+            </div>
         `;
 
-        setupScrollGliders();
         setupPanicKey();
-        setupAuthMenuListeners();
-    }
-
-    function setupScrollGliders() {
-        const scrollContainer = document.getElementById('tabScrollContainer');
-        const leftBtn = document.getElementById('glide-left');
-        const rightBtn = document.getElementById('glide-right');
-
-        if (!scrollContainer || !leftBtn || !rightBtn) return;
-
-        function updateGliders() {
-            const atStart = scrollContainer.scrollLeft <= 5;
-            const atEnd = scrollContainer.scrollLeft + scrollContainer.clientWidth >= scrollContainer.scrollWidth - 5;
-
-            leftBtn.classList.toggle('hidden', atStart);
-            rightBtn.classList.toggle('hidden', atEnd);
-        }
-
-        leftBtn.addEventListener('click', () => {
-            scrollContainer.scrollBy({ left: -220, behavior: 'smooth' });
-        });
-
-        rightBtn.addEventListener('click', () => {
-            scrollContainer.scrollBy({ left: 220, behavior: 'smooth' });
-        });
-
-        scrollContainer.addEventListener('scroll', updateGliders, { passive: true });
-        window.addEventListener('resize', updateGliders);
-        setTimeout(updateGliders, 150);
+        setupAuthClusterListeners();
     }
 
     function setupPanicKey() {
@@ -410,7 +370,7 @@
 
     // Expose theme logo update callback (v6 drop-shadow tinting)
     window.__updateNavbarLogo = function(theme) {
-        const logos = document.querySelectorAll('.navbar-logo, #navbar-logo');
+        const logos = document.querySelectorAll('.navbar-logo, #navbar-logo, #sidebar-logo');
         const t = theme || (typeof window.getCurrentTheme === 'function' ? window.getCurrentTheme() : null);
         if (!t) return;
         const isLight = lightThemeNames.includes(t.name);
@@ -441,7 +401,7 @@
     });
 
     const initNav = () => {
-        createNavbar();
+        createFloatingSidebar();
         try {
             window.__updateNavbarLogo();
         } catch(e) {}
