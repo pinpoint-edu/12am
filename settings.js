@@ -2916,31 +2916,81 @@
             const avatarUrl = devUser?.avatar_url || devUser?.avatar || devUser?.pfp || localStorage.getItem('12am_profile_picture') || '';
             const safeUsername = String(currentUsername).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+            let avatarMode = devUser?.avatar_type || (avatarUrl ? 'image' : 'letter');
+            let currentLetters = (devUser?.avatar_letter || (devUser?.firstName || devUser?.nickname || 'U')[0] || 'U').slice(0, 3).toUpperCase();
+            let currentBg = devUser?.avatar_bg || '#000000';
+            let currentColor = devUser?.avatar_color || '#ffffff';
+
             mainView.innerHTML = `
                 <div class="w-full max-w-2xl">
                     <h2 class="text-3xl font-bold text-[var(--text-main)] mb-6">General Settings</h2>
 
-                    <!-- 1. Profile Picture -->
+                    <!-- 1. Profile Picture & Letter Avatar Customization -->
                     <div class="settings-box p-6 mb-6">
                         <h3 class="text-xl font-bold text-[var(--text-main)] mb-1">Profile Picture</h3>
-                        <p class="text-xs text-[var(--text-muted)] mb-4">Upload a custom profile photo or avatar displayed across 12AM.</p>
-                        <div class="flex items-center gap-6">
-                            <div class="w-20 h-20 rounded-2xl border border-[var(--border-main)] bg-[var(--bg-page)] overflow-hidden flex items-center justify-center relative flex-shrink-0">
-                                <img id="settingsAvatarPreview" src="${avatarUrl || 'images/logo-white.png'}" alt="Avatar" class="w-full h-full object-cover">
-                            </div>
-                            <div class="flex flex-col gap-2">
-                                <div class="flex items-center gap-3">
-                                    <label class="btn-toolbar-style btn-primary-override cursor-pointer">
-                                        <i class="fa-solid fa-cloud-arrow-up"></i>
-                                        <span>Upload Image</span>
-                                        <input type="file" id="settingsAvatarInput" accept="image/*" class="hidden">
-                                    </label>
-                                    <button type="button" id="settingsRemoveAvatarBtn" class="btn-toolbar-style">
-                                        <i class="fa-solid fa-trash-can"></i>
-                                        <span>Remove</span>
+                        <p class="text-xs text-[var(--text-muted)] mb-4">Choose between custom letter initials (with customizable colors) or an uploaded image.</p>
+                        
+                        <!-- Mode Tabs -->
+                        <div class="flex items-center gap-2 mb-5 p-1 rounded-xl bg-[var(--bg-page)] border border-[var(--border-main)] inline-flex">
+                            <button type="button" id="avatarModeLetterBtn" class="px-4 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors ${avatarMode === 'letter' ? 'bg-[var(--accent-color)] text-white' : 'text-[var(--text-muted)] hover:text-white'}">Letter Avatar</button>
+                            <button type="button" id="avatarModeImageBtn" class="px-4 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors ${avatarMode === 'image' ? 'bg-[var(--accent-color)] text-white' : 'text-[var(--text-muted)] hover:text-white'}">Custom Image</button>
+                        </div>
+
+                        <!-- Letter Avatar Customizer -->
+                        <div id="letterAvatarSection" class="${avatarMode === 'letter' ? 'block' : 'hidden'}">
+                            <div class="flex flex-col sm:flex-row items-center gap-6">
+                                <div id="letterAvatarPreview" style="width: 80px; height: 80px; border-radius: 18px; background: ${currentBg}; color: ${currentColor}; border: 1px solid rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center; font-weight: 500; font-size: 26px; text-transform: uppercase; letter-spacing: 0.5px; user-select: none; flex-shrink: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+                                    ${currentLetters}
+                                </div>
+                                <div class="flex-1 flex flex-col gap-3 w-full">
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        <div>
+                                            <label class="text-xs text-[var(--text-muted)] mb-1 block">Initials (1–3)</label>
+                                            <input type="text" id="avatarLetterInput" value="${currentLetters}" maxlength="3" class="input-text-style font-mono text-center text-sm uppercase" style="width: 100%;">
+                                        </div>
+                                        <div>
+                                            <label class="text-xs text-[var(--text-muted)] mb-1 block">Background</label>
+                                            <div class="flex items-center gap-2 h-10 px-2 rounded-xl bg-[var(--bg-page)] border border-[var(--border-main)]">
+                                                <input type="color" id="avatarBgInput" value="${currentBg}" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent">
+                                                <span id="avatarBgHex" class="text-xs font-mono text-[var(--text-muted)]">${currentBg}</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="text-xs text-[var(--text-muted)] mb-1 block">Text Color</label>
+                                            <div class="flex items-center gap-2 h-10 px-2 rounded-xl bg-[var(--bg-page)] border border-[var(--border-main)]">
+                                                <input type="color" id="avatarColorInput" value="${currentColor}" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent">
+                                                <span id="avatarColorHex" class="text-xs font-mono text-[var(--text-muted)]">${currentColor}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" id="saveLetterAvatarBtn" class="btn-toolbar-style btn-primary-override self-start mt-1">
+                                        <i class="fa-solid fa-floppy-disk"></i>
+                                        <span>Save Avatar</span>
                                     </button>
                                 </div>
-                                <p class="text-xs text-[var(--text-muted)]">PNG, JPG, or WEBP under 5MB.</p>
+                            </div>
+                        </div>
+
+                        <!-- Image Upload Customizer -->
+                        <div id="imageAvatarSection" class="${avatarMode === 'image' ? 'block' : 'hidden'}">
+                            <div class="flex items-center gap-6">
+                                <div class="w-20 h-20 rounded-2xl border border-[var(--border-main)] bg-[var(--bg-page)] overflow-hidden flex items-center justify-center relative flex-shrink-0">
+                                    <img id="settingsAvatarPreview" src="${avatarUrl || 'images/logo-white.png'}" alt="Avatar" class="w-full h-full object-cover">
+                                </div>
+                                <div class="flex flex-col gap-2">
+                                    <div class="flex items-center gap-3">
+                                        <label class="btn-toolbar-style btn-primary-override cursor-pointer">
+                                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                                            <span>Upload Image</span>
+                                            <input type="file" id="settingsAvatarInput" accept="image/*" class="hidden">
+                                        </label>
+                                        <button type="button" id="settingsRemoveAvatarBtn" class="btn-toolbar-style">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                            <span>Remove</span>
+                                        </button>
+                                    </div>
+                                    <p class="text-xs text-[var(--text-muted)]">PNG, JPG, or WEBP under 5MB.</p>
+                                </div>
                             </div>
                         </div>
                         <div id="avatarMessage" class="general-message-area"></div>
@@ -2988,11 +3038,90 @@
                 </div>
             `;
 
-            // 1. Avatar Upload
+            // Avatar Mode Switchers & Handlers
+            const modeLetterBtn = document.getElementById('avatarModeLetterBtn');
+            const modeImageBtn = document.getElementById('avatarModeImageBtn');
+            const letterSection = document.getElementById('letterAvatarSection');
+            const imageSection = document.getElementById('imageAvatarSection');
+            const letterPreview = document.getElementById('letterAvatarPreview');
+            const letterInput = document.getElementById('avatarLetterInput');
+            const bgInput = document.getElementById('avatarBgInput');
+            const colorInput = document.getElementById('avatarColorInput');
+            const bgHex = document.getElementById('avatarBgHex');
+            const colorHex = document.getElementById('avatarColorHex');
+            const saveLetterBtn = document.getElementById('saveLetterAvatarBtn');
+            const avatarMsg = document.getElementById('avatarMessage');
+
+            function updateLetterPreview() {
+                const letters = (letterInput.value || (devUser?.firstName || devUser?.nickname || 'U')[0] || 'U').slice(0, 3).toUpperCase();
+                const bg = bgInput.value || '#000000';
+                const col = colorInput.value || '#ffffff';
+                letterPreview.textContent = letters;
+                letterPreview.style.background = bg;
+                letterPreview.style.color = col;
+                bgHex.textContent = bg;
+                colorHex.textContent = col;
+            }
+
+            if (modeLetterBtn && modeImageBtn) {
+                modeLetterBtn.addEventListener('click', () => {
+                    modeLetterBtn.className = 'px-4 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors bg-[var(--accent-color)] text-white';
+                    modeImageBtn.className = 'px-4 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors text-[var(--text-muted)] hover:text-white';
+                    letterSection.classList.remove('hidden');
+                    letterSection.classList.add('block');
+                    imageSection.classList.remove('block');
+                    imageSection.classList.add('hidden');
+                });
+
+                modeImageBtn.addEventListener('click', () => {
+                    modeImageBtn.className = 'px-4 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors bg-[var(--accent-color)] text-white';
+                    modeLetterBtn.className = 'px-4 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors text-[var(--text-muted)] hover:text-white';
+                    imageSection.classList.remove('hidden');
+                    imageSection.classList.add('block');
+                    letterSection.classList.remove('block');
+                    letterSection.classList.add('hidden');
+                });
+            }
+
+            if (letterInput) letterInput.addEventListener('input', updateLetterPreview);
+            if (bgInput) bgInput.addEventListener('input', updateLetterPreview);
+            if (colorInput) colorInput.addEventListener('input', updateLetterPreview);
+
+            if (saveLetterBtn) {
+                saveLetterBtn.addEventListener('click', () => {
+                    const letters = (letterInput.value || (devUser?.firstName || devUser?.nickname || 'U')[0] || 'U').slice(0, 3).toUpperCase();
+                    const bg = bgInput.value || '#000000';
+                    const col = colorInput.value || '#ffffff';
+
+                    try {
+                        if (devUser) {
+                            devUser.avatar_type = 'letter';
+                            devUser.avatar_letter = letters;
+                            devUser.avatar_bg = bg;
+                            devUser.avatar_color = col;
+                            localStorage.setItem('12am_user', JSON.stringify(devUser));
+                        }
+                        const bound = JSON.parse(localStorage.getItem('12am_device_account') || 'null');
+                        if (bound) {
+                            bound.avatar_type = 'letter';
+                            bound.avatar_letter = letters;
+                            bound.avatar_bg = bg;
+                            bound.avatar_color = col;
+                            localStorage.setItem('12am_device_account', JSON.stringify(bound));
+                        }
+                    } catch(err) {}
+
+                    if (typeof window.__updateNavbarUser === 'function') {
+                        window.__updateNavbarUser();
+                    }
+                    showMessage(avatarMsg, 'Letter avatar saved successfully!', 'success');
+                });
+            }
+
+            // Image Upload Handlers
             const avatarInput = document.getElementById('settingsAvatarInput');
             const avatarPreview = document.getElementById('settingsAvatarPreview');
             const removeAvatarBtn = document.getElementById('settingsRemoveAvatarBtn');
-            const avatarMsg = document.getElementById('avatarMessage');
 
             if (avatarInput) {
                 avatarInput.addEventListener('change', (e) => {
@@ -3009,6 +3138,7 @@
                         try {
                             localStorage.setItem('12am_profile_picture', dataUrl);
                             if (devUser) {
+                                devUser.avatar_type = 'image';
                                 devUser.avatar_url = dataUrl;
                                 devUser.avatar = dataUrl;
                                 devUser.pfp = dataUrl;
@@ -3016,6 +3146,7 @@
                             }
                             const bound = JSON.parse(localStorage.getItem('12am_device_account') || 'null');
                             if (bound) {
+                                bound.avatar_type = 'image';
                                 bound.avatar_url = dataUrl;
                                 bound.avatar = dataUrl;
                                 bound.pfp = dataUrl;
@@ -3025,7 +3156,7 @@
                         if (typeof window.__updateNavbarUser === 'function') {
                             window.__updateNavbarUser();
                         }
-                        showMessage(avatarMsg, 'Profile picture updated successfully!', 'success');
+                        showMessage(avatarMsg, 'Profile image updated successfully!', 'success');
                     };
                     reader.readAsDataURL(file);
                 });
@@ -3037,6 +3168,7 @@
                     try {
                         localStorage.removeItem('12am_profile_picture');
                         if (devUser) {
+                            devUser.avatar_type = 'letter';
                             delete devUser.avatar_url;
                             delete devUser.avatar;
                             delete devUser.pfp;
@@ -3044,6 +3176,7 @@
                         }
                         const bound = JSON.parse(localStorage.getItem('12am_device_account') || 'null');
                         if (bound) {
+                            bound.avatar_type = 'letter';
                             delete bound.avatar_url;
                             delete bound.avatar;
                             delete bound.pfp;
@@ -3053,7 +3186,7 @@
                     if (typeof window.__updateNavbarUser === 'function') {
                         window.__updateNavbarUser();
                     }
-                    showMessage(avatarMsg, 'Profile picture removed.', 'success');
+                    showMessage(avatarMsg, 'Switched back to placeholder letter avatar.', 'success');
                 });
             }
 

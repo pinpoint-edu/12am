@@ -17,6 +17,33 @@
     const SUPABASE_URL = "https://gsihkocouoigddbpahxd.supabase.co";
     const SUPABASE_KEY = "sb_publishable_oB5gQBtTFrhq6Vvas_938A_zq2DJVgL";
 
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function render12AMAvatar(user, size = 36, fontSize = '14px', radius = '12px') {
+        if (!user) {
+            return `<div class="pfp-squircle" style="width:${size}px; height:${size}px; border-radius:${radius}; background:#000000; color:#ffffff; border:1px solid rgba(255,255,255,0.16); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize};">?</div>`;
+        }
+
+        const type = user.avatar_type || (user.avatar_url || user.avatar || user.pfp || localStorage.getItem('12am_profile_picture') ? 'image' : 'letter');
+        const imgUrl = user.avatar_url || user.avatar || user.pfp || user.photoURL || localStorage.getItem('12am_profile_picture');
+
+        if (type === 'image' && imgUrl) {
+            const fallbackInitial = escapeHtml(((user.firstName || user.nickname || 'U')[0] || 'U').toUpperCase());
+            return `<img src="${escapeHtml(imgUrl)}" alt="Avatar" class="pfp-squircle" style="width:${size}px; height:${size}px; border-radius:${radius}; object-fit:cover; display:block; border:1px solid rgba(255,255,255,0.16);" onerror="this.outerHTML='<div class=\\'pfp-squircle\\' style=\\'width:${size}px; height:${size}px; border-radius:${radius}; background:#000000; color:#ffffff; border:1px solid rgba(255,255,255,0.16); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize};\\'>${fallbackInitial}</div>'">`;
+        }
+
+        const rawLetters = user.avatar_letter || (user.firstName || user.nickname || 'U')[0] || 'U';
+        const letters = escapeHtml(String(rawLetters).slice(0, 3).toUpperCase());
+        const bg = escapeHtml(user.avatar_bg || '#000000');
+        const color = escapeHtml(user.avatar_color || '#ffffff');
+
+        return `<div class="pfp-squircle" style="width:${size}px; height:${size}px; border-radius:${radius}; background:${bg}; color:${color}; border:1px solid rgba(255,255,255,0.16); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize}; text-transform:uppercase; letter-spacing:0.5px; user-select:none; flex-shrink:0;">${letters}</div>`;
+    }
+    window.render12AMAvatar = render12AMAvatar;
+
     // Generates or retrieves browser fingerprint token
     function getDeviceFingerprint() {
         let stored = null;
@@ -249,30 +276,52 @@
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        padding: 1rem;
+                        padding: 1.25rem;
                         font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
                     }
                     .auth-modal-card {
                         background: #09090c;
-                        border: 1px solid #1c1c22;
-                        border-radius: 18px;
-                        max-width: 360px;
+                        border: 1px solid rgba(255, 255, 255, 0.08);
+                        border-radius: 22px;
+                        max-width: 380px;
                         width: 100%;
-                        padding: 2rem 1.75rem;
-                        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(139, 92, 246, 0.15);
+                        padding: 2.25rem 2rem;
+                        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(139, 92, 246, 0.15);
                         color: #ffffff;
-                        animation: twelveAmFadeIn 0.2s ease-out;
+                        animation: twelveAmFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
                         box-sizing: border-box;
+                        position: relative;
+                    }
+                    .auth-modal-close {
+                        position: absolute;
+                        top: 14px;
+                        right: 14px;
+                        background: transparent;
+                        border: none;
+                        color: #71717a;
+                        font-size: 15px;
+                        width: 28px;
+                        height: 28px;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        transition: all 0.15s ease;
+                    }
+                    .auth-modal-close:hover {
+                        color: #ffffff;
+                        background: rgba(255, 255, 255, 0.06);
                     }
                     .auth-modal-input {
                         width: 100%;
-                        height: 44px;
-                        background: #040406;
-                        border: 1px solid #222228;
-                        border-radius: 12px;
+                        height: 46px;
+                        background: #050508;
+                        border: 1px solid #202028;
+                        border-radius: 14px;
                         color: #ffffff;
                         font-size: 0.95rem;
-                        padding: 0 12px;
+                        padding: 0 14px;
                         outline: none;
                         transition: border-color 0.2s, box-shadow 0.2s;
                         box-sizing: border-box;
@@ -283,12 +332,12 @@
                     }
                     .auth-modal-btn {
                         width: 100%;
-                        height: 42px;
+                        height: 44px;
                         background: #8b5cf6;
                         border: none;
-                        border-radius: 12px;
+                        border-radius: 14px;
                         color: #ffffff;
-                        font-size: 0.9rem;
+                        font-size: 0.92rem;
                         font-weight: 500;
                         cursor: pointer;
                         display: flex;
@@ -300,7 +349,7 @@
                     }
                     .auth-modal-btn:hover {
                         background: #7c3aed;
-                        box-shadow: 0 0 16px rgba(139, 92, 246, 0.45);
+                        box-shadow: 0 0 20px rgba(139, 92, 246, 0.45);
                     }
                 `;
                 document.head.appendChild(styleEl);
@@ -313,28 +362,33 @@
             card.className = 'auth-modal-card';
 
             if (bound) {
-                // UNLOCK MODE (Clean, minimal, no avatar circle, no buzzwords)
-                const displayName = bound.nickname || bound.firstName || 'user';
+                // UNLOCK MODE (Proper 12AM Card Styling with placeholder PFP)
+                const displayName = bound.firstName ? `${bound.firstName} ${bound.lastName || ''}`.trim() : (bound.nickname || 'user');
+                const handle = bound.nickname || 'user';
                 card.innerHTML = `
-                    <div style="text-align: center; margin-bottom: 1.5rem;">
-                        <img src="images/logo-white.png" alt="12AM" style="height: 22px; margin: 0 auto 0.75rem; display: block; opacity: 0.95;">
-                        <h2 style="font-size: 1.15rem; font-weight: 500; margin: 0 0 4px; color: #fff;">Unlock</h2>
-                        <p style="font-size: 0.82rem; color: #888892; margin: 0;">Welcome back, @${displayName}</p>
+                    <button type="button" class="auth-modal-close" id="modalCloseBtn" title="Close">✕</button>
+                    <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1.5rem;">
+                        <img src="images/logo-white.png" alt="12AM" style="height: 18px; margin-bottom: 1.15rem; opacity: 0.85;">
+                        <div style="margin-bottom: 0.85rem; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+                            ${render12AMAvatar(bound, 62, '22px', '18px')}
+                        </div>
+                        <h2 style="font-size: 1.2rem; font-weight: 500; margin: 0 0 4px; color: #fff;">${escapeHtml(displayName)}</h2>
+                        <p style="font-size: 0.82rem; color: #888896; margin: 0;">@${escapeHtml(handle)}</p>
                     </div>
 
-                    <form id="modalAuthForm" style="display: flex; flex-direction: column; gap: 12px;">
+                    <form id="modalAuthForm" style="display: flex; flex-direction: column; gap: 14px;">
                         <div>
-                            <input type="password" id="modalPinInput" class="auth-modal-input" placeholder="••••" maxlength="6" pattern="[0-9]{4,6}" inputmode="numeric" required style="text-align: center; letter-spacing: 0.3em; font-size: 1.25rem; font-family: monospace;" autofocus>
+                            <input type="password" id="modalPinInput" class="auth-modal-input" placeholder="••••" maxlength="6" pattern="[0-9]{4,6}" inputmode="numeric" required style="text-align: center; letter-spacing: 0.35em; font-size: 1.3rem; font-family: monospace;" autofocus autocomplete="off">
                         </div>
                         <div id="modalAuthError" style="font-size: 0.78rem; color: #f87171; text-align: center; min-height: 16px;"></div>
                         <button type="submit" class="auth-modal-btn">
-                            <span>Unlock</span>
+                            <span>Unlock Session</span>
                             <i class="fa-solid fa-arrow-right" style="font-size: 11px;"></i>
                         </button>
                     </form>
 
-                    <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid #1a1a20; text-align: center;">
-                        <button type="button" id="modalResetBtn" style="background: none; border: none; color: #666672; font-size: 0.75rem; cursor: pointer; transition: color 0.2s;">Reset Account</button>
+                    <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06); text-align: center;">
+                        <button type="button" id="modalResetBtn" style="background: none; border: none; color: #71717a; font-size: 0.75rem; cursor: pointer; transition: color 0.2s;">Reset Account</button>
                     </div>
                 `;
 
@@ -343,6 +397,9 @@
 
                 const pinInput = document.getElementById('modalPinInput');
                 if (pinInput) pinInput.focus();
+
+                const closeBtn = document.getElementById('modalCloseBtn');
+                if (closeBtn) closeBtn.addEventListener('click', () => overlay.remove());
 
                 document.getElementById('modalAuthForm').addEventListener('submit', async (e) => {
                     e.preventDefault();

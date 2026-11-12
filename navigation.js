@@ -118,6 +118,46 @@
         }
     };
 
+    function ensureIconFonts() {
+        if (!document.querySelector('link[href*="font-awesome"]')) {
+            const l = document.createElement('link');
+            l.rel = 'stylesheet';
+            l.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css';
+            l.crossOrigin = 'anonymous';
+            document.head.appendChild(l);
+        }
+        if (!document.querySelector('link[href*="Material+Symbols+Sharp"]')) {
+            const l = document.createElement('link');
+            l.rel = 'stylesheet';
+            l.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200';
+            document.head.appendChild(l);
+        }
+    }
+    ensureIconFonts();
+
+    function renderNavAvatar(user, size = 32, fontSize = '13px', radius = '10px') {
+        if (typeof window.render12AMAvatar === 'function') {
+            return window.render12AMAvatar(user, size, fontSize, radius);
+        }
+        if (!user) {
+            return `<div style="width:${size}px; height:${size}px; border-radius:${radius}; background:#000000; color:#ffffff; border:1px solid rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize};">?</div>`;
+        }
+        const type = user.avatar_type || (user.avatar_url || user.avatar || user.pfp || localStorage.getItem('12am_profile_picture') ? 'image' : 'letter');
+        const imgUrl = user.avatar_url || user.avatar || user.pfp || user.photoURL || localStorage.getItem('12am_profile_picture');
+
+        if (type === 'image' && imgUrl) {
+            const fallbackInitial = escapeHtml(((user.firstName || user.nickname || 'U')[0] || 'U').toUpperCase());
+            return `<img src="${escapeHtml(imgUrl)}" alt="Avatar" style="width:${size}px; height:${size}px; border-radius:${radius}; object-fit:cover; display:block; border:1px solid rgba(255,255,255,0.15);" onerror="this.outerHTML='<div style=\\'width:${size}px; height:${size}px; border-radius:${radius}; background:#000000; color:#ffffff; border:1px solid rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize};\\'>${fallbackInitial}</div>'">`;
+        }
+
+        const rawLetters = user.avatar_letter || (user.firstName || user.nickname || 'U')[0] || 'U';
+        const letters = escapeHtml(String(rawLetters).slice(0, 3).toUpperCase());
+        const bg = escapeHtml(user.avatar_bg || '#000000');
+        const color = escapeHtml(user.avatar_color || '#ffffff');
+
+        return `<div style="width:${size}px; height:${size}px; border-radius:${radius}; background:${bg}; color:${color}; border:1px solid rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize}; text-transform:uppercase; letter-spacing:0.5px; user-select:none; flex-shrink:0;">${letters}</div>`;
+    }
+
     function getRightControlsHtml() {
         let currentUser = null;
         try {
@@ -133,10 +173,8 @@
         if (currentUser && (currentUser.nickname || currentUser.firstName)) {
             const displayName = currentUser.firstName ? `${currentUser.firstName} ${currentUser.lastName || ''}`.trim() : currentUser.nickname;
             const handle = currentUser.nickname || 'user';
-            const avatarUrl = currentUser.avatar_url || currentUser.avatar || currentUser.pfp || currentUser.photoURL || localStorage.getItem('12am_profile_picture');
-            const avatarHtml = avatarUrl 
-                ? `<img src="${escapeHtml(avatarUrl)}" alt="Avatar" class="auth-toggle-avatar" onerror="this.outerHTML='<i class=\\'fa-solid fa-user-check\\'></i>'">` 
-                : `<i class="fa-solid fa-user-check"></i>`;
+            const avatarHtml = renderNavAvatar(currentUser, 32, '13px', '10px');
+            const menuAvatarHtml = renderNavAvatar(currentUser, 42, '16px', '12px');
 
             return `
                 <div class="nav-right-controls" id="navRightControls">
@@ -145,9 +183,12 @@
                             ${avatarHtml}
                         </button>
                         <div id="auth-menu-container" class="auth-menu-container closed">
-                            <div class="auth-menu-header">
-                                <p class="auth-menu-displayname">${escapeHtml(displayName)}</p>
-                                <p class="auth-menu-handle">@${escapeHtml(handle)}</p>
+                            <div class="auth-menu-header" style="display: flex; align-items: center; gap: 12px; padding: 6px 4px 10px;">
+                                <div style="flex-shrink: 0;">${menuAvatarHtml}</div>
+                                <div style="min-width: 0; flex: 1;">
+                                    <p class="auth-menu-displayname" style="margin: 0; font-size: 0.95rem; font-weight: 500; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(displayName)}</p>
+                                    <p class="auth-menu-handle" style="margin: 2px 0 0; font-size: 0.78rem; color: #888896;">@${escapeHtml(handle)}</p>
+                                </div>
                             </div>
                             <div class="auth-menu-divider"></div>
                             <a href="settings.html" class="auth-menu-link">

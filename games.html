@@ -606,6 +606,12 @@
       transform: scale(0.94);
     }
 
+    .player-btn-squircle.pinned-active {
+      color: #facc15 !important;
+      border-color: rgba(250, 204, 21, 0.4) !important;
+      background: rgba(250, 204, 21, 0.12) !important;
+    }
+
     .player-btn-squircle.btn-close:hover {
       background: rgba(239, 68, 68, 0.2);
       border-color: #ef4444;
@@ -800,6 +806,9 @@
         <span class="player-title" id="currentPlayerTitle">Playing</span>
       </div>
       <div class="player-header-right">
+        <button class="player-btn-squircle" id="playerPinBtn" onclick="togglePinCurrentGame()" title="Pin Game">
+          <span class="material-symbols-sharp" id="playerPinIcon">push_pin</span>
+        </button>
         <button class="player-btn-squircle" onclick="reloadCurrentGame()" title="Reload Game">
           <span class="material-symbols-sharp">refresh</span>
         </button>
@@ -873,13 +882,9 @@
         const res = await fetch('strongdog-games.json');
         const data = await res.json();
         categoryGames['StrongdogXP'] = data.map(g => {
-          let u = g.url || '';
-          if (u.includes('pinpoint-edu.github.io/strongdog6/html/') && u.endsWith('/index.html') && !u.includes('/game/index.html')) {
-            u = u.replace(/\/index\.html$/, '/game/index.html');
-          }
           return {
             ...g,
-            url: u,
+            url: normalizeGameUrl(g.url || ''),
             category: 'StrongdogXP'
           };
         });
@@ -1058,6 +1063,15 @@
       `;
     }
 
+    // Normalize game URL: Clean StrongdogXP and GAMES outer container URLs to direct /game/index.html
+    function normalizeGameUrl(url) {
+      if (!url) return '';
+      if (/pinpoint-edu\.github\.io\/(?:strongdog[0-9]*|GAMES)\/html\/[^/]+\/index\.html$/i.test(url)) {
+        return url.replace(/\/index\.html$/i, '/game/index.html');
+      }
+      return url;
+    }
+
     // Toggle Pin / Favorite
     function togglePin(nameEnc) {
       const name = decodeURIComponent(nameEnc);
@@ -1156,15 +1170,28 @@
 
     // Launch Game in Fullscreen Player View
     let currentGameUrl = '';
+    let currentGameTitle = '';
+
+    function updatePlayerPinBtn() {
+      const pinBtn = document.getElementById('playerPinBtn');
+      if (!pinBtn) return;
+      const isPinned = pinnedGames.has(currentGameTitle);
+      pinBtn.classList.toggle('pinned-active', isPinned);
+      pinBtn.title = isPinned ? 'Unpin Game' : 'Pin Game';
+    }
+
+    function togglePinCurrentGame() {
+      if (!currentGameTitle) return;
+      togglePin(encodeURIComponent(currentGameTitle));
+      updatePlayerPinBtn();
+    }
 
     function launchGame(urlEnc, titleEnc, isLocal, category) {
       let url = decodeURIComponent(urlEnc);
       const title = decodeURIComponent(titleEnc);
 
-      // Clean StrongdogXP nested container
-      if (url.includes('pinpoint-edu.github.io/strongdog6/html/') && url.endsWith('/index.html') && !url.includes('/game/index.html')) {
-        url = url.replace(/\/index\.html$/, '/game/index.html');
-      }
+      // Clean StrongdogXP / GAMES nested container to embedded game
+      url = normalizeGameUrl(url);
 
       // Proxy TGLSC games through the worker gateway
       if (category === 'TGLSC' || url.includes('glseries.net')) {
@@ -1172,12 +1199,14 @@
       }
 
       currentGameUrl = url;
+      currentGameTitle = title;
 
       const player = document.getElementById('player-view');
       const titleEl = document.getElementById('currentPlayerTitle');
       const iframe = document.getElementById('gameIframe');
 
       titleEl.textContent = title;
+      updatePlayerPinBtn();
       player.style.display = 'flex';
       document.body.style.overflow = 'hidden';
 

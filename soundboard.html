@@ -82,24 +82,24 @@
             font-family: monospace;
         }
 
-        /* Sound Grid */
+        /* Sound Grid & Pinning */
         .sound-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
             gap: 10px;
             margin-bottom: 2.5rem;
         }
 
-        .sound-btn {
+        .sound-card {
             background: var(--bg-card);
             border: 1px solid var(--border-main);
             border-radius: 12px;
-            padding: 14px 12px;
-            min-height: 72px;
+            padding: 10px 12px;
+            min-height: 56px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            text-align: center;
+            justify-content: space-between;
+            gap: 8px;
             font-size: 0.84rem;
             color: var(--text-muted);
             cursor: pointer;
@@ -109,9 +109,10 @@
             word-break: break-word;
             position: relative;
             outline: none;
+            text-align: left;
         }
 
-        .sound-btn:hover {
+        .sound-card:hover {
             border-color: var(--accent-color);
             color: var(--text-main);
             background: rgba(255, 255, 255, 0.04);
@@ -119,13 +120,53 @@
             box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
         }
 
-        .sound-btn:active,
-        .sound-btn.playing {
+        .sound-card:active,
+        .sound-card.playing {
             background: var(--btn-bg) !important;
             border-color: var(--accent-color) !important;
             color: var(--accent-color) !important;
-            transform: scale(0.97);
             box-shadow: 0 0 16px var(--accent-glow) !important;
+        }
+
+        .sound-card.pinned {
+            border-color: rgba(234, 179, 8, 0.35);
+            background: rgba(234, 179, 8, 0.04);
+        }
+
+        .sound-title {
+            flex: 1 1 auto;
+            font-size: 0.84rem;
+            color: var(--text-main);
+            line-height: 1.3;
+            word-break: break-word;
+        }
+
+        .sound-pin-btn {
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            opacity: 0.4;
+            transition: all 0.15s ease;
+            padding: 0;
+        }
+
+        .sound-pin-btn:hover {
+            opacity: 1;
+            color: #facc15;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .sound-card.pinned .sound-pin-btn {
+            opacity: 1;
+            color: #facc15;
         }
 
         /* Floating Bottom Controls Bar */
@@ -344,35 +385,62 @@
             </div>
 
             <!-- Overlay Mode -->
-            <button class="bar-btn active" id="overlayBtn" title="Play sounds simultaneously without cutting off">
+            <button class="bar-btn active" id="overlayBtn" title="Play sounds simultaneously without cutting off (Press X)">
                 <span class="material-symbols-sharp" style="font-size: 16px;">layers</span>
                 <span class="hidden sm:inline">Overlay</span>
             </button>
 
             <!-- Stop All Sounds -->
-            <button class="bar-btn bar-btn-stop" id="stopAllBtn" title="Stop all playing audio">
+            <button class="bar-btn bar-btn-stop" id="stopAllBtn" title="Stop all playing audio (Press Space)">
                 <span class="material-symbols-sharp" style="font-size: 16px;">volume_off</span>
                 <span class="hidden sm:inline">Stop</span>
             </button>
         </div>
     </div>
 
-    <!-- Minimal Centered Footer -->
-    <footer class="soundboard-footer">
-        <img src="images/logo-white.png" class="h-5 w-auto opacity-70" alt="12AM">
-        <span class="text-xs text-[var(--text-muted)]">&copy; 2026 12AM. All rights reserved.</span>
-        <span class="text-xs text-[var(--text-muted)] opacity-30">•</span>
-        <a href="legal.html" class="text-xs text-[var(--text-muted)] hover:text-[var(--accent-color)] transition-colors">Terms &amp; Policies</a>
-    </footer>
-
     <script type="module">
-        // Import third party sounds
+        // Import Community Sounds from genizymath (pinpoint-mini soundboard source)
         let thirdPartyList = [];
         try {
-            const mod = await import('https://cdn.jsdelivr.net/gh/genizy/soundboard@main/sounds.js');
+            const mod = await import('https://cdn.jsdelivr.net/gh/genizymath/soundboard@main/sounds.js');
             thirdPartyList = mod.sounds || [];
         } catch(e) {
-            console.warn('Could not load third party sounds:', e);
+            console.warn('Could not load community sounds:', e);
+        }
+
+        // Pinned Sounds System (pinpoint-mini compatibility)
+        function getPinnedSounds() {
+            try {
+                return JSON.parse(localStorage.getItem('soundboard_pinned_sounds') || localStorage.getItem('favorites') || '[]');
+            } catch(e) {
+                return [];
+            }
+        }
+
+        function savePinnedSounds(list) {
+            try {
+                localStorage.setItem('soundboard_pinned_sounds', JSON.stringify(list));
+                localStorage.setItem('favorites', JSON.stringify(list));
+            } catch(e) {}
+        }
+
+        function isPinned(name) {
+            const list = getPinnedSounds();
+            return list.some(item => (typeof item === 'string' ? item : item.name) === name);
+        }
+
+        function togglePin(name, cardEl) {
+            let list = getPinnedSounds();
+            const exists = list.some(item => (typeof item === 'string' ? item : item.name) === name);
+            if (exists) {
+                list = list.filter(item => (typeof item === 'string' ? item : item.name) !== name);
+                cardEl.classList.remove('pinned');
+            } else {
+                list.push(name);
+                cardEl.classList.add('pinned');
+            }
+            savePinnedSounds(list);
+            loadAllSounds();
         }
 
         // --- Web Audio API Gain Node State (Volume Booster 0% - 300%) ---
@@ -439,11 +507,12 @@
 
         // Overlay Toggle
         const overlayBtn = document.getElementById('overlayBtn');
-        overlayBtn.addEventListener('click', () => {
+        function toggleOverlay() {
             isOverlayMode = !isOverlayMode;
             overlayBtn.classList.toggle('active', isOverlayMode);
             if (!isOverlayMode) stopAllAudios();
-        });
+        }
+        overlayBtn.addEventListener('click', toggleOverlay);
 
         // Stop All Audios
         const stopAllBtn = document.getElementById('stopAllBtn');
@@ -475,7 +544,6 @@
                         const source = audioCtx.createMediaElementSource(audio);
                         source.connect(masterGain);
                     } catch(err) {
-                        // Fallback if CORS prevents createMediaElementSource
                         audio.volume = Math.min(1, currentVolumeFactor);
                     }
                 }
@@ -501,19 +569,51 @@
             }
         }
 
-        // Create Sound Button Element
-        function createSoundBtn(name, url) {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'sound-btn';
-            btn.textContent = name;
-            btn.dataset.name = name.toLowerCase();
+        // Create Sound Card Element with Pin Button
+        function createSoundCard(name, url) {
+            const card = document.createElement('div');
+            card.className = 'sound-card';
+            if (isPinned(name)) {
+                card.classList.add('pinned');
+            }
+            card.dataset.name = name.toLowerCase();
 
-            btn.addEventListener('click', () => playSound(url, btn));
-            return btn;
+            const title = document.createElement('span');
+            title.className = 'sound-title';
+            title.textContent = name;
+
+            const pinBtn = document.createElement('button');
+            pinBtn.type = 'button';
+            pinBtn.className = 'sound-pin-btn';
+            pinBtn.title = 'Left-click to pin/unpin sound';
+            pinBtn.innerHTML = '<span class="material-symbols-sharp" style="font-size: 16px;">push_pin</span>';
+
+            pinBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                togglePin(name, card);
+            });
+
+            card.addEventListener('click', () => playSound(url, card));
+
+            card.appendChild(title);
+            card.appendChild(pinBtn);
+            return card;
         }
 
-        // Load 4SP & Third Party Sounds
+        // Sort Sounds Helper: Pinned sounds automatically move to top
+        function sortPinned(list, getName) {
+            return [...list].sort((a, b) => {
+                const aName = getName(a);
+                const bName = getName(b);
+                const aPinned = isPinned(aName);
+                const bPinned = isPinned(bName);
+                if (aPinned && !bPinned) return -1;
+                if (!aPinned && bPinned) return 1;
+                return 0;
+            });
+        }
+
+        // Load 4SP & Community Sounds
         const soundBlacklist = ['ear ringing', 'smoke detector'];
 
         async function loadAllSounds() {
@@ -531,12 +631,13 @@
                         const n = f.replace('.mp3', '').replace(/_/g, ' ').toLowerCase();
                         return !soundBlacklist.some(b => n.includes(b));
                     });
-                    document.getElementById('normalCount').textContent = `${normalFiltered.length} sounds`;
+                    const normalSorted = sortPinned(normalFiltered, f => f.replace('.mp3', '').replace(/_/g, ' '));
+                    document.getElementById('normalCount').textContent = `${normalSorted.length} sounds`;
                     normalGrid.innerHTML = '';
-                    normalFiltered.forEach(f => {
+                    normalSorted.forEach(f => {
                         const name = f.replace('.mp3', '').replace(/_/g, ' ');
                         const path = `https://cdn.jsdelivr.net/npm/4sp-sounds@latest/sounds/${f}`;
-                        normalGrid.appendChild(createSoundBtn(name, path));
+                        normalGrid.appendChild(createSoundCard(name, path));
                     });
                 }
 
@@ -545,12 +646,13 @@
                         const n = f.replace('.mp3', '').replace(/_/g, ' ').toLowerCase();
                         return !soundBlacklist.some(b => n.includes(b));
                     });
-                    document.getElementById('explicitCount').textContent = `${explicitFiltered.length} sounds`;
+                    const explicitSorted = sortPinned(explicitFiltered, f => f.replace('.mp3', '').replace(/_/g, ' '));
+                    document.getElementById('explicitCount').textContent = `${explicitSorted.length} sounds`;
                     explicitGrid.innerHTML = '';
-                    explicitFiltered.forEach(f => {
+                    explicitSorted.forEach(f => {
                         const name = f.replace('.mp3', '').replace(/_/g, ' ');
                         const path = `https://cdn.jsdelivr.net/npm/4sp-sounds@latest/sounds/${f}`;
-                        explicitGrid.appendChild(createSoundBtn(name, path));
+                        explicitGrid.appendChild(createSoundCard(name, path));
                     });
                 }
             } catch(e) {
@@ -558,49 +660,66 @@
                 normalGrid.innerHTML = '<div style="color: #f87171; font-size: 0.85rem; padding: 1rem;">Unable to load sound directory.</div>';
             }
 
-            // 2. Load Community Third Party Sounds
+            // 2. Load Community Sounds (genizymath soundboard format)
             if (thirdPartyList && thirdPartyList.length > 0) {
-                const baseUrl = 'https://cdn.jsdelivr.net/gh/genizy/soundboard@main/';
                 const thirdPartyFiltered = thirdPartyList.filter(s => {
                     const n = (s.name || '').toLowerCase();
                     return !soundBlacklist.some(b => n.includes(b));
                 });
-                document.getElementById('thirdPartyCount').textContent = `${thirdPartyFiltered.length} sounds`;
+                const thirdPartySorted = sortPinned(thirdPartyFiltered, s => s.name);
+                document.getElementById('thirdPartyCount').textContent = `${thirdPartySorted.length} sounds`;
                 thirdPartyGrid.innerHTML = '';
-                thirdPartyFiltered.forEach(s => {
-                    const path = baseUrl + s.mp3;
-                    thirdPartyGrid.appendChild(createSoundBtn(s.name, path));
+                thirdPartySorted.forEach(s => {
+                    const path = s.mp3.startsWith('http')
+                        ? s.mp3
+                        : 'https://cdn.jsdelivr.net/gh/genizymath/soundboard@main' + (s.mp3.startsWith('/') ? '' : '/') + s.mp3;
+                    thirdPartyGrid.appendChild(createSoundCard(s.name, path));
                 });
             } else {
                 document.getElementById('thirdPartyCount').textContent = '0 sounds';
                 thirdPartyGrid.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; padding: 1rem;">No community sounds available.</div>';
             }
+
+            // Reapply any active search filter
+            applySearch();
         }
 
         // Live Filtering
         const searchInput = document.getElementById('soundSearchInput');
-        searchInput.addEventListener('input', () => {
+        function applySearch() {
             const query = searchInput.value.toLowerCase().trim();
-            const allBtns = document.querySelectorAll('.sound-btn');
-            allBtns.forEach(btn => {
-                const name = btn.dataset.name || '';
+            const allCards = document.querySelectorAll('.sound-card');
+            allCards.forEach(card => {
+                const name = card.dataset.name || '';
                 if (!query || name.includes(query)) {
-                    btn.style.display = '';
+                    card.style.display = '';
                 } else {
-                    btn.style.display = 'none';
+                    card.style.display = 'none';
                 }
             });
-        });
+        }
+        searchInput.addEventListener('input', applySearch);
 
-        // Keyboard Shortcut: '/' to search, Shift+C to stop
+        // pinpoint-mini Soundboard Shortcuts: Space to stop, X for overlap, / for search, Escape to blur
         window.addEventListener('keydown', (e) => {
+            if (document.activeElement === searchInput) {
+                if (e.key === 'Escape') {
+                    searchInput.blur();
+                }
+                return;
+            }
             if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
-            if (e.key === '/') {
+
+            if (e.code === 'Space') {
+                e.preventDefault();
+                stopAllAudios();
+            } else if (e.key === 'x' || e.key === 'X') {
+                e.preventDefault();
+                toggleOverlay();
+            } else if (e.key === '/') {
                 e.preventDefault();
                 searchInput.focus();
                 searchInput.select();
-            } else if (e.shiftKey && e.key.toLowerCase() === 'c') {
-                stopAllAudios();
             }
         });
 

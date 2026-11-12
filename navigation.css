@@ -29,9 +29,25 @@ b, strong, th,
   font-weight: 500 !important;
 }
 
-/* Ensure Font Awesome solid glyphs retain required icon font weight */
-.fa, .fa-solid, .fas, [class*="fa-solid"], .custom-checkbox:checked::after {
+/* Ensure Font Awesome solid glyphs retain required icon font weight and font family */
+.fa, .fa-solid, .fas, .far, .fa-regular, [class*="fa-solid"], [class*="fa-regular"], .custom-checkbox:checked::after {
+  font-family: "Font Awesome 6 Free", "FontAwesome" !important;
   font-weight: 900 !important;
+  font-style: normal !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+.fa-brands, .fab, [class*="fa-brands"] {
+  font-family: "Font Awesome 6 Brands" !important;
+  font-weight: 400 !important;
+  font-style: normal !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+.material-symbols-sharp {
+  font-family: 'Material Symbols Sharp' !important;
+  font-style: normal !important;
+  -webkit-font-smoothing: antialiased;
 }
 
 body {
