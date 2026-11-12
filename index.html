@@ -1,396 +1,215 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class="dark custom-scroll">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>12AM</title>
-    <meta name="description" content="12AM — Games, movies, music, and tools.">
+    <title>12AM — Home</title>
+    <meta name="description" content="12AM — A comprehensive platform for focus audio, entertainment, encrypted tools, and personalized dashboards.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@200;300;400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Supabase & 12AM Device Auth Core -->
-    <script src="supabase-config.js"></script>
+    <script type="module" src="supabase-config.js"></script>
     <script src="device-auth.js"></script>
+
+    <!-- 12AM Core Theme & Navigation -->
+    <link rel="stylesheet" href="navigation.css">
+    <script src="theme.js"></script>
+    <script src="navigation.js" defer></script>
 
     <style>
         :root {
-            --bg-page: #040404;
-            --bg-card: #0c0c0e;
-            --text-main: #ffffff;
-            --text-muted: #888892;
-            --accent-color: #8b5cf6;
-            --accent-glow: rgba(139, 92, 246, 0.3);
-            --border-main: #18181c;
-            --border-faint: rgba(255, 255, 255, 0.05);
+            --bg-page: var(--bg-primary, #040404);
+            --bg-card: var(--bg-secondary, #0c0c0e);
+            --text-main: var(--text-primary, #ffffff);
+            --text-muted: var(--text-secondary, #a1a1aa);
+            --accent-color: var(--accent-primary, #8b5cf6);
+            --accent-glow: var(--accent-secondary, rgba(139, 92, 246, 0.4));
+            --border-main: var(--border-primary, #1c1c20);
+            --border-faint: var(--border-secondary, rgba(255, 255, 255, 0.05));
+            --btn-bg: var(--button-bg, rgba(139, 92, 246, 0.12));
+            --btn-text: var(--button-text, #8b5cf6);
         }
 
         * {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif !important;
+            font-weight: 400;
         }
 
-        body {
-            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--bg-page);
+        body { 
+            font-family: 'Geist', sans-serif !important; 
             color: var(--text-main);
-            font-weight: 300;
-            line-height: 1.5;
+            background-color: var(--bg-page);
+            font-weight: 300 !important;
+            overflow-x: hidden;
             min-height: 100vh;
+            padding-top: calc(var(--navbar-height, 64px) + 2rem);
+            margin: 0;
             display: flex;
             flex-direction: column;
-            overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* Top Nav */
-        .nav-bar {
-            width: 100%;
-            height: 64px;
-            padding: 0 1.5rem;
-            display: flex;
-            align-items: center;
             justify-content: space-between;
-            border-bottom: 1px solid var(--border-faint);
-            background: rgba(4, 4, 4, 0.8);
-            backdrop-filter: blur(16px);
-            position: sticky;
-            top: 0;
-            z-index: 50;
         }
 
-        .brand-link {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        /* Subtle dot grid like v6 */
+        .grid-bg {
+            background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+
+        #dynamic-background {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 50% 25%, var(--accent-glow), transparent 65%);
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.55;
+        }
+
+        /* Thinner Gradient Text Animation */
+        .gradient-text {
+            background-image: linear-gradient(90deg, #c084fc, #8b5cf6, #38bdf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            background-size: 300% auto;
+            animation: shine 8s linear infinite;
+            font-weight: 400 !important;
+            letter-spacing: -0.02em;
+        }
+
+        @keyframes shine {
+            to { background-position: 300% center; }
+        }
+
+        /* Hero Button */
+        .btn-primary-override {
+            background-color: var(--btn-bg) !important;
+            border: 1px solid var(--accent-color) !important;
+            color: var(--accent-color) !important;
+            outline: 1px solid var(--accent-glow);
+            border-radius: 14px;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            font-weight: 500 !important;
             text-decoration: none;
-            color: var(--text-main);
         }
 
-        .brand-logo {
-            height: 24px;
-            width: auto;
+        .btn-primary-override:hover {
+            background-color: var(--accent-color) !important;
+            color: #ffffff !important;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px -8px var(--accent-glow);
         }
 
-        .brand-name {
-            font-size: 1rem;
-            font-weight: 400;
-            letter-spacing: 0.04em;
-        }
-
-        .nav-right {
-            display: flex;
+        /* Social Link Squircles */
+        .hero-btn-base {
+            display: inline-flex;
             align-items: center;
-            gap: 12px;
-        }
-
-        .btn-link {
-            color: var(--text-muted);
-            text-decoration: none;
+            justify-content: center;
+            padding: 0.65rem 1.25rem;
             font-size: 0.85rem;
-            font-weight: 300;
-            padding: 6px 12px;
-            border-radius: 8px;
-            transition: color 0.15s ease;
-        }
-
-        .btn-link:hover {
-            color: var(--text-main);
-        }
-
-        .btn-auth {
-            background: var(--accent-color);
-            color: #ffffff;
-            text-decoration: none;
-            font-size: 0.82rem;
-            font-weight: 400;
-            padding: 7px 16px;
-            border-radius: 8px;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .btn-auth:hover {
-            background: #7c3aed;
-            box-shadow: 0 0 16px var(--accent-glow);
-        }
-
-        /* Hero */
-        .hero {
-            max-width: 720px;
-            margin: 0 auto;
-            padding: 5rem 1.5rem 3.5rem;
-            text-align: center;
-        }
-
-        .hero-tag {
-            display: inline-block;
-            font-size: 0.75rem;
-            font-weight: 400;
-            color: var(--accent-color);
-            margin-bottom: 1.25rem;
-            letter-spacing: 0.05em;
-        }
-
-        .hero-h1 {
-            font-size: clamp(2.2rem, 5vw, 3.4rem);
-            font-weight: 300;
-            letter-spacing: -0.03em;
-            line-height: 1.15;
-            margin-bottom: 1rem;
-            color: #ffffff;
-        }
-
-        .hero-sub {
-            font-size: 1rem;
-            font-weight: 300;
+            font-weight: 400 !important;
             color: var(--text-muted);
-            max-width: 480px;
-            margin: 0 auto 2rem;
-            line-height: 1.6;
-        }
-
-        .hero-cta-btn {
-            background: var(--accent-color);
-            color: #ffffff;
+            border-radius: 12px; 
             text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 400;
-            padding: 10px 22px;
-            border-radius: 10px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s ease;
-        }
-
-        .hero-cta-btn:hover {
-            background: #7c3aed;
-            box-shadow: 0 0 20px var(--accent-glow);
-        }
-
-        /* App Grid */
-        .apps-container {
-            max-width: 1000px;
-            margin: 0 auto 5rem;
-            padding: 0 1.5rem;
-            width: 100%;
-        }
-
-        .apps-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 1rem;
-        }
-
-        .app-item {
             background: var(--bg-card);
             border: 1px solid var(--border-main);
-            border-radius: 14px;
-            padding: 1.25rem;
-            text-decoration: none;
-            color: inherit;
-            display: flex;
-            flex-direction: column;
-            gap: 0.65rem;
             transition: all 0.2s ease;
         }
 
-        .app-item:hover {
+        .hero-btn-base:hover {
             border-color: var(--accent-color);
-            background: #101014;
-            transform: translateY(-2px);
-        }
-
-        .app-icon {
-            font-size: 18px;
-            color: var(--accent-color);
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            background: rgba(139, 92, 246, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .app-title {
-            font-size: 0.95rem;
-            font-weight: 400;
-            color: #ffffff;
-        }
-
-        .app-desc {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            line-height: 1.4;
-        }
-
-        /* Simple Footer */
-        .site-footer {
-            margin-top: auto;
-            border-top: 1px solid var(--border-faint);
-            padding: 2rem 1.5rem;
-            text-align: center;
-            font-size: 0.78rem;
-            color: var(--text-muted);
-        }
-
-        .footer-links {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 16px;
-            margin-top: 0.5rem;
-        }
-
-        .footer-links a {
-            color: var(--text-muted);
-            text-decoration: none;
-        }
-        .footer-links a:hover {
             color: var(--text-main);
+            transform: translateY(-1px);
+        }
+
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: var(--border-main); border-radius: 10px; }
+
+        .cinema-footer {
+            border-top: 1px solid var(--border-main);
+            padding: 2rem 1.5rem;
+            background: var(--bg-card);
+            position: relative;
+            z-index: 10;
         }
     </style>
 </head>
-<body>
-    <!-- Nav -->
-    <header class="nav-bar">
-        <a href="index.html" class="brand-link">
-            <img src="images/logo-white.png" alt="12AM" class="brand-logo">
-            <span class="brand-name">12AM</span>
-        </a>
 
-        <div class="nav-right">
-            <a href="legal.html" class="btn-link">Terms</a>
-            <a href="authentication.html" class="btn-auth" id="navAuthBtn">Log In</a>
-        </div>
-    </header>
+<body class="grid-bg">
+    <div id="dynamic-background"></div>
 
-    <!-- Clean Hero -->
-    <main class="hero">
-        <span class="hero-tag">12AM Web</span>
-        <h1 class="hero-h1">Games, movies, music, and messenger.</h1>
-        <p class="hero-sub">Simple, fast, and unblocked.</p>
-        <a href="dashboard.html" class="hero-cta-btn" id="heroCtaBtn">
-            <span>Get Started</span>
-            <i class="fa-solid fa-arrow-right text-xs"></i>
-        </a>
+    <main class="flex-1 min-w-0 flex items-center justify-center relative z-10 py-12 px-6">
+        <section class="text-center max-w-4xl mx-auto">
+            <h1 class="text-xs md:text-sm font-normal text-purple-400 uppercase tracking-widest mb-6 opacity-85">
+                Next-generation workspace &amp; entertainment platform
+            </h1>
+
+            <h2 class="text-5xl md:text-7xl font-light tracking-tight mb-8 leading-tight">
+                <span class="gradient-text">Academic Collaboration, Reimagined.</span>
+            </h2>
+
+            <p class="text-base md:text-xl text-[var(--text-muted)] max-w-2xl mx-auto mb-10 font-light leading-relaxed">
+                Welcome to <strong>12AM</strong> — a student-focused environment featuring Vidy proxy streaming, high-speed games, focus audio, encrypted notes, and an integrated dictionary.
+            </p>
+            
+            <div id="auth-button-container" class="mb-10">
+                <a id="auth-button" href="authentication.html" class="btn-primary-override inline-flex items-center justify-center px-8 py-4 text-base md:text-lg tracking-wide shadow-xl">
+                    Get Started <i class="fas fa-arrow-right ml-3"></i>
+                </a>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-center gap-3">
+                <a href="dashboard.html" class="hero-btn-base">
+                    <i class="fa-solid fa-gauge mr-2"></i> Dashboard
+                </a>
+                <a href="games.html" class="hero-btn-base">
+                    <i class="fa-solid fa-gamepad mr-2"></i> Games
+                </a>
+                <a href="movies.html" class="hero-btn-base">
+                    <i class="fa-solid fa-film mr-2"></i> Movies
+                </a>
+                <a href="music.html" class="hero-btn-base">
+                    <i class="fa-solid fa-music mr-2"></i> Music
+                </a>
+                <a href="legal.html" class="hero-btn-base">
+                    <i class="fa-solid fa-scale-balanced mr-2"></i> Terms
+                </a>
+            </div>
+            
+            <p class="text-xs text-[var(--text-muted)] mt-12 font-mono opacity-60">
+                12AM &bull; Independently developed and maintained.
+            </p>
+        </section>
     </main>
 
-    <!-- Apps List -->
-    <section class="apps-container">
-        <div class="apps-grid">
-            <a href="games.html" class="app-item">
-                <div class="app-icon"><i class="fa-solid fa-gamepad"></i></div>
-                <div class="app-title">Games</div>
-                <div class="app-desc">2,200+ games across Strongdog, GN-Math, TGLSC, and local vault.</div>
-            </a>
-
-            <a href="movies.html" class="app-item">
-                <div class="app-icon"><i class="fa-solid fa-film"></i></div>
-                <div class="app-title">Movies &amp; TV</div>
-                <div class="app-desc">Stream movies and series with episode selectors and fast servers.</div>
-            </a>
-
-            <a href="music.html" class="app-item">
-                <div class="app-icon"><i class="fa-solid fa-music"></i></div>
-                <div class="app-title">Music</div>
-                <div class="app-desc">Audio player with search, playlists, and fullscreen player.</div>
-            </a>
-
-            <a href="messenger.html" class="app-item">
-                <div class="app-icon"><i class="fa-solid fa-comments"></i></div>
-                <div class="app-title">Messenger</div>
-                <div class="app-desc">Real-time messaging with image sharing and live typing.</div>
-            </a>
-
-            <a href="ai.html" class="app-item">
-                <div class="app-icon"><i class="fa-solid fa-robot"></i></div>
-                <div class="app-title">AI</div>
-                <div class="app-desc">Instant assistant for chat, study, and code generation.</div>
-            </a>
-
-            <a href="proxy.html" class="app-item">
-                <div class="app-icon"><i class="fa-solid fa-globe"></i></div>
-                <div class="app-title">Proxy</div>
-                <div class="app-desc">Browse restricted websites with tab disguise shortcuts.</div>
-            </a>
-
-            <a href="notes.html" class="app-item">
-                <div class="app-icon"><i class="fa-solid fa-note-sticky"></i></div>
-                <div class="app-title">Notes</div>
-                <div class="app-desc">Notebook mode and AES-encrypted note storage.</div>
-            </a>
-
-            <a href="dictionary.html" class="app-item">
-                <div class="app-icon"><i class="fa-solid fa-book-bookmark"></i></div>
-                <div class="app-title">Dictionary</div>
-                <div class="app-desc">Definitions, synonyms, and pronunciation audio.</div>
-            </a>
-        </div>
-    </section>
-
-    <!-- Simple Footer -->
-    <footer class="site-footer">
-        <p>&copy; 2026 12AM</p>
-        <div class="footer-links">
-            <a href="legal.html">Terms &amp; Privacy</a>
-            <a href="settings.html">Settings</a>
-            <a href="dashboard.html">Dashboard</a>
+    <footer class="cinema-footer">
+        <div class="max-w-6xl mx-auto flex items-center justify-between flex-wrap gap-4 text-xs text-[var(--text-muted)]">
+            <div class="flex items-center gap-2.5">
+                <img src="images/logo-white.png" class="h-5 w-auto opacity-80 navbar-logo" alt="12AM">
+                <span>&copy; 2026 12AM Platform</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="dashboard.html" class="hover:text-[var(--text-main)] transition-colors">Dashboard</a>
+                <a href="legal.html" class="hover:text-[var(--text-main)] transition-colors">Legal &amp; Privacy</a>
+                <a href="settings.html" class="hover:text-[var(--text-main)] transition-colors">Settings</a>
+            </div>
         </div>
     </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const user = window.TwelveAMAuth ? window.TwelveAMAuth.getCurrentUser() : null;
-            const navBtn = document.getElementById('navAuthBtn');
-            const heroBtn = document.getElementById('heroCtaBtn');
-
-            if (user) {
-                if (navBtn) {
-                    navBtn.textContent = 'Dashboard';
-                    navBtn.href = 'dashboard.html';
-                }
-                if (heroBtn) {
-                    heroBtn.innerHTML = `<span>Open Dashboard</span> <i class="fa-solid fa-arrow-right text-xs"></i>`;
-                    heroBtn.href = 'dashboard.html';
-                }
-            } else {
-                if (navBtn) {
-                    navBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        if (window.TwelveAMAuth) {
-                            window.TwelveAMAuth.showAuthModal(() => { window.location.href = 'dashboard.html'; });
-                        }
-                    });
-                }
-                if (heroBtn) {
-                    heroBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        if (window.TwelveAMAuth) {
-                            window.TwelveAMAuth.showAuthModal(() => { window.location.href = 'dashboard.html'; });
-                        }
-                    });
-                }
-
-                // Protect app links on landing page
-                document.querySelectorAll('.app-item').forEach(link => {
-                    link.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        const targetHref = link.getAttribute('href');
-                        if (window.TwelveAMAuth) {
-                            window.TwelveAMAuth.showAuthModal(() => {
-                                window.location.href = targetHref;
-                            });
-                        }
-                    });
-                });
+            const authBtn = document.getElementById('auth-button');
+            const acc = (typeof TwelveAMAuth !== 'undefined' && TwelveAMAuth.getCurrentUser) ? TwelveAMAuth.getCurrentUser() : null;
+            if (acc && authBtn) {
+                authBtn.href = "dashboard.html";
+                authBtn.innerHTML = `Go to Dashboard <i class="fas fa-arrow-right ml-3"></i>`;
             }
         });
     </script>

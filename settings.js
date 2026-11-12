@@ -214,62 +214,6 @@
                 console.warn("Supabase saveUserData warning:", e);
             }
         }
-                const mapping = {
-                    pfpType: 'pfp_type',
-                    pfp_type: 'pfp_type',
-                    customPfp: 'avatar_url',
-                    photoURL: 'avatar_url',
-                    displayName: 'display_name',
-                    description: 'description',
-                    pfpLetterBg: 'pfp_letter_bg',
-                    pfpLetterChar: 'pfp_letter_char',
-                    letterAvatarText: 'pfp_letter_char',
-                    mibiConfig: 'mibi_config',
-                    showOffline: 'show_offline',
-                    leaderboardOptOut: 'leaderboard_opt_out',
-                    hideStreaks: 'hide_streaks',
-                    navbarTheme: 'navbar_theme',
-                    schoolId: 'school_id',
-                    schoolName: 'school_name',
-                    districtId: 'district_id',
-                    state: 'state',
-                    stateAbbr: 'state_abbr',
-                    schoolSkipped: 'school_skipped',
-                    schoolChangesThisMonth: 'school_changes_this_month',
-                    lastSchoolChangeMonth: 'last_school_change_month',
-                    usernameChangesThisMonth: 'username_changes_this_month',
-                    lastUsernameChangeMonth: 'last_username_change_month'
-                };
-
-                for (const key in updates) {
-                    const sbKey = mapping[key] || key;
-                    const value = updates[key];
-
-                    // Handle legacy FieldValue types if still passed
-                    if (value && typeof value === 'object' && value._methodName === 'deleteField') {
-                        supabaseUpdates[sbKey] = null;
-                        continue;
-                    }
-
-                    supabaseUpdates[sbKey] = value;
-                }
-
-                // Logic: If we are switching to letter or mibi, clear avatar_url
-                if (supabaseUpdates.pfp_type === 'letter' || supabaseUpdates.pfp_type === 'mibi') {
-                    supabaseUpdates.avatar_url = null;
-                }
-
-                const { error } = await window.supabase
-                    .from('profiles')
-                    .update(supabaseUpdates)
-                    .eq('id', uid);
-
-                if (error) throw error;
-            } catch (e) {
-                console.error("Supabase profile save error:", e);
-                throw e;
-            }
-        }
 
         import { checkAdminStatus } from './utils.js';
         const getUserDocRef = (userId) => {
@@ -4366,7 +4310,7 @@
                             data-theme-name="${theme.name}" 
                             style="
                                 color: ${activeText} !important; 
-                                font-weight: ${(theme.name === 'Tokyo Night' || lightThemeNames.includes(theme.name)) ? '700' : '500'};
+                                font-weight: 500;
                                 border-color: ${activeBorder}; 
                                 background: ${activeBg};
                                 --hover-color: ${hoverText};

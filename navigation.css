@@ -18,6 +18,19 @@
   box-sizing: border-box;
 }
 
+/* Universal Font Weight Cap: Max 500 anywhere across the app (exempting icon glyphs) */
+h1, h2, h3, h4, h5, h6,
+b, strong, th,
+.font-bold, .font-semibold, .font-extrabold, .font-black,
+[class*="font-bold"], [class*="font-semibold"], [class*="font-extrabold"], [class*="font-black"] {
+  font-weight: 500 !important;
+}
+
+/* Ensure Font Awesome solid glyphs retain required icon font weight */
+.fa, .fa-solid, .fas, [class*="fa-solid"], .custom-checkbox:checked::after {
+  font-weight: 900 !important;
+}
+
 body {
   margin: 0;
   padding-top: var(--navbar-height);
@@ -242,7 +255,7 @@ body {
   background: var(--btn-bg, rgba(139, 92, 246, 0.12));
   color: var(--accent-color, #8b5cf6);
   border: 1px solid var(--accent-color, #8b5cf6);
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.01em;
 }
 
@@ -288,7 +301,7 @@ body {
   align-items: center;
   justify-content: center;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 500;
   text-transform: uppercase;
 }
 
@@ -297,7 +310,7 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-main);
 }
 
@@ -380,7 +393,7 @@ body {
 
 .theme-menu-header {
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-muted);
@@ -494,7 +507,7 @@ body {
 
 .auth-menu-displayname {
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-main, #ffffff);
   margin: 0;
   white-space: nowrap;
@@ -561,7 +574,7 @@ body {
 .auth-menu-primary {
   background: var(--accent-color, #8b5cf6) !important;
   color: #ffffff !important;
-  font-weight: 600;
+  font-weight: 500;
   justify-content: center;
 }
 

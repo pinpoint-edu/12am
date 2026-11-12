@@ -1,93 +1,9 @@
 [
   {
-    "name": "Mario Combat",
-    "url": "https://pinpoint-edu.github.io/GAMES/html/Mario Combat/index.html",
-    "imgSrc": "https://dv-service-lfs.4simpleproblems.workers.dev/GAMES/images/Mario combat.jpeg",
-    "id": "strongdog-1211",
-    "category": "StrongdogXP"
-  },
-  {
-    "name": "Cuphead",
-    "url": "https://pinpoint-edu.github.io/GAMES/html/Cuphead/index.html",
-    "imgSrc": "https://dv-service-lfs.4simpleproblems.workers.dev/GAMES/images/cuphead.png",
-    "id": "strongdog-1155",
-    "category": "StrongdogXP"
-  },
-  {
     "name": "Duck Life 3",
     "url": "https://pinpoint-edu.github.io/GAMES/swf/ducklife3/base.html",
     "imgSrc": "https://pinpoint-edu.github.io/GAMES/img/ducklife3.webp",
     "id": "strongdog-231",
-    "category": "StrongdogXP"
-  },
-  {
-    "name": "colony defenders td",
-    "url": "https://pinpoint-edu.github.io/GAMES/html/colony defenders td/index.html",
-    "imgSrc": "https://dv-service-lfs.4simpleproblems.workers.dev/GAMES/images/colony defenders td.jpeg",
-    "id": "strongdog-1183",
-    "category": "StrongdogXP"
-  },
-  {
-    "name": "sniper year one",
-    "url": "https://pinpoint-edu.github.io/GAMES/html/sniper year one/index.html",
-    "imgSrc": "https://dv-service-lfs.4simpleproblems.workers.dev/GAMES/images/sniper year one.jpeg",
-    "id": "strongdog-1194",
-    "category": "StrongdogXP"
-  },
-  {
-    "name": "boss slayer",
-    "url": "https://pinpoint-edu.github.io/GAMES/html/boss slayer/index.html",
-    "imgSrc": "https://dv-service-lfs.4simpleproblems.workers.dev/GAMES/images/boss slayer.jpeg",
-    "id": "strongdog-1182",
-    "category": "StrongdogXP"
-  },
-  {
-    "name": "Schoolboy Escape",
-    "url": "https://pinpoint-edu.github.io/GAMES/html/Schoolboy Escape/index.html",
-    "imgSrc": "https://dv-service-lfs.4simpleproblems.workers.dev/GAMES/images/schoolboy escape.jpeg",
-    "id": "strongdog-1193",
-    "category": "StrongdogXP"
-  },
-  {
-    "name": "deep lift",
-    "url": "https://pinpoint-edu.github.io/GAMES/html/deep lift/index.html",
-    "imgSrc": "https://dv-service-lfs.4simpleproblems.workers.dev/GAMES/images/deep lift.jpeg",
-    "id": "strongdog-1185",
-    "category": "StrongdogXP"
-  },
-  {
-    "name": "epic coaster",
-    "url": "https://pinpoint-edu.github.io/GAMES/html/epic coaster/index.html",
-    "imgSrc": "https://dv-service-lfs.4simpleproblems.workers.dev/GAMES/images/epic coaster.jpeg",
-    "id": "strongdog-1186",
-    "category": "StrongdogXP"
-  },
-  {
-    "name": "Bank robbery 3",
-    "url": "https://pinpoint-edu.github.io/GAMES/html/Bank robbery 3/index.html",
-    "imgSrc": "https://dv-service-lfs.4simpleproblems.workers.dev/GAMES/images/bank robbery 3.jpeg",
-    "id": "strongdog-1181",
-    "category": "StrongdogXP"
-  },
-  {
-    "name": "the infection",
-    "url": "https://pinpoint-edu.github.io/GAMES/html/the infection/index.html",
-    "imgSrc": "https://dv-service-lfs.4simpleproblems.workers.dev/GAMES/images/the infection.jpeg",
-    "id": "strongdog-1195",
-    "category": "StrongdogXP"
-  },
-  {
-    "name": "Protektor",
-    "url": "https://pinpoint-edu.github.io/GAMES/html/Protektor/index.html",
-    "imgSrc": "https://dv-service-lfs.4simpleproblems.workers.dev/GAMES/images/protektor.jpeg",
-    "id": "strongdog-1190",
-    "category": "StrongdogXP"
-  },
-  {
-    "name": "epic combo",
-    "url": "https://pinpoint-edu.github.io/GAMES/html/epic combo/index.html",
-    "imgSrc": "https://dv-service-lfs.4simpleproblems.workers.dev/GAMES/images/epic combo.jpeg",
-    "id": "strongdog-1187",
     "category": "StrongdogXP"
   },
   {
@@ -5425,20 +5341,6 @@
     "category": "StrongdogXP"
   },
   {
-    "name": "Mini Sticky",
-    "url": "https://pinpoint-edu.github.io/GAMES/html/mini sticky/index.html",
-    "imgSrc": "https://dv-service-lfs.4simpleproblems.workers.dev/GAMES/images/mini sticky.avif",
-    "id": "strongdog-359",
-    "category": "StrongdogXP"
-  },
-  {
-    "name": "Mini Jumps",
-    "url": "https://pinpoint-edu.github.io/GAMES/html/mini jumps/index.html",
-    "imgSrc": "https://dv-service-lfs.4simpleproblems.workers.dev/GAMES/images/mini jumps.png",
-    "id": "strongdog-358",
-    "category": "StrongdogXP"
-  },
-  {
     "name": "Life in the Static",
     "url": "https://pinpoint-edu.github.io/GAMES/html/life in the static/index.html",
     "imgSrc": "https://pinpoint-edu.github.io/GAMES/img/life in the static.jpg",
@@ -6559,13 +6461,6 @@
     "category": "StrongdogXP"
   },
   {
-    "name": "Bloxorz",
-    "url": "https://pinpoint-edu.github.io/GAMES/html/bloxorz/game/index.html",
-    "imgSrc": "https://dv-service-lfs.4simpleproblems.workers.dev/GAMES/images/bloxorz.png",
-    "id": "strongdog-193",
-    "category": "StrongdogXP"
-  },
-  {
     "name": "Bounceback",
     "url": "https://pinpoint-edu.github.io/GAMES/html/bounceback/index.html",
     "imgSrc": "https://pinpoint-edu.github.io/GAMES/img/bounceback.png",
@@ -6626,13 +6521,6 @@
     "url": "https://pinpoint-edu.github.io/GAMES/html/cookieclicker/index.html",
     "imgSrc": "https://pinpoint-edu.github.io/GAMES/img/cookie.png",
     "id": "strongdog-184",
-    "category": "StrongdogXP"
-  },
-  {
-    "name": "Crystal Seeker",
-    "url": "https://pinpoint-edu.github.io/GAMES/html/Crystal Seeker.html",
-    "imgSrc": "https://dv-service-lfs.4simpleproblems.workers.dev/GAMES/images/crystal.png",
-    "id": "strongdog-183",
     "category": "StrongdogXP"
   },
   {
@@ -6731,13 +6619,6 @@
     "url": "https://pinpoint-edu.github.io/GAMES/html/Getting Over It v1/game/Getting Over It v1.html",
     "imgSrc": "https://pinpoint-edu.github.io/GAMES/img/over.png",
     "id": "strongdog-168",
-    "category": "StrongdogXP"
-  },
-  {
-    "name": "Horse Master",
-    "url": "https://pinpoint-edu.github.io/GAMES/html/hearse mster/-=HORSE MASTER=- The Game of Horse Mastery.html",
-    "imgSrc": "https://dv-service-lfs.4simpleproblems.workers.dev/GAMES/images/horse.png",
-    "id": "strongdog-167",
     "category": "StrongdogXP"
   },
   {
@@ -6958,20 +6839,6 @@
     "category": "StrongdogXP"
   },
   {
-    "name": "$100 Unicorn",
-    "url": "https://pinpoint-edu.github.io/GAMES/html/100uc.html",
-    "imgSrc": "https://dv-service-lfs.4simpleproblems.workers.dev/GAMES/images/100uc.png",
-    "id": "strongdog-132",
-    "category": "StrongdogXP"
-  },
-  {
-    "name": "The Executor",
-    "url": "https://pinpoint-edu.github.io/GAMES/html/theexocutor",
-    "imgSrc": "https://dv-service-lfs.4simpleproblems.workers.dev/GAMES/images/executor.png",
-    "id": "strongdog-131",
-    "category": "StrongdogXP"
-  },
-  {
     "name": "1v1.lol",
     "url": "https://pinpoint-edu.github.io/GAMES/html/1v1/index.html",
     "imgSrc": "https://pinpoint-edu.github.io/GAMES/img/1v1.webp",
@@ -7042,13 +6909,6 @@
     "category": "StrongdogXP"
   },
   {
-    "name": "Backrooms",
-    "url": "https://pinpoint-edu.github.io/GAMES/html/backrooms/index.html",
-    "imgSrc": "https://dv-service-lfs.4simpleproblems.workers.dev/GAMES/images/backrooms.webp",
-    "id": "strongdog-120",
-    "category": "StrongdogXP"
-  },
-  {
     "name": "Bad Icecream",
     "url": "https://pinpoint-edu.github.io/GAMES/html/bad-ice-cream/index.html",
     "imgSrc": "https://pinpoint-edu.github.io/GAMES/img/bad-ice-cream.webp",
@@ -7102,13 +6962,6 @@
     "url": "https://pinpoint-edu.github.io/GAMES/html/biters-io/index.html",
     "imgSrc": "https://pinpoint-edu.github.io/GAMES/img/biters.webp",
     "id": "strongdog-112",
-    "category": "StrongdogXP"
-  },
-  {
-    "name": "Blocky tower",
-    "url": "https://pinpoint-edu.github.io/GAMES/html/blocky-tower/index.html",
-    "imgSrc": "https://dv-service-lfs.4simpleproblems.workers.dev/GAMES/images/blocky.webp",
-    "id": "strongdog-111",
     "category": "StrongdogXP"
   },
   {
@@ -7816,13 +7669,6 @@
     "url": "https://pinpoint-edu.github.io/GAMES/html/afterlife/game/afterlife.html",
     "imgSrc": "https://pinpoint-edu.github.io/GAMES/img/afterlife.png",
     "id": "strongdog-9",
-    "category": "StrongdogXP"
-  },
-  {
-    "name": "Earth Sausage",
-    "url": "https://pinpoint-edu.github.io/GAMES/html/earthsausage/game/earthsausage.html",
-    "imgSrc": "https://dv-service-lfs.4simpleproblems.workers.dev/GAMES/images/earth.png",
-    "id": "strongdog-8",
     "category": "StrongdogXP"
   },
   {

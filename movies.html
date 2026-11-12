@@ -14,7 +14,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Supabase & 12AM Device Auth Core -->
-    <script src="supabase-config.js"></script>
+    <script type="module" src="supabase-config.js"></script>
     <script src="device-auth.js"></script>
 
     <!-- 12AM Core Theme & Navigation -->
@@ -128,7 +128,7 @@
 
         .movies-brand-title {
             font-size: 24px;
-            font-weight: 800;
+            font-weight: 500;
             letter-spacing: -0.03em;
             color: var(--text-main);
         }
@@ -151,7 +151,7 @@
             padding: 7px 15px;
             border-radius: 10px;
             font-size: 13px;
-            font-weight: 600;
+            font-weight: 500;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
@@ -265,7 +265,7 @@
             border: 1px solid rgba(139, 92, 246, 0.4);
             color: #d8b4fe;
             font-size: 0.75rem;
-            font-weight: 700;
+            font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             margin-bottom: 0.85rem;
@@ -273,7 +273,7 @@
 
         .spotlight-title {
             font-size: 2.35rem;
-            font-weight: 800;
+            font-weight: 500;
             line-height: 1.15;
             margin-bottom: 0.75rem;
             color: #ffffff;
@@ -293,7 +293,7 @@
 
         .spotlight-rating {
             color: #facc15;
-            font-weight: 700;
+            font-weight: 500;
             display: flex;
             align-items: center;
             gap: 4px;
@@ -319,7 +319,7 @@
             background: var(--accent-color);
             color: #ffffff;
             font-size: 0.9rem;
-            font-weight: 700;
+            font-weight: 500;
             cursor: pointer;
             border: none;
             transition: all 0.2s ease;
@@ -401,7 +401,7 @@
             backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             font-size: 0.75rem;
-            font-weight: 700;
+            font-weight: 500;
             color: #facc15;
             display: flex;
             align-items: center;
@@ -418,7 +418,7 @@
             backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             font-size: 0.7rem;
-            font-weight: 600;
+            font-weight: 500;
             color: #e4e4e7;
             text-transform: uppercase;
         }
@@ -434,7 +434,7 @@
 
         .media-title {
             font-size: 0.88rem;
-            font-weight: 700;
+            font-weight: 500;
             color: var(--text-main);
             white-space: nowrap;
             overflow: hidden;
@@ -520,7 +520,7 @@
         .player-title {
             font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif !important;
             font-size: 13.5px;
-            font-weight: 600;
+            font-weight: 500;
             color: var(--text-main, #f4f4f5) !important;
             white-space: nowrap;
             overflow: hidden;
@@ -697,7 +697,7 @@
         </div>
 
         <div class="player-frame-area">
-            <iframe id="streamIframe" allow="encrypted-media; autoplay *; fullscreen *; clipboard-write; picture-in-picture" allowfullscreen="true"></iframe>
+            <iframe id="streamIframe" allow="encrypted-media; autoplay *; fullscreen *; clipboard-write; picture-in-picture"></iframe>
         </div>
     </div>
 

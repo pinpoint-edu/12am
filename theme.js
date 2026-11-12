@@ -1478,7 +1478,7 @@
             }
             fixStyle.textContent = `
                 .nav-tab:hover { color: #000000 !important; }
-                .nav-tab.active { color: var(--accent-primary) !important; font-weight: 600 !important; }
+                .nav-tab.active { color: var(--accent-primary) !important; font-weight: 500 !important; }
                 .text-white { color: #111827 !important; }
                 .text-gray-400 { color: #4b5563 !important; }
             `;

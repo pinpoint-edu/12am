@@ -9,7 +9,8 @@
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
   <!-- 12AM Core Theme & Navigation -->
@@ -19,6 +20,13 @@
   <script src="navigation.js" defer></script>
 
   <style>
+    *, *::before, *::after,
+    h1, h2, h3, h4, h5, h6,
+    b, strong, th,
+    .font-bold, .font-semibold, .font-extrabold, .font-black {
+      font-weight: 500 !important;
+    }
+
     html, body {
       height: 100%;
       overflow: hidden;
@@ -31,6 +39,8 @@
       display: flex;
       flex-direction: column;
       background: var(--bg-page);
+      font-family: 'Geist', sans-serif;
+      font-weight: 400;
     }
 
     .proxy-layout {
@@ -43,7 +53,7 @@
 
     /* Proxy Omnibox Toolbar */
     .proxy-toolbar {
-      height: 48px;
+      height: 52px;
       background: var(--bg-card);
       border-bottom: 1px solid var(--border-main);
       display: flex;
@@ -51,52 +61,77 @@
       gap: 8px;
       padding: 0 1rem;
       flex-shrink: 0;
+      box-sizing: border-box;
     }
 
-    .proxy-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      background: var(--border-faint);
-      border: 1px solid var(--border-main);
-      color: var(--text-muted);
-      display: flex;
+    /* Unified Squircle UI Button */
+    .proxy-squircle-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 11px;
+      background: var(--bg-card, #0a0a0c);
+      border: 1px solid var(--border-main, #1c1c22);
+      color: var(--text-muted, #a1a1aa);
+      display: inline-flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      font-size: 13px;
-      transition: all 0.15s ease;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      flex-shrink: 0;
+      outline: none;
+      padding: 0;
     }
 
-    .proxy-btn:hover {
-      border-color: var(--accent-color);
-      color: var(--text-main);
+    .proxy-squircle-btn:hover:not(:disabled) {
+      background: var(--btn-bg, rgba(255, 255, 255, 0.08));
+      border-color: var(--accent-color, #8b5cf6);
+      color: var(--accent-color, #ffffff);
+      box-shadow: 0 0 12px var(--accent-glow, rgba(139, 92, 246, 0.3));
+      transform: translateY(-1px);
     }
 
-    .proxy-btn:disabled {
-      opacity: 0.4;
+    .proxy-squircle-btn:active:not(:disabled) {
+      transform: scale(0.94);
+    }
+
+    .proxy-squircle-btn:disabled {
+      opacity: 0.35;
       cursor: not-allowed;
       border-color: var(--border-main);
     }
 
-    .omnibox-form {
+    .proxy-squircle-btn .material-symbols-sharp {
+      font-size: 20px;
+    }
+
+    /* Omnibar Form */
+    .proxy-omnibar-wrap {
       flex: 1;
+      height: 38px;
       display: flex;
       align-items: center;
       background: var(--bg-page);
       border: 1px solid var(--border-main);
       border-radius: 12px;
-      padding: 4px 12px;
+      padding: 0 6px 0 12px;
       gap: 8px;
       transition: all 0.2s ease;
+      min-width: 0;
     }
 
-    .omnibox-form:focus-within {
+    .proxy-omnibar-wrap:focus-within {
       border-color: var(--accent-color);
       box-shadow: 0 0 0 2px var(--accent-glow);
     }
 
-    .omnibox-input {
+    .proxy-lock-icon {
+      font-size: 16px;
+      color: var(--text-muted);
+      opacity: 0.7;
+      flex-shrink: 0;
+    }
+
+    .proxy-omnibar-input {
       flex: 1;
       background: transparent;
       border: none;
@@ -104,17 +139,38 @@
       color: var(--text-main);
       font-size: 0.88rem;
       font-family: inherit;
+      font-weight: 400;
+      min-width: 0;
     }
 
-    .omnibox-go-btn {
+    .proxy-omnibar-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .proxy-go-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
       background: var(--accent-color);
       border: none;
       color: #ffffff;
-      padding: 3px 10px;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+      padding: 0;
+    }
+
+    .proxy-go-btn:hover {
+      filter: brightness(1.15);
+      transform: scale(1.04);
+    }
+
+    .proxy-go-btn .material-symbols-sharp {
+      font-size: 17px;
     }
 
     /* Viewport & Start Screen */
@@ -153,7 +209,7 @@
 
     .proxy-title {
       font-size: 2.25rem;
-      font-weight: 700;
+      font-weight: 500;
       letter-spacing: -0.03em;
       margin: 0 0 0.5rem;
       color: var(--text-main);
@@ -163,7 +219,7 @@
       font-size: 0.95rem;
       color: var(--text-muted);
       margin: 0;
-      font-weight: 300;
+      font-weight: 400;
     }
 
     /* Minimalist Center Search */
@@ -175,8 +231,8 @@
       background: var(--bg-card);
       border: 1px solid var(--border-main);
       border-radius: 9999px;
-      padding: 0.6rem 0.8rem 0.6rem 1.25rem;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      padding: 0.55rem 0.65rem 0.55rem 1.25rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
       transition: all 0.25s ease;
       gap: 10px;
     }
@@ -186,9 +242,9 @@
       box-shadow: 0 0 0 3px var(--accent-glow);
     }
 
-    .proxy-center-search i {
+    .proxy-center-search .material-symbols-sharp {
       color: var(--text-muted);
-      font-size: 15px;
+      font-size: 20px;
     }
 
     .proxy-center-search input {
@@ -197,8 +253,9 @@
       border: none;
       outline: none;
       color: var(--text-main);
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-family: inherit;
+      font-weight: 400;
     }
 
     .proxy-center-search input::placeholder {
@@ -218,12 +275,18 @@
       justify-content: center;
       cursor: pointer;
       transition: all 0.2s ease;
-      font-size: 13px;
+      flex-shrink: 0;
+      padding: 0;
     }
 
     .proxy-center-search button:hover {
-      background: #7c3aed;
+      filter: brightness(1.15);
       transform: scale(1.05);
+    }
+
+    .proxy-center-search button .material-symbols-sharp {
+      color: #ffffff;
+      font-size: 20px;
     }
 
     #proxyViewport {
@@ -238,29 +301,34 @@
   <div id="dynamic-background"></div>
 
   <div class="proxy-layout">
-    <!-- Browser Toolbar -->
+    <!-- Browser Squircle Toolbar -->
     <div class="proxy-toolbar">
-      <button class="proxy-btn" id="btnBack" onclick="goBack()" title="Back" disabled>
-        <i class="fa-solid fa-arrow-left"></i>
+      <button class="proxy-squircle-btn" id="btnBack" onclick="goBack()" title="Back" disabled>
+        <span class="material-symbols-sharp">arrow_back</span>
       </button>
-      <button class="proxy-btn" id="btnForward" onclick="goForward()" title="Forward" disabled>
-        <i class="fa-solid fa-arrow-right"></i>
+      <button class="proxy-squircle-btn" id="btnForward" onclick="goForward()" title="Forward" disabled>
+        <span class="material-symbols-sharp">arrow_forward</span>
       </button>
-      <button class="proxy-btn" id="btnReload" onclick="reloadPage()" title="Reload">
-        <i class="fa-solid fa-arrow-rotate-right"></i>
+      <button class="proxy-squircle-btn" id="btnReload" onclick="reloadPage()" title="Reload">
+        <span class="material-symbols-sharp">refresh</span>
       </button>
-      <button class="proxy-btn" onclick="showStartScreen()" title="Home">
-        <i class="fa-solid fa-house"></i>
+      <button class="proxy-squircle-btn" onclick="showStartScreen()" title="Home">
+        <span class="material-symbols-sharp">home</span>
       </button>
 
-      <form class="omnibox-form" id="omniboxForm" onsubmit="handleNavigate(event)">
-        <i class="fa-solid fa-globe" style="color: var(--text-muted); font-size: 13px;"></i>
-        <input type="text" id="omniboxInput" class="omnibox-input" placeholder="Search the web or type a URL..." autocomplete="off">
-        <button type="submit" class="omnibox-go-btn">Go</button>
+      <form class="proxy-omnibar-wrap" id="omniboxForm" onsubmit="handleNavigate(event)">
+        <span class="material-symbols-sharp proxy-lock-icon">lock</span>
+        <input type="text" id="omniboxInput" class="proxy-omnibar-input" placeholder="Search the web or type a URL..." autocomplete="off">
+        <button type="submit" class="proxy-go-btn" title="Navigate">
+          <span class="material-symbols-sharp">arrow_forward</span>
+        </button>
       </form>
 
-      <button class="proxy-btn" onclick="popOutCurrent()" title="Open in New Window">
-        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+      <button class="proxy-squircle-btn" onclick="popOutCurrent()" title="Open in New Tab">
+        <span class="material-symbols-sharp">open_in_new</span>
+      </button>
+      <button class="proxy-squircle-btn" onclick="toggleFullscreen()" title="Toggle Fullscreen">
+        <span class="material-symbols-sharp" id="fsIcon">fullscreen</span>
       </button>
     </div>
 
@@ -275,27 +343,41 @@
         </div>
 
         <form class="proxy-center-search" onsubmit="handleCenterSearch(event)">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" id="centerSearchInput" placeholder="Search the web or enter address..." autocomplete="off" autofocus>
+          <span class="material-symbols-sharp">search</span>
+          <input type="text" id="centerSearchInput" placeholder="Search the web or enter address (e.g. totaljerkface.com)..." autocomplete="off" autofocus>
           <button type="submit" title="Navigate">
-            <i class="fa-solid fa-arrow-right"></i>
+            <span class="material-symbols-sharp">arrow_forward</span>
           </button>
         </form>
       </div>
 
       <!-- Iframe viewport -->
-      <iframe id="proxyViewport" allow="fullscreen; autoplay; clipboard-read; clipboard-write"></iframe>
+      <iframe id="proxyViewport" allow="fullscreen; autoplay; clipboard-read; clipboard-write; encrypted-media; picture-in-picture"></iframe>
     </div>
   </div>
 
   <script>
-    const PROXY_DOMAIN = "https://ohio-notes.broshan.com.np";
+    const PROXY_GATEWAY = "https://classroom-docs.googleus-cloud1.workers.dev/browse?url=";
     const viewport = document.getElementById('proxyViewport');
     const startScreen = document.getElementById('startScreen');
     const omnibox = document.getElementById('omniboxInput');
 
     let historyStack = [];
     let historyIdx = -1;
+
+    function normalizeUrl(raw) {
+      let v = (raw || "").trim();
+      if (!v) return "https://www.bing.com";
+      if (/^https?:\/\//i.test(v)) return v;
+      if (/^[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(\/.*)?$/i.test(v) && !v.includes(" ")) {
+        return "https://" + v;
+      }
+      return "https://www.bing.com/search?q=" + encodeURIComponent(v);
+    }
+
+    function getProxiedUrl(targetUrl) {
+      return PROXY_GATEWAY + encodeURIComponent(targetUrl) + "&embed=1";
+    }
 
     function handleCenterSearch(e) {
       if (e) e.preventDefault();
@@ -312,24 +394,18 @@
       navigate(input);
     }
 
-    function navigate(query) {
-      let url = query;
-      if (!/^https?:\/\//i.test(url)) {
-        if (url.includes('.') && !url.includes(' ')) {
-          url = 'https://' + url;
-        } else {
-          url = 'https://www.google.com/search?q=' + encodeURIComponent(url);
-        }
-      }
+    function navigate(rawQuery) {
+      const target = normalizeUrl(rawQuery);
+      if (!target) return;
 
-      omnibox.value = url;
+      omnibox.value = target;
       startScreen.style.display = 'none';
 
-      // Route via proxy backend
-      const proxyUrl = PROXY_DOMAIN + '/uv/service/' + encodeURIComponent(url);
-      viewport.src = proxyUrl;
+      const proxied = getProxiedUrl(target);
+      viewport.src = proxied;
 
-      historyStack.push(url);
+      historyStack = historyStack.slice(0, historyIdx + 1);
+      historyStack.push(target);
       historyIdx = historyStack.length - 1;
       updateNavButtons();
     }
@@ -349,9 +425,9 @@
     function goBack() {
       if (historyIdx > 0) {
         historyIdx--;
-        const url = historyStack[historyIdx];
-        omnibox.value = url;
-        viewport.src = PROXY_DOMAIN + '/uv/service/' + encodeURIComponent(url);
+        const target = historyStack[historyIdx];
+        omnibox.value = target;
+        viewport.src = getProxiedUrl(target);
         updateNavButtons();
       }
     }
@@ -359,9 +435,9 @@
     function goForward() {
       if (historyIdx < historyStack.length - 1) {
         historyIdx++;
-        const url = historyStack[historyIdx];
-        omnibox.value = url;
-        viewport.src = PROXY_DOMAIN + '/uv/service/' + encodeURIComponent(url);
+        const target = historyStack[historyIdx];
+        omnibox.value = target;
+        viewport.src = getProxiedUrl(target);
         updateNavButtons();
       }
     }
@@ -376,6 +452,22 @@
         window.open(viewport.src, '_blank');
       }
     }
+
+    function toggleFullscreen() {
+      const layout = document.querySelector('.proxy-layout');
+      if (!document.fullscreenElement) {
+        (layout || document.documentElement).requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    document.addEventListener('fullscreenchange', () => {
+      const icon = document.getElementById('fsIcon');
+      if (icon) {
+        icon.textContent = document.fullscreenElement ? 'fullscreen_exit' : 'fullscreen';
+      }
+    });
 
     // Check if URL passed in search params
     const initialUrl = new URLSearchParams(window.location.search).get('url');

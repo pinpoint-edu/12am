@@ -37,16 +37,16 @@
         body { 
             font-family: 'Geist', sans-serif; 
             background-color: var(--bg-page); 
-            color: var(--text-muted); 
-            transition: all 0.3s ease;
+            color: var(--text-main); 
+            transition: background-color 0.3s ease, color 0.3s ease;
             font-size: 16px;
             overflow-x: hidden;
-            font-weight: 300;
+            font-weight: 400;
             padding-top: var(--navbar-height, 64px);
         }
 
         h1, h2, h3, .font-bold, .font-semibold, strong, .tracking-widest {
-            font-weight: 400 !important;
+            font-weight: 500 !important;
         }
 
         .dict-container {
@@ -60,7 +60,7 @@
             border: 1px solid var(--border-main);
             border-radius: 1.25rem;
             padding: 0.5rem 1rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
             transition: all 0.25s ease;
         }
 
@@ -69,11 +69,24 @@
             box-shadow: 0 0 20px var(--accent-glow);
         }
 
+        .dict-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-main);
+            color: var(--text-main);
+            border-radius: 1.25rem;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            min-height: 280px;
+            transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+
         .highlighted-word {
             cursor: pointer;
             transition: all 0.15s ease;
             text-decoration: underline;
-            text-decoration-color: rgba(139, 92, 246, 0.3);
+            text-decoration-color: var(--accent-glow);
             text-underline-offset: 3px;
         }
         .highlighted-word:hover {
@@ -86,7 +99,7 @@
             width: 38px;
             height: 38px;
             border-radius: 50%;
-            background: rgba(139, 92, 246, 0.15);
+            background: var(--btn-bg);
             border: 1px solid var(--accent-color);
             color: var(--accent-color);
             display: inline-flex;
@@ -118,6 +131,7 @@
             margin-bottom: 0.85rem;
             line-height: 1.7;
             color: var(--text-main);
+            font-weight: 400;
         }
         .definition-item::before {
             content: "•";
@@ -129,12 +143,13 @@
 
         .synonym-tag {
             display: inline-block;
-            background: rgba(139, 92, 246, 0.1);
-            border: 1px solid rgba(139, 92, 246, 0.25);
+            background: var(--btn-bg);
+            border: 1px solid var(--border-main);
             color: var(--text-main);
             padding: 4px 12px;
             border-radius: 9999px;
             font-size: 0.82rem;
+            font-weight: 500;
             margin: 4px;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -154,18 +169,18 @@
 
         <!-- Search Bar -->
         <div class="search-box flex items-center gap-3 mb-10">
-            <i class="fa-solid fa-magnifying-glass text-zinc-500 ml-2"></i>
-            <input type="text" id="searchInput" placeholder="Search any English word (e.g. serendipity, epiphany, quantum)..." class="bg-transparent border-none outline-none text-white text-base w-full placeholder-zinc-500 font-normal">
-            <button id="searchBtn" class="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-medium text-sm transition-all shadow-md">
+            <i class="fa-solid fa-magnifying-glass opacity-60 ml-2" style="color: var(--text-muted);"></i>
+            <input type="text" id="searchInput" placeholder="Search any English word (e.g. serendipity, epiphany, quantum)..." class="bg-transparent border-none outline-none text-base w-full font-normal" style="color: var(--text-main);">
+            <button id="searchBtn" style="background: var(--accent-color); color: #ffffff;" class="px-5 py-2.5 rounded-xl font-medium text-sm transition-all shadow-md hover:opacity-90 flex-shrink-0">
                 Search
             </button>
         </div>
 
         <!-- Output -->
-        <div id="definitionOutput" class="bg-[#09090b]/80 border border-zinc-800/80 rounded-2xl p-6 sm:p-10 shadow-xl backdrop-blur-md min-h-[280px]">
-            <div class="h-full flex flex-col items-center justify-center py-16 text-center opacity-50">
-                <i class="fa-solid fa-book-open-reader text-4xl text-purple-400 mb-4"></i>
-                <p class="text-lg text-white font-light">Type a word above or click a suggestion.</p>
+        <div id="definitionOutput" class="dict-card">
+            <div class="h-full flex flex-col items-center justify-center py-16 text-center opacity-60">
+                <i class="fa-solid fa-book-open-reader text-4xl mb-4" style="color: var(--accent-color);"></i>
+                <p class="text-lg font-normal" style="color: var(--text-main);">Type a word above or click a suggestion.</p>
                 <div class="mt-4 flex flex-wrap justify-center gap-2">
                     <span class="synonym-tag" onclick="fetchWord('serendipity')">serendipity</span>
                     <span class="synonym-tag" onclick="fetchWord('ephemeral')">ephemeral</span>
@@ -177,17 +192,17 @@
     </main>
 
     <!-- Unified 12AM Footer -->
-    <footer class="mt-20 border-t border-white/5 py-10 text-center text-xs text-gray-500 relative z-10">
+    <footer class="mt-20 border-t py-10 text-center text-xs relative z-10" style="border-color: var(--border-faint); color: var(--text-muted);">
         <div class="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div class="flex items-center gap-3">
                 <img src="images/logo-white.png" class="h-6 w-auto opacity-70" alt="12AM Logo">
-                <span class="text-sm font-semibold tracking-wider text-white">12AM</span>
+                <span class="text-sm font-medium tracking-wider" style="color: var(--text-main);">12AM</span>
             </div>
             <p>&copy; 2026 12AM. All rights reserved.</p>
             <div class="flex items-center gap-4 text-xs">
-                <a href="legal.html" class="hover:text-white transition-colors">Terms & Privacy</a>
-                <a href="settings.html" class="hover:text-white transition-colors">Settings</a>
-                <a href="dashboard.html" class="hover:text-white transition-colors">Dashboard</a>
+                <a href="legal.html" class="hover:opacity-80 transition-opacity" style="color: var(--text-muted);">Terms & Privacy</a>
+                <a href="settings.html" class="hover:opacity-80 transition-opacity" style="color: var(--text-muted);">Settings</a>
+                <a href="dashboard.html" class="hover:opacity-80 transition-opacity" style="color: var(--text-muted);">Dashboard</a>
             </div>
         </div>
     </footer>
@@ -206,8 +221,8 @@
 
             output.innerHTML = `
                 <div class="flex flex-col items-center justify-center py-16 text-center">
-                    <i class="fa-solid fa-spinner fa-spin text-3xl text-purple-400 mb-3"></i>
-                    <p class="text-sm text-zinc-400">Consulting 12AM lexicon...</p>
+                    <i class="fa-solid fa-spinner fa-spin text-3xl mb-3" style="color: var(--accent-color);"></i>
+                    <p class="text-sm" style="color: var(--text-muted);">Consulting 12AM lexicon...</p>
                 </div>
             `;
 
@@ -236,9 +251,9 @@
         function displayNotFound(query) {
             output.innerHTML = `
                 <div class="text-center py-16 opacity-60">
-                    <i class="fa-solid fa-circle-question text-4xl text-purple-400 mb-3"></i>
-                    <p class="text-xl text-white font-medium mb-1">No definition found for "${query}"</p>
-                    <p class="text-xs text-zinc-400">Check spelling or search another word.</p>
+                    <i class="fa-solid fa-circle-question text-4xl mb-3" style="color: var(--accent-color);"></i>
+                    <p class="text-xl font-medium mb-1" style="color: var(--text-main);">No definition found for "${query}"</p>
+                    <p class="text-xs" style="color: var(--text-muted);">Check spelling or search another word.</p>
                 </div>
             `;
         }
@@ -253,15 +268,15 @@
             }
 
             let html = `
-                <div class="border-b border-zinc-800/80 pb-6 mb-6 flex items-center justify-between flex-wrap gap-4">
+                <div class="border-b pb-6 mb-6 flex items-center justify-between flex-wrap gap-4" style="border-color: var(--border-main);">
                     <div>
-                        <h2 class="text-3xl sm:text-4xl text-white font-semibold tracking-tight capitalize flex items-center gap-3">
+                        <h2 class="text-3xl sm:text-4xl font-medium tracking-tight capitalize flex items-center gap-3" style="color: var(--text-main);">
                             <span>${word}</span>
                             <button onclick="playAudio('${encodeURIComponent(audioUrl)}', '${encodeURIComponent(word)}')" class="audio-btn" title="Listen to pronunciation">
                                 <i class="fa-solid fa-volume-high text-sm"></i>
                             </button>
                         </h2>
-                        ${phonetic ? `<p class="text-sm font-mono text-purple-400 mt-1">${phonetic}</p>` : ''}
+                        ${phonetic ? `<p class="text-sm font-mono mt-1" style="color: var(--accent-color);">${phonetic}</p>` : ''}
                     </div>
                 </div>
             `;
@@ -275,7 +290,7 @@
                             html += `
                                 <div class="definition-item">
                                     <span>${d.definition}</span>
-                                    ${d.example ? `<p class="text-xs italic text-zinc-400 mt-1">"${d.example}"</p>` : ''}
+                                    ${d.example ? `<p class="text-xs italic mt-1 opacity-70" style="color: var(--text-muted);">"${d.example}"</p>` : ''}
                                 </div>
                             `;
                         });
@@ -284,7 +299,7 @@
                     if (m.synonyms && m.synonyms.length) {
                         html += `
                             <div class="mb-6">
-                                <span class="text-xs font-semibold uppercase tracking-wider text-zinc-500 mr-2">Synonyms:</span>
+                                <span class="text-xs font-medium uppercase tracking-wider mr-2 opacity-70" style="color: var(--text-muted);">Synonyms:</span>
                                 ${m.synonyms.slice(0, 8).map(s => `<span class="synonym-tag" onclick="fetchWord('${s}')">${s}</span>`).join('')}
                             </div>
                         `;

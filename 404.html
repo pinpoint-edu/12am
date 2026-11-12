@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>12AM — Page Not Found</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@200;300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <link rel="stylesheet" href="navigation.css">
+    <script src="theme.js"></script>
+
+    <style>
+        :root {
+            --bg-page: var(--bg-primary, #040404);
+            --bg-card: var(--bg-secondary, #0c0c0e);
+            --text-main: var(--text-primary, #ffffff);
+            --text-muted: var(--text-secondary, #a1a1aa);
+            --accent-color: var(--accent-primary, #8b5cf6);
+            --accent-glow: var(--accent-secondary, rgba(139, 92, 246, 0.4));
+            --border-main: var(--border-primary, #1c1c20);
+        }
+
+        *, html, body {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif !important;
+            font-weight: 400 !important;
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .dynamic-glow {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 50% 40%, var(--accent-glow), transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.6;
+        }
+
+        .error-card {
+            position: relative;
+            z-index: 10;
+            max-width: 480px;
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-main);
+            border-radius: 20px;
+            padding: 3rem 2rem;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .logo-wrap {
+            width: 44px;
+            height: 44px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .logo-img {
+            height: 36px;
+            width: auto;
+            object-fit: contain;
+            display: block;
+        }
+
+        .error-code {
+            font-size: 4.5rem;
+            line-height: 1;
+            font-weight: 300 !important;
+            letter-spacing: -0.04em;
+            color: var(--text-main);
+        }
+
+        .error-title {
+            font-size: 1.25rem;
+            font-weight: 500 !important;
+            color: var(--text-main);
+            letter-spacing: -0.01em;
+        }
+
+        .error-desc {
+            font-size: 0.92rem;
+            line-height: 1.6;
+            color: var(--text-muted);
+            font-weight: 300 !important;
+        }
+
+        .btn-home {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 22px;
+            border-radius: 12px;
+            background: var(--accent-color);
+            color: #ffffff;
+            font-size: 0.88rem;
+            font-weight: 500 !important;
+            text-decoration: none;
+            border: 1px solid var(--accent-color);
+            transition: all 0.2s ease;
+            box-shadow: 0 8px 24px var(--accent-glow);
+            margin-top: 0.5rem;
+        }
+
+        .btn-home:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="dynamic-glow"></div>
+
+    <div class="error-card">
+        <div class="logo-wrap">
+            <img src="images/logo-white.png" alt="12AM Logo" class="logo-img navbar-logo" id="logo-404">
+        </div>
+
+        <h1 class="error-code">404</h1>
+        <h2 class="error-title">Page Not Found</h2>
+        <p class="error-desc">The page or resource you requested could not be located. It may have been moved, renamed, or is temporarily unavailable.</p>
+
+        <a href="dashboard.html" class="btn-home">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Return to Dashboard</span>
+        </a>
+    </div>
+
+    <script>
+        function apply404LogoTint() {
+            const logo = document.getElementById('logo-404');
+            if (!logo) return;
+            const t = typeof window.getCurrentTheme === 'function' ? window.getCurrentTheme() : null;
+            if (!t) return;
+            const noFilter = ['Dark', 'Light', 'Christmas'];
+            if (noFilter.includes(t.name)) {
+                logo.style.filter = '';
+                logo.style.transform = '';
+            } else {
+                const tint = t['accent-primary'] || '#8b5cf6';
+                logo.style.filter = `drop-shadow(100px 0 0 ${tint})`;
+                logo.style.transform = 'translateX(-100px)';
+            }
+        }
+        window.addEventListener('12am:theme-changed', apply404LogoTint);
+        document.addEventListener('DOMContentLoaded', apply404LogoTint);
+    </script>
+</body>
+</html>
