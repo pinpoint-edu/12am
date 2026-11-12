@@ -4,6 +4,15 @@
  */
 
 (function() {
+    // Suppress Tailwind Play CDN production notice in console
+    if (typeof console !== 'undefined' && console.warn) {
+        const _origWarn = console.warn;
+        console.warn = function(...args) {
+            if (args && typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com')) return;
+            _origWarn.apply(console, args);
+        };
+    }
+
     const THEME_STORAGE_KEY = "12am-theme";
     const LEGACY_STORAGE_KEY = "user-navbar-theme";
     const lightThemeNames = ["Light", "Lavender", "Rose Gold", "Mint", "Pink", "Birthday"];

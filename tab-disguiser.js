@@ -8,22 +8,22 @@
 const urlChanger = {
     // --- Configuration ---
     presets: [
-        { id: 'hac', name: 'HAC', title: 'Login', favicon: '../favicons/hac.png', category: 'websites' },
-        { id: 'gmm', name: 'GMM', title: 'Get More Math!', favicon: '../favicons/gmm.png', category: 'websites' },
-        { id: 'bim', name: 'Big Ideas Math', title: 'Big Ideas Math - Login', favicon: '../favicons/bim.png', category: 'websites' },
-        { id: 'kahoot', name: 'Kahoot', title: 'Kahoot! | Learning games | Make learning awesome!', favicon: '../favicons/kahoot.png', category: 'websites' },
-        { id: 'g_classroom', name: 'Google Classroom', title: 'Home - Classroom', favicon: '../favicons/google-classroom.png', category: 'websites' },
-        { id: 'g_docs', name: 'Google Docs', title: 'Google Docs', favicon: '../favicons/google-docs.png', category: 'websites' },
-        { id: 'g_slides', name: 'Google Slides', title: 'Google Slides', favicon: '../favicons/google-slides.png', category: 'websites' },
-        { id: 'g_drive', name: 'Google Drive', title: 'Home - Google Drive', favicon: '../favicons/google-drive.png', category: 'websites' },
-        { id: 'wikipedia', name: 'Wikipedia', title: 'Wikipedia', favicon: '../favicons/wikipedia.png', category: 'websites' },
-        { id: 'clever', name: 'Clever', title: 'Clever | Connect every student to a world of learning', favicon: '../favicons/clever.png', category: 'websites' },
+        { id: 'hac', name: 'HAC', title: 'Login', favicon: 'favicons/hac.png', category: 'websites' },
+        { id: 'gmm', name: 'GMM', title: 'Get More Math!', favicon: 'favicons/gmm.png', category: 'websites' },
+        { id: 'bim', name: 'Big Ideas Math', title: 'Big Ideas Math - Login', favicon: 'favicons/bim.png', category: 'websites' },
+        { id: 'kahoot', name: 'Kahoot', title: 'Kahoot! | Learning games | Make learning awesome!', favicon: 'favicons/kahoot.png', category: 'websites' },
+        { id: 'g_classroom', name: 'Google Classroom', title: 'Home - Classroom', favicon: 'favicons/google-classroom.png', category: 'websites' },
+        { id: 'g_docs', name: 'Google Docs', title: 'Google Docs', favicon: 'favicons/google-docs.png', category: 'websites' },
+        { id: 'g_slides', name: 'Google Slides', title: 'Google Slides', favicon: 'favicons/google-slides.png', category: 'websites' },
+        { id: 'g_drive', name: 'Google Drive', title: 'Home - Google Drive', favicon: 'favicons/google-drive.png', category: 'websites' },
+        { id: 'wikipedia', name: 'Wikipedia', title: 'Wikipedia', favicon: 'favicons/wikipedia.png', category: 'websites' },
+        { id: 'clever', name: 'Clever', title: 'Clever | Connect every student to a world of learning', favicon: 'favicons/clever.png', category: 'websites' },
         { id: '_LIVE_CURRENT_TIME', name: 'Current Time', title: 'Live Time', favicon: '', category: 'live', live: true }
     ],
 
     // --- Internal Properties ---
     originalTitle: '',
-    originalFavicon: '../favicon.ico',
+    originalFavicon: 'favicons/favicon.ico',
     liveInterval: null,
     customFavicons: [],
     CUSTOM_FAVICONS_KEY: 'tabDisguiseCustomFavicons',

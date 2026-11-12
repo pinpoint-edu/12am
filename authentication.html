@@ -144,21 +144,21 @@
         <!-- VIEW A: Device Login View (When account already bound to this device) -->
         <div id="deviceLoginView" style="display: none;">
             <div class="text-center mb-6">
-                <div class="w-16 h-16 rounded-full mx-auto mb-3 bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-white text-2xl font-bold" id="deviceUserAvatar">
+                <div class="w-14 h-14 rounded-full mx-auto mb-3 bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-white text-xl font-medium" id="deviceUserAvatar">
                     U
                 </div>
-                <h2 class="text-2xl font-bold text-white tracking-tight mb-1" id="deviceUserName">Welcome Back</h2>
+                <h2 class="text-xl font-medium text-white mb-1" id="deviceUserName">Welcome Back</h2>
                 <p class="text-xs text-purple-400 font-mono" id="deviceUserNick">@user</p>
-                <p class="text-xs text-zinc-400 mt-2">Enter your device PIN to unlock 12AM.</p>
+                <p class="text-xs text-zinc-500 mt-2">Enter your PIN to unlock.</p>
             </div>
 
             <form id="loginForm" onsubmit="handleDeviceLogin(event)" class="space-y-4">
                 <div>
-                    <label class="block mb-1.5 text-zinc-400 text-xs font-semibold uppercase tracking-wider">4-6 Digit PIN</label>
+                    <label class="block mb-1.5 text-zinc-400 text-xs font-normal">PIN (4-6 digits)</label>
                     <input type="password" id="loginPin" placeholder="••••" maxlength="6" pattern="[0-9]{4,6}" inputmode="numeric" required class="input-style text-center tracking-[0.3em] font-mono text-lg" autofocus autocomplete="current-password">
                 </div>
                 <button type="submit" class="btn-primary-purple mt-2">
-                    <span>Unlock Account</span>
+                    <span>Unlock</span>
                     <i class="fa-solid fa-arrow-right text-xs"></i>
                 </button>
             </form>
@@ -167,53 +167,48 @@
 
             <div class="mt-8 pt-4 border-t border-zinc-800/80 flex items-center justify-between text-xs">
                 <button type="button" onclick="confirmResetDevice()" class="text-zinc-500 hover:text-red-400 transition-colors">
-                    <i class="fa-solid fa-trash-can mr-1"></i> Reset Device
+                    Reset Device
                 </button>
-                <span class="text-zinc-500 text-[11px]">1 Account Per Device</span>
+                <span class="text-zinc-600 text-[11px]">1 account per device</span>
             </div>
         </div>
 
         <!-- VIEW B: Device Register View (Only when NO account is bound to this device) -->
         <div id="deviceRegisterView" style="display: none;">
             <div class="text-center mb-6">
-                <h2 class="text-2xl font-bold text-white tracking-tight mb-1">Create Account</h2>
-                <p class="text-xs text-zinc-400">Set up your single permanent profile on this device.</p>
+                <h2 class="text-xl font-medium text-white mb-1">Create Account</h2>
+                <p class="text-xs text-zinc-500">1 account per device.</p>
             </div>
 
             <form id="signupForm" onsubmit="handleDeviceRegister(event)" class="space-y-4">
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block mb-1 text-zinc-400 text-xs font-semibold uppercase tracking-wider">First Name</label>
-                        <input type="text" id="regFirstName" placeholder="John" required class="input-style">
+                        <label class="block mb-1 text-zinc-400 text-xs font-normal">First Name</label>
+                        <input type="text" id="regFirstName" placeholder="First" required class="input-style">
                     </div>
                     <div>
-                        <label class="block mb-1 text-zinc-400 text-xs font-semibold uppercase tracking-wider">Last Name</label>
-                        <input type="text" id="regLastName" placeholder="Doe" required class="input-style">
+                        <label class="block mb-1 text-zinc-400 text-xs font-normal">Last Name</label>
+                        <input type="text" id="regLastName" placeholder="Last" required class="input-style">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block mb-1 text-zinc-400 text-xs font-semibold uppercase tracking-wider">Nickname</label>
-                    <input type="text" id="regNickname" placeholder="Choose unique handle" required class="input-style" autocomplete="username">
+                    <label class="block mb-1 text-zinc-400 text-xs font-normal">Nickname</label>
+                    <input type="text" id="regNickname" placeholder="Choose a handle" required class="input-style" autocomplete="username">
                 </div>
 
                 <div>
-                    <label class="block mb-1 text-zinc-400 text-xs font-semibold uppercase tracking-wider">4-6 Digit Security PIN</label>
+                    <label class="block mb-1 text-zinc-400 text-xs font-normal">Security PIN (4-6 digits)</label>
                     <input type="password" id="regPin" placeholder="••••" maxlength="6" pattern="[0-9]{4,6}" inputmode="numeric" required class="input-style tracking-widest font-mono">
-                    <p class="text-[11px] text-zinc-500 mt-1">Numbers only. Used to unlock your device profile.</p>
                 </div>
 
                 <button type="submit" class="btn-primary-purple mt-2">
-                    <span>Create & Bind Device Profile</span>
-                    <i class="fa-solid fa-lock text-xs"></i>
+                    <span>Create Account</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
                 </button>
             </form>
 
             <div id="registerMessage" class="mt-4 text-center"></div>
-
-            <div class="mt-6 pt-4 border-t border-zinc-800/80 text-center text-xs text-zinc-500">
-                <span>Account required to access all 12AM features</span>
-            </div>
         </div>
 
     </div>

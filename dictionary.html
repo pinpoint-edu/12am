@@ -246,14 +246,19 @@
             const word = entry.word || '';
             const phonetic = entry.phonetic || (entry.phonetics && entry.phonetics.find(p => p.text)?.text) || '';
             const audioObj = entry.phonetics && entry.phonetics.find(p => p.audio && p.audio.length > 0);
-            const audioUrl = audioObj ? audioObj.audio : '';
+            let audioUrl = audioObj ? audioObj.audio : '';
+            if (audioUrl && audioUrl.startsWith('//')) {
+                audioUrl = 'https:' + audioUrl;
+            }
 
             let html = `
                 <div class="border-b border-zinc-800/80 pb-6 mb-6 flex items-center justify-between flex-wrap gap-4">
                     <div>
-                        <h2 class="text-3xl sm:text-4xl text-white font-semibold tracking-tight capitalize">
-                            ${word}
-                            ${audioUrl ? `<button onclick="playAudio('${audioUrl}')" class="audio-btn" title="Listen to pronunciation"><i class="fa-solid fa-volume-high text-sm"></i></button>` : ''}
+                        <h2 class="text-3xl sm:text-4xl text-white font-semibold tracking-tight capitalize flex items-center gap-3">
+                            <span>${word}</span>
+                            <button onclick="playAudio('${encodeURIComponent(audioUrl)}', '${encodeURIComponent(word)}')" class="audio-btn" title="Listen to pronunciation">
+                                <i class="fa-solid fa-volume-high text-sm"></i>
+                            </button>
                         </h2>
                         ${phonetic ? `<p class="text-sm font-mono text-purple-400 mt-1">${phonetic}</p>` : ''}
                     </div>
@@ -289,10 +294,37 @@
             output.innerHTML = html;
         }
 
-        function playAudio(url) {
+        function speakWord(word) {
             try {
-                new Audio(url).play();
+                if ('speechSynthesis' in window && word) {
+                    window.speechSynthesis.cancel();
+                    const utter = new SpeechSynthesisUtterance(word);
+                    utter.rate = 0.9;
+                    utter.lang = 'en-US';
+                    window.speechSynthesis.speak(utter);
+                }
             } catch(e) {}
+        }
+
+        function playAudio(urlEnc, wordEnc) {
+            const url = decodeURIComponent(urlEnc || '');
+            const word = decodeURIComponent(wordEnc || '');
+
+            if (url) {
+                try {
+                    const audio = new Audio(url);
+                    const playPromise = audio.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(() => {
+                            speakWord(word);
+                        });
+                    }
+                } catch(e) {
+                    speakWord(word);
+                }
+            } else {
+                speakWord(word);
+            }
         }
 
         input.addEventListener('keydown', (e) => {

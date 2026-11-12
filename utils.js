@@ -1,6 +1,6 @@
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-        import { firebaseConfig } from "../firebase-config.js"; 
+        import { firebaseConfig } from "./firebase-config.js"; 
 
         // Initialize primary app safely
         let app;

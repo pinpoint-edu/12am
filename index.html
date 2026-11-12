@@ -3,583 +3,361 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>12AM — Everything You Need. Zero Restrictions.</title>
-    <meta name="description" content="12AM is the ultimate high-performance unblocked gaming, movies, music, AI, and study suite bound securely to your device.">
+    <title>12AM</title>
+    <meta name="description" content="12AM — Games, movies, music, and tools.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Supabase & 12AM Device Auth Core -->
     <script src="supabase-config.js"></script>
     <script src="device-auth.js"></script>
-
-    <!-- 12AM Core Theme & Navigation -->
-    <link rel="stylesheet" href="navigation.css">
-    <script src="theme.js"></script>
-
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brandPurple: '#8b5cf6',
-                        brandPurpleDark: '#7c3aed'
-                    },
-                    fontFamily: {
-                        sans: ['Geist', 'sans-serif']
-                    }
-                }
-            }
-        }
-    </script>
 
     <style>
         :root {
             --bg-page: #040404;
             --bg-card: #0c0c0e;
             --text-main: #ffffff;
-            --text-muted: #a1a1aa;
+            --text-muted: #888892;
             --accent-color: #8b5cf6;
-            --accent-glow: rgba(139, 92, 246, 0.4);
-            --border-main: #1c1c20;
-            --border-faint: rgba(255, 255, 255, 0.06);
-            --btn-bg: rgba(139, 92, 246, 0.12);
+            --accent-glow: rgba(139, 92, 246, 0.3);
+            --border-main: #18181c;
+            --border-faint: rgba(255, 255, 255, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body {
-            font-family: 'Geist', sans-serif;
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: var(--bg-page);
             color: var(--text-main);
+            font-weight: 300;
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
             overflow-x: hidden;
-            margin: 0;
-            padding: 0;
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Ambient Glow Backdrop */
-        .ambient-glow {
-            position: fixed;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 1000px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.03) 45%, transparent 70%);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        /* Top Header Navigation */
-        .landing-nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 68px;
-            background: rgba(4, 4, 4, 0.75);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-faint);
-            z-index: 50;
+        /* Top Nav */
+        .nav-bar {
+            width: 100%;
+            height: 64px;
+            padding: 0 1.5rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 2rem;
+            border-bottom: 1px solid var(--border-faint);
+            background: rgba(4, 4, 4, 0.8);
+            backdrop-filter: blur(16px);
+            position: sticky;
+            top: 0;
+            z-index: 50;
         }
 
-        .landing-brand {
+        .brand-link {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             text-decoration: none;
+            color: var(--text-main);
         }
 
-        .landing-logo {
-            height: 28px;
+        .brand-logo {
+            height: 24px;
             width: auto;
         }
 
-        .landing-brand-text {
-            font-size: 1.1rem;
-            font-weight: 800;
-            letter-spacing: 0.08em;
-            color: #ffffff;
+        .brand-name {
+            font-size: 1rem;
+            font-weight: 400;
+            letter-spacing: 0.04em;
         }
 
-        .landing-nav-right {
+        .nav-right {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 12px;
         }
 
-        .btn-ghost {
+        .btn-link {
             color: var(--text-muted);
-            font-size: 0.85rem;
-            font-weight: 500;
-            padding: 0.45rem 0.9rem;
-            border-radius: 9999px;
-            transition: all 0.2s ease;
             text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 300;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: color 0.15s ease;
         }
 
-        .btn-ghost:hover {
-            color: #ffffff;
-            background: rgba(255, 255, 255, 0.06);
+        .btn-link:hover {
+            color: var(--text-main);
         }
 
-        .btn-cta {
+        .btn-auth {
             background: var(--accent-color);
             color: #ffffff;
-            font-size: 0.85rem;
-            font-weight: 600;
-            padding: 0.5rem 1.2rem;
-            border-radius: 9999px;
-            transition: all 0.2s ease;
             text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: 400;
+            padding: 7px 16px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            box-shadow: 0 0 20px rgba(139, 92, 246, 0.35);
         }
 
-        .btn-cta:hover {
-            background: #9d74f8;
-            box-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
-            transform: translateY(-1px);
+        .btn-auth:hover {
+            background: #7c3aed;
+            box-shadow: 0 0 16px var(--accent-glow);
         }
 
         /* Hero */
-        .hero-section {
-            position: relative;
-            z-index: 1;
-            padding: 9rem 1.5rem 5rem;
-            max-width: 900px;
+        .hero {
+            max-width: 720px;
             margin: 0 auto;
+            padding: 5rem 1.5rem 3.5rem;
             text-align: center;
         }
 
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 14px;
-            border-radius: 9999px;
-            background: var(--btn-bg);
-            border: 1px solid var(--accent-glow);
+        .hero-tag {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 400;
             color: var(--accent-color);
-            font-size: 0.8rem;
-            font-weight: 600;
-            letter-spacing: 0.04em;
-            margin-bottom: 2rem;
+            margin-bottom: 1.25rem;
+            letter-spacing: 0.05em;
         }
 
-        .hero-title {
-            font-size: clamp(2.8rem, 7vw, 5.2rem);
-            font-weight: 800;
-            letter-spacing: -0.04em;
-            line-height: 1.05;
-            margin-bottom: 1.5rem;
-            color: var(--text-main);
-        }
-
-        .gradient-purple {
-            background: linear-gradient(135deg, #ffffff 30%, #a78bfa 70%, #8b5cf6 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .hero-desc {
-            font-size: 1.15rem;
-            line-height: 1.7;
-            color: var(--text-muted);
-            max-width: 640px;
-            margin: 0 auto 2.5rem;
+        .hero-h1 {
+            font-size: clamp(2.2rem, 5vw, 3.4rem);
             font-weight: 300;
+            letter-spacing: -0.03em;
+            line-height: 1.15;
+            margin-bottom: 1rem;
+            color: #ffffff;
         }
 
-        .hero-actions {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 1rem;
-            flex-wrap: wrap;
+        .hero-sub {
+            font-size: 1rem;
+            font-weight: 300;
+            color: var(--text-muted);
+            max-width: 480px;
+            margin: 0 auto 2rem;
+            line-height: 1.6;
         }
 
-        .hero-btn-primary {
+        .hero-cta-btn {
             background: var(--accent-color);
             color: #ffffff;
-            font-size: 1rem;
-            font-weight: 600;
-            padding: 0.85rem 2rem;
-            border-radius: 9999px;
-            transition: all 0.25s ease;
             text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 400;
+            padding: 10px 22px;
+            border-radius: 10px;
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            box-shadow: 0 0 25px rgba(139, 92, 246, 0.4);
+            transition: all 0.2s ease;
         }
 
-        .hero-btn-primary:hover {
-            background: #9d74f8;
-            box-shadow: 0 0 35px rgba(139, 92, 246, 0.7);
+        .hero-cta-btn:hover {
+            background: #7c3aed;
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        /* App Grid */
+        .apps-container {
+            max-width: 1000px;
+            margin: 0 auto 5rem;
+            padding: 0 1.5rem;
+            width: 100%;
+        }
+
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1rem;
+        }
+
+        .app-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-main);
+            border-radius: 14px;
+            padding: 1.25rem;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+            transition: all 0.2s ease;
+        }
+
+        .app-item:hover {
+            border-color: var(--accent-color);
+            background: #101014;
             transform: translateY(-2px);
         }
 
-        .hero-btn-secondary {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid var(--border-main);
-            color: #ffffff;
-            font-size: 1rem;
-            font-weight: 500;
-            padding: 0.85rem 1.8rem;
-            border-radius: 9999px;
-            transition: all 0.2s ease;
-            text-decoration: none;
-        }
-
-        .hero-btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        /* Features Showcase Grid */
-        .features-section {
-            position: relative;
-            z-index: 1;
-            max-width: 1200px;
-            margin: 2rem auto 6rem;
-            padding: 0 1.5rem;
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 3.5rem;
-        }
-
-        .section-title {
-            font-size: 2.2rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            margin-bottom: 0.5rem;
-        }
-
-        .section-subtitle {
-            font-size: 0.95rem;
-            color: var(--text-muted);
-        }
-
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .feature-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-main);
-            border-radius: 20px;
-            padding: 2rem;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            gap: 1.5rem;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            position: relative;
-            overflow: hidden;
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .feature-card:hover {
-            border-color: var(--accent-color);
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px var(--accent-glow);
-        }
-
-        .feature-icon-wrap {
-            width: 48px;
-            height: 48px;
-            border-radius: 14px;
-            background: var(--btn-bg);
-            border: 1px solid var(--border-faint);
+        .app-icon {
+            font-size: 18px;
+            color: var(--accent-color);
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(139, 92, 246, 0.1);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
-            color: var(--accent-color);
         }
 
-        .feature-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            color: var(--text-main);
+        .app-title {
+            font-size: 0.95rem;
+            font-weight: 400;
+            color: #ffffff;
         }
 
-        .feature-text {
-            font-size: 0.88rem;
-            line-height: 1.6;
+        .app-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* Simple Footer */
+        .site-footer {
+            margin-top: auto;
+            border-top: 1px solid var(--border-faint);
+            padding: 2rem 1.5rem;
+            text-align: center;
+            font-size: 0.78rem;
             color: var(--text-muted);
         }
 
-        .feature-tag {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--accent-color);
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        /* Security Device Banner */
-        .security-banner {
-            max-width: 1200px;
-            margin: 0 auto 6rem;
-            padding: 0 1.5rem;
-        }
-
-        .security-box {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(12, 12, 14, 0.95) 100%);
-            border: 1px solid var(--border-main);
-            border-radius: 24px;
-            padding: 3rem;
-            display: flex;
-            flex-direction: column;
-            md:flex-row;
-            align-items: center;
-            justify-content: space-between;
-            gap: 2rem;
-        }
-
-        /* Styled Footer */
-        .landing-footer {
-            border-top: 1px solid var(--border-main);
-            padding: 3rem 1.5rem;
-            background: rgba(6, 6, 8, 0.9);
-            position: relative;
-            z-index: 10;
-        }
-
-        .landing-footer-inner {
-            max-width: 1200px;
-            margin: 0 auto;
+        .footer-links {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 1.5rem;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 0.5rem;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+        .footer-links a:hover {
+            color: var(--text-main);
         }
     </style>
 </head>
 <body>
-    <div class="ambient-glow"></div>
-
-    <!-- Top Navbar -->
-    <header class="landing-nav">
-        <a href="index.html" class="landing-brand">
-            <img src="images/logo-white.png" alt="12AM" class="landing-logo">
-            <span class="landing-brand-text">12AM</span>
+    <!-- Nav -->
+    <header class="nav-bar">
+        <a href="index.html" class="brand-link">
+            <img src="images/logo-white.png" alt="12AM" class="brand-logo">
+            <span class="brand-name">12AM</span>
         </a>
 
-        <div class="landing-nav-right">
-            <a href="legal.html" class="btn-ghost">Terms &amp; Security</a>
-            <a href="authentication.html" class="btn-cta" id="topNavBtn">
-                <span>Sign In</span>
-                <i class="fa-solid fa-arrow-right text-xs"></i>
-            </a>
+        <div class="nav-right">
+            <a href="legal.html" class="btn-link">Terms</a>
+            <a href="authentication.html" class="btn-auth" id="navAuthBtn">Log In</a>
         </div>
     </header>
 
-    <!-- Hero Section -->
-    <main class="hero-section">
-        <div class="hero-badge">
-            <i class="fa-solid fa-shield-halved"></i>
-            <span>12AM Single-Device Ecosystem</span>
-        </div>
-
-        <h1 class="hero-title">
-            Everything You Need.<br>
-            <span class="gradient-purple">Zero Restrictions.</span>
-        </h1>
-
-        <p class="hero-desc">
-            The private web platform engineered for high-performance unblocked games, multi-source cinema, high-fidelity music, AI intelligence, and encrypted peer communication.
-        </p>
-
-        <div class="hero-actions">
-            <a href="authentication.html" class="hero-btn-primary" id="mainHeroCta">
-                <span>Get Started</span>
-                <i class="fa-solid fa-arrow-right text-sm"></i>
-            </a>
-            <a href="#features" class="hero-btn-secondary">
-                <span>Explore Features</span>
-            </a>
-        </div>
+    <!-- Clean Hero -->
+    <main class="hero">
+        <span class="hero-tag">12AM Web</span>
+        <h1 class="hero-h1">Games, movies, music, and messenger.</h1>
+        <p class="hero-sub">Simple, fast, and unblocked. One account per device.</p>
+        <a href="authentication.html" class="hero-cta-btn" id="heroCtaBtn">
+            <span>Get Started</span>
+            <i class="fa-solid fa-arrow-right text-xs"></i>
+        </a>
     </main>
 
-    <!-- Features Showcase -->
-    <section class="features-section" id="features">
-        <div class="section-header">
-            <h2 class="section-title">Built Without Compromise</h2>
-            <p class="section-subtitle">Every tool, mirror, and protocol is curated for speed, stability, and privacy.</p>
-        </div>
-
-        <div class="feature-grid">
-            <!-- 1. Games Hub -->
-            <a href="games.html" class="feature-card">
-                <div>
-                    <div class="feature-icon-wrap mb-4">
-                        <i class="fa-solid fa-gamepad"></i>
-                    </div>
-                    <h3 class="feature-title">2,200+ Unblocked Games</h3>
-                    <p class="feature-text">
-                        Switch seamlessly between 12AM Vault, StrongdogXP, GN-Math, TGLSC High-Speed CDN, and classic open-source ports with offline IndexedDB caching.
-                    </p>
-                </div>
-                <div class="feature-tag">
-                    <span>Explore Catalog</span>
-                    <i class="fa-solid fa-arrow-right"></i>
-                </div>
+    <!-- Apps List -->
+    <section class="apps-container">
+        <div class="apps-grid">
+            <a href="games.html" class="app-item">
+                <div class="app-icon"><i class="fa-solid fa-gamepad"></i></div>
+                <div class="app-title">Games</div>
+                <div class="app-desc">2,200+ games across Strongdog, GN-Math, TGLSC, and local vault.</div>
             </a>
 
-            <!-- 2. Cinema & TV -->
-            <a href="movies.html" class="feature-card">
-                <div>
-                    <div class="feature-icon-wrap mb-4">
-                        <i class="fa-solid fa-film"></i>
-                    </div>
-                    <h3 class="feature-title">Movies &amp; Series</h3>
-                    <p class="feature-text">
-                        High-resolution multi-server streaming powered by high-speed embed nodes with episode selectors and instant TMDB discovery.
-                    </p>
-                </div>
-                <div class="feature-tag">
-                    <span>Watch Now</span>
-                    <i class="fa-solid fa-arrow-right"></i>
-                </div>
+            <a href="movies.html" class="app-item">
+                <div class="app-icon"><i class="fa-solid fa-film"></i></div>
+                <div class="app-title">Movies &amp; TV</div>
+                <div class="app-desc">Stream movies and series with episode selectors and fast servers.</div>
             </a>
 
-            <!-- 3. Music -->
-            <a href="music.html" class="feature-card">
-                <div>
-                    <div class="feature-icon-wrap mb-4">
-                        <i class="fa-solid fa-music"></i>
-                    </div>
-                    <h3 class="feature-title">12AM Sound</h3>
-                    <p class="feature-text">
-                        Full-spectrum music playback with search, curated playlists, visualizer wave, and docked persistent player controls.
-                    </p>
-                </div>
-                <div class="feature-tag">
-                    <span>Stream Music</span>
-                    <i class="fa-solid fa-arrow-right"></i>
-                </div>
+            <a href="music.html" class="app-item">
+                <div class="app-icon"><i class="fa-solid fa-music"></i></div>
+                <div class="app-title">Music</div>
+                <div class="app-desc">Audio player with search, playlists, and fullscreen player.</div>
             </a>
 
-            <!-- 4. Supabase Messenger -->
-            <a href="messenger.html" class="feature-card">
-                <div>
-                    <div class="feature-icon-wrap mb-4">
-                        <i class="fa-solid fa-comments"></i>
-                    </div>
-                    <h3 class="feature-title">Encrypted Messenger</h3>
-                    <p class="feature-text">
-                        Direct real-time peer messaging connected to Supabase Realtime with image attachments, typing indicators, and local message storage.
-                    </p>
-                </div>
-                <div class="feature-tag">
-                    <span>Open Messenger</span>
-                    <i class="fa-solid fa-arrow-right"></i>
-                </div>
+            <a href="messenger.html" class="app-item">
+                <div class="app-icon"><i class="fa-solid fa-comments"></i></div>
+                <div class="app-title">Messenger</div>
+                <div class="app-desc">Real-time messaging with image sharing and live typing.</div>
             </a>
 
-            <!-- 5. AI Assistant -->
-            <a href="ai.html" class="feature-card">
-                <div>
-                    <div class="feature-icon-wrap mb-4">
-                        <i class="fa-solid fa-robot"></i>
-                    </div>
-                    <h3 class="feature-title">12AM Intelligence</h3>
-                    <p class="feature-text">
-                        Instant coding, writing, and research assistance powered by zero-friction LLM inference with full markdown and code highlighting.
-                    </p>
-                </div>
-                <div class="feature-tag">
-                    <span>Start Chat</span>
-                    <i class="fa-solid fa-arrow-right"></i>
-                </div>
+            <a href="ai.html" class="app-item">
+                <div class="app-icon"><i class="fa-solid fa-robot"></i></div>
+                <div class="app-title">AI</div>
+                <div class="app-desc">Instant assistant for chat, study, and code generation.</div>
             </a>
 
-            <!-- 6. Web Proxy & Disguise -->
-            <a href="proxy.html" class="feature-card">
-                <div>
-                    <div class="feature-icon-wrap mb-4">
-                        <i class="fa-solid fa-globe"></i>
-                    </div>
-                    <h3 class="feature-title">Web Proxy &amp; Disguise</h3>
-                    <p class="feature-text">
-                        Bypass domain restrictions with resilient proxy routing and quick-switch tab disguises (Google Docs, Canvas, Wikipedia).
-                    </p>
-                </div>
-                <div class="feature-tag">
-                    <span>Browse Freely</span>
-                    <i class="fa-solid fa-arrow-right"></i>
-                </div>
+            <a href="proxy.html" class="app-item">
+                <div class="app-icon"><i class="fa-solid fa-globe"></i></div>
+                <div class="app-title">Proxy</div>
+                <div class="app-desc">Browse restricted websites with tab disguise shortcuts.</div>
+            </a>
+
+            <a href="notes.html" class="app-item">
+                <div class="app-icon"><i class="fa-solid fa-note-sticky"></i></div>
+                <div class="app-title">Notes</div>
+                <div class="app-desc">Notebook mode and AES-encrypted note storage.</div>
+            </a>
+
+            <a href="dictionary.html" class="app-item">
+                <div class="app-icon"><i class="fa-solid fa-book-bookmark"></i></div>
+                <div class="app-title">Dictionary</div>
+                <div class="app-desc">Definitions, synonyms, and pronunciation audio.</div>
             </a>
         </div>
     </section>
 
-    <!-- Security Section -->
-    <section class="security-banner">
-        <div class="security-box">
-            <div>
-                <span class="text-xs uppercase font-bold tracking-widest text-[var(--accent-color)] mb-2 block">Hardware-Bound Security</span>
-                <h3 class="text-2xl font-bold text-white mb-2">1 Account Per Device. Anti-Spam Protected.</h3>
-                <p class="text-sm text-[var(--text-muted)] max-w-xl">
-                    12AM employs dual-storage fingerprint binding (localStorage + IndexedDB) to enforce strict single-profile integrity per device, eliminating profile spam and console exploits.
-                </p>
-            </div>
-            <a href="authentication.html" class="hero-btn-primary whitespace-nowrap">
-                <span>Unlock Your Profile</span>
-                <i class="fa-solid fa-arrow-right text-xs"></i>
-            </a>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="landing-footer">
-        <div class="landing-footer-inner">
-            <div class="flex items-center gap-3">
-                <img src="images/logo-white.png" class="h-6 w-auto opacity-80" alt="12AM">
-                <span class="text-sm font-semibold tracking-wider text-white">12AM</span>
-            </div>
-            <p class="text-xs text-zinc-500">&copy; 2026 12AM. High-Performance Unblocked System.</p>
-            <div class="flex items-center gap-5 text-xs text-zinc-400">
-                <a href="legal.html" class="hover:text-white transition-colors">Terms &amp; Privacy</a>
-                <a href="dashboard.html" class="hover:text-white transition-colors">Dashboard</a>
-                <a href="settings.html" class="hover:text-white transition-colors">Settings</a>
-            </div>
+    <!-- Simple Footer -->
+    <footer class="site-footer">
+        <p>&copy; 2026 12AM</p>
+        <div class="footer-links">
+            <a href="legal.html">Terms &amp; Privacy</a>
+            <a href="settings.html">Settings</a>
+            <a href="dashboard.html">Dashboard</a>
         </div>
     </footer>
 
     <script>
-        // Check authentication state to update CTAs
         document.addEventListener('DOMContentLoaded', () => {
             const user = window.TwelveAMAuth ? window.TwelveAMAuth.getCurrentUser() : null;
-            const topBtn = document.getElementById('topNavBtn');
-            const heroBtn = document.getElementById('mainHeroCta');
-
             if (user) {
-                if (topBtn) {
-                    topBtn.innerHTML = `<span>Dashboard</span> <i class="fa-solid fa-arrow-right text-xs"></i>`;
-                    topBtn.href = 'dashboard.html';
+                const navBtn = document.getElementById('navAuthBtn');
+                const heroBtn = document.getElementById('heroCtaBtn');
+                if (navBtn) {
+                    navBtn.textContent = 'Dashboard';
+                    navBtn.href = 'dashboard.html';
                 }
                 if (heroBtn) {
-                    heroBtn.innerHTML = `<span>Enter Dashboard</span> <i class="fa-solid fa-arrow-right text-sm"></i>`;
+                    heroBtn.innerHTML = `<span>Open Dashboard</span> <i class="fa-solid fa-arrow-right text-xs"></i>`;
                     heroBtn.href = 'dashboard.html';
                 }
             }

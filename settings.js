@@ -1,9 +1,8 @@
-        import { supabaseConfig } from "../supabase-config.js";
+        import { supabaseConfig } from "./supabase-config.js";
         import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
         
-        // --- NEW: Import Site Mapping (from index.html logic) ---
-        // This file MUST exist at ../site-mapping.js for import/export to work
-        import { siteMapping } from "../site-mapping.js";
+        // --- Import Site Mapping ---
+        import { siteMapping } from "./site-mapping.js";
 
         // --- Supabase Client (Reuse global instance if available) ---
         let supabase = window.supabase;
@@ -44,22 +43,22 @@
             return {
                 'google.com': { 
                     name: 'Google', 
-                    icon: '../images/google-icon.png', 
+                    icon: 'images/google-icon.png', 
                     instance: () => new GoogleAuthProvider() 
                 },
                 'github.com': { 
                     name: 'GitHub', 
-                    icon: light ? '../images/github-mark.png' : '../images/github-mark-white.png', 
+                    icon: light ? 'images/github-mark.png' : 'images/github-mark-white.png', 
                     instance: () => new GithubAuthProvider() 
                 },
                 'microsoft.com': { 
                     name: 'Microsoft', 
-                    icon: '../images/microsoft.png', 
+                    icon: 'images/microsoft.png', 
                     instance: () => new OAuthProvider('microsoft.com') 
                 },
                 'twitter.com': { // NEW: X (Twitter) Provider
                     name: 'X (Twitter)',
-                    icon: light ? '../images/x.png' : '../images/x-white.png',
+                    icon: light ? 'images/x.png' : 'images/x-white.png',
                     instance: () => new OAuthProvider('twitter.com')
                 },
                 'password': { 
@@ -96,15 +95,15 @@
 
         // Presets copied from tab-disguiser.js
         const urlChangerPresets = [
-            { id: 'hac', name: 'HAC', title: 'Login', favicon: '../favicons/hac.png', category: 'websites' },
-            { id: 'gmm', name: 'GMM', title: 'Get More Math!', favicon: '../favicons/gmm.png', category: 'websites' },
-            { id: 'kahoot', name: 'Kahoot', title: 'Kahoot! | Learning games | Make learning awesome!', favicon: '../favicons/kahoot.png', category: 'websites' },
-            { id: 'g_classroom', name: 'Google Classroom', title: 'Home', favicon: '../favicons/google-classroom.png', category: 'websites' },
-            { id: 'g_docs', name: 'Google Docs', title: 'Google Docs', favicon: '../favicons/google-docs.png', category: 'websites' },
-            { id: 'g_slides', name: 'Google Slides', title: 'Google Slides', favicon: '../favicons/google-slides.png', category: 'websites' },
-            { id: 'g_drive', name: 'Google Drive', title: 'Home - Google Drive', favicon: '../favicons/google-drive.png', category: 'websites' },
-            { id: 'wikipedia', name: 'Wikipedia', title: 'Wikipedia', favicon: '../favicons/wikipedia.png', category: 'websites' },
-            { id: 'clever', name: 'Clever', title: 'Clever | Connect every student to a world of learning', favicon: '../favicons/clever.png', category: 'websites' },
+            { id: 'hac', name: 'HAC', title: 'Login', favicon: 'favicons/hac.png', category: 'websites' },
+            { id: 'gmm', name: 'GMM', title: 'Get More Math!', favicon: 'favicons/gmm.png', category: 'websites' },
+            { id: 'kahoot', name: 'Kahoot', title: 'Kahoot! | Learning games | Make learning awesome!', favicon: 'favicons/kahoot.png', category: 'websites' },
+            { id: 'g_classroom', name: 'Google Classroom', title: 'Home', favicon: 'favicons/google-classroom.png', category: 'websites' },
+            { id: 'g_docs', name: 'Google Docs', title: 'Google Docs', favicon: 'favicons/google-docs.png', category: 'websites' },
+            { id: 'g_slides', name: 'Google Slides', title: 'Google Slides', favicon: 'favicons/google-slides.png', category: 'websites' },
+            { id: 'g_drive', name: 'Google Drive', title: 'Home - Google Drive', favicon: 'favicons/google-drive.png', category: 'websites' },
+            { id: 'wikipedia', name: 'Wikipedia', title: 'Wikipedia', favicon: 'favicons/wikipedia.png', category: 'websites' },
+            { id: 'clever', name: 'Clever', title: 'Clever | Connect every student to a world of learning', favicon: 'favicons/clever.png', category: 'websites' },
             { id: '_LIVE_CURRENT_TIME', name: 'Current Time', title: 'Live Time', favicon: '', category: 'live', live: true }
         ];
 
@@ -211,7 +210,7 @@
             }
         }
 
-        import { checkAdminStatus } from '../utils.js';
+        import { checkAdminStatus } from './utils.js';
         const getUserDocRef = (userId) => {
             // Placeholder for Firestore-style calls, though we use Supabase
             console.warn("getUserDocRef called in Supabase mode for user:", userId);
@@ -1272,7 +1271,7 @@
                                                     
                                                     <!-- Avatar Layers Container (Rotates/Scales/Moves) -->
                                                     <div id="mac-layers-container" class="absolute inset-0 w-full h-full transition-transform duration-75 ease-out origin-center pointer-events-none">
-                                                        <img id="mac-layer-head" src="../mibi-avatars/head.png" class="absolute inset-0 w-full h-full object-contain z-10">
+                                                        <img id="mac-layer-head" src="mibi-avatars/head.png" class="absolute inset-0 w-full h-full object-contain z-10">
                                                         <img id="mac-layer-eyes" class="absolute inset-0 w-full h-full object-contain z-20 hidden">
                                                         <img id="mac-layer-mouth" class="absolute inset-0 w-full h-full object-contain z-20 hidden">
                                                         <img id="mac-layer-hat" class="absolute inset-0 w-full h-full object-contain z-30 hidden">
@@ -1802,8 +1801,8 @@
                     
                     <h3 class="text-xl font-bold text-[var(--text-main)] mt-6 mb-3">Legal Information</h3>
                     <div class="legal-buttons">
-                        <a href="../legal.html#terms-of-service" class="btn-toolbar-style">Terms of Service</a>
-                        <a href="../legal.html#privacy-policy" class="btn-toolbar-style">Privacy Policy</a>
+                        <a href="legal.html#terms-of-service" class="btn-toolbar-style">Terms of Service</a>
+                        <a href="legal.html#privacy-policy" class="btn-toolbar-style">Privacy Policy</a>
                     </div>
                 </div>
             `;
@@ -1898,21 +1897,21 @@
 
             // Update Layers
             if (mibiAvatarState.eyes) {
-                eyesEl.src = `../mibi-avatars/eyes/${mibiAvatarState.eyes}`;
+                eyesEl.src = `mibi-avatars/eyes/${mibiAvatarState.eyes}`;
                 eyesEl.classList.remove('hidden');
             } else {
                 eyesEl.classList.add('hidden');
             }
             
             if (mibiAvatarState.mouths) {
-                mouthEl.src = `../mibi-avatars/mouths/${mibiAvatarState.mouths}`;
+                mouthEl.src = `mibi-avatars/mouths/${mibiAvatarState.mouths}`;
                 mouthEl.classList.remove('hidden');
             } else {
                 mouthEl.classList.add('hidden');
             }
 
             if (mibiAvatarState.hats) {
-                hatEl.src = `../mibi-avatars/hats/${mibiAvatarState.hats}`;
+                hatEl.src = `mibi-avatars/hats/${mibiAvatarState.hats}`;
                 hatEl.classList.remove('hidden');
             } else {
                 hatEl.classList.add('hidden');
@@ -1981,7 +1980,7 @@
                     item.className = `bg-gray-200 rounded-[16px] p-2 flex flex-col items-center justify-center cursor-pointer border-2 hover:border-dashed hover:border-black transition-all ${isSelected ? 'border-black' : 'border-transparent'}`;
                     
                     item.innerHTML = `
-                        <img src="../mibi-avatars/${category}/${file}" class="w-16 h-16 object-contain">
+                        <img src="mibi-avatars/${category}/${file}" class="w-16 h-16 object-contain">
                     `;
                     
                     item.onclick = () => {
@@ -2006,7 +2005,7 @@
 
                                     const img = new Image();
 
-                                    img.src = `../mibi-avatars/${cat}/${file}`;
+                                    img.src = `mibi-avatars/${cat}/${file}`;
 
                                 });
 
@@ -3219,7 +3218,7 @@
 
                     // --- 3. Sign Out & Redirect ---
                     if (window.supabase) await window.supabase.auth.signOut();
-                    window.location.href = '../authentication.html';
+                    window.location.href = 'authentication.html';
 
                 } catch (error) {
                     console.error("Error deleting account:", error);
@@ -4256,7 +4255,7 @@
 
             try {
                 // 1. Fetch themes
-                const response = await fetch('../themes.json');
+                const response = await fetch('themes.json');
                 if (!response.ok) throw new Error('Failed to fetch themes.json');
                 let themes = await response.json(); // Use 'let' to reassign
                 
@@ -4516,7 +4515,7 @@
                         switchTab('general');
                     }
                 } else {
-                    window.location.replace('../authentication.html');
+                    window.location.replace('authentication.html');
                 }
             };
 
@@ -4535,7 +4534,7 @@
                 if (session) {
                     handleUser(session.user);
                 } else {
-                    window.location.replace('../authentication.html');
+                    window.location.replace('authentication.html');
                 }
             } else {
                 console.error("Supabase client not found.");
