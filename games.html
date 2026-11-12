@@ -809,27 +809,27 @@
     <div class="pill-switcher-container">
       <div class="pill-switcher-track" id="categorySwitcherTrack">
         <div class="pill-slider-indicator" id="pillSliderIndicator"></div>
-        <button type="button" class="pill-tab-btn active" data-tab="vault">
+        <button type="button" class="pill-tab-btn active" data-tab="originals">
           <i class="fa-solid fa-cube"></i>
-          <span>12AM Vault</span>
+          <span>Originals</span>
         </button>
-        <button type="button" class="pill-tab-btn" data-tab="arcade">
-          <i class="fa-solid fa-gamepad"></i>
-          <span>Web Arcade</span>
+        <button type="button" class="pill-tab-btn" data-tab="strongdog">
+          <i class="fa-solid fa-dog"></i>
+          <span>StrongdogXP</span>
         </button>
-        <button type="button" class="pill-tab-btn" data-tab="favorites">
-          <i class="fa-solid fa-star"></i>
-          <span>Favorites</span>
+        <button type="button" class="pill-tab-btn" data-tab="gnmath">
+          <i class="fa-solid fa-shapes"></i>
+          <span>GN-Math</span>
         </button>
-        <button type="button" class="pill-tab-btn" data-tab="all">
-          <i class="fa-solid fa-grip"></i>
-          <span>All Games</span>
+        <button type="button" class="pill-tab-btn" data-tab="tglsc">
+          <i class="fa-solid fa-bolt"></i>
+          <span>TGLSC</span>
         </button>
       </div>
 
       <!-- Catalog Count & Badge Bar -->
       <div class="catalog-bar">
-        <span class="catalog-tag color-vault" id="categoryTag">12AM Vault</span>
+        <span class="catalog-tag color-vault" id="categoryTag">Originals</span>
         <span class="catalog-count" id="catalogCount">Loading games...</span>
       </div>
     </div>
@@ -870,26 +870,29 @@
 
 
   <script>
-    let currentTab = 'vault';
+    let currentTab = 'originals';
     let categoryGames = {
-      '12AM Vault': [],
+      'Originals': [],
       'StrongdogXP': [],
+      'GN-Math': [],
       'TGLSC': []
     };
     let allSearchableGames = [];
-    let pinnedGames = new Set();
+    let pinnedGames = [];
 
     try {
       const savedPins = JSON.parse(localStorage.getItem('12am_pinned_games') || '[]');
-      pinnedGames = new Set(savedPins);
-    } catch (e) {}
+      pinnedGames = Array.isArray(savedPins) ? savedPins : [];
+    } catch (e) {
+      pinnedGames = [];
+    }
 
     // Initialize & Load all Categories
     async function initGamesHub() {
       setupSwitcherControls();
       setupSearch();
 
-      // 1. Load 12AM Vault
+      // 1. Load Originals (12AM Vault)
       try {
         let vaultRaw = [];
         if (window.__12AM_GAMES__ && Array.isArray(window.__12AM_GAMES__)) {
@@ -899,17 +902,17 @@
           const data = await res.json();
           vaultRaw = data.filter(g => !g.isApp);
         }
-        categoryGames['12AM Vault'] = vaultRaw.map(g => ({
+        categoryGames['Originals'] = vaultRaw.map(g => ({
           id: `vault-${g.title.replace(/\s+/g, '-').toLowerCase()}`,
           name: g.title,
           url: g.file,
           imgSrc: g.thumbnail || '',
-          category: '12AM Vault',
+          category: 'Original',
           isLocal: true,
           sizeBytes: g.sizeBytes
         }));
       } catch (e) {
-        console.warn('Failed loading 12AM Vault games:', e);
+        console.warn('Failed loading Originals games:', e);
       }
 
       // 2. Load StrongdogXP
@@ -927,7 +930,22 @@
         console.warn('Failed loading Strongdog games:', e);
       }
 
-      // 3. Load TGLSC (The Blue Category)
+      // 3. Load GN-Math
+      try {
+        const res = await fetch('gn-math-games.json');
+        const data = await res.json();
+        categoryGames['GN-Math'] = data.filter(g => g.id >= 0).map(g => ({
+          id: `gn-${g.id}`,
+          name: g.name,
+          category: 'GN-Math',
+          imgSrc: (g.cover || '').replace("{COVER_URL}", "https://cdn.jsdelivr.net/gh/gn-math/covers@main").replace("{HTML_URL}", "https://cdn.jsdelivr.net/gh/gn-math/html@main"),
+          url: (g.url || '').replace("{COVER_URL}", "https://cdn.jsdelivr.net/gh/gn-math/covers@main").replace("{HTML_URL}", "https://cdn.jsdelivr.net/gh/gn-math/html@main")
+        }));
+      } catch (e) {
+        console.warn('Failed loading GN-Math games:', e);
+      }
+
+      // 4. Load TGLSC (The Blue Category)
       try {
         const res = await fetch('tglsc-games.json');
         const data = await res.json();
@@ -1000,25 +1018,25 @@
       const tagEl = document.getElementById('categoryTag');
       if (!grid) return;
 
-      let games = [];
-      let tagText = '12AM Vault';
+      let rawList = [];
+      let tagText = 'Originals';
       let tagClass = 'color-vault';
 
-      if (currentTab === 'vault') {
-        games = categoryGames['12AM Vault'] || [];
-        tagText = '12AM Vault';
+      if (currentTab === 'originals') {
+        rawList = categoryGames['Originals'] || [];
+        tagText = 'Originals';
         tagClass = 'color-vault';
-      } else if (currentTab === 'arcade') {
-        games = [...(categoryGames['StrongdogXP'] || []), ...(categoryGames['TGLSC'] || [])];
-        tagText = 'Web Arcade';
+      } else if (currentTab === 'strongdog') {
+        rawList = categoryGames['StrongdogXP'] || [];
+        tagText = 'StrongdogXP';
         tagClass = 'color-strongdog';
-      } else if (currentTab === 'favorites') {
-        games = allSearchableGames.filter(g => pinnedGames.has(g.name));
-        tagText = 'Favorites';
-        tagClass = 'color-vault';
-      } else if (currentTab === 'all') {
-        games = allSearchableGames;
-        tagText = 'All Games';
+      } else if (currentTab === 'gnmath') {
+        rawList = categoryGames['GN-Math'] || [];
+        tagText = 'GN-Math';
+        tagClass = 'color-gnmath';
+      } else if (currentTab === 'tglsc') {
+        rawList = categoryGames['TGLSC'] || [];
+        tagText = 'TGLSC';
         tagClass = 'color-tglsc';
       }
 
@@ -1027,56 +1045,43 @@
         tagEl.textContent = tagText;
       }
       if (countEl) {
-        countEl.textContent = `${games.length.toLocaleString()} games available`;
+        countEl.textContent = `${rawList.length.toLocaleString()} games available`;
       }
 
       grid.style.opacity = '0';
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, 90));
 
-      if (games.length === 0) {
-        if (currentTab === 'favorites') {
-          grid.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
-              <i class="fa-regular fa-star" style="font-size: 32px; margin-bottom: 12px; color: var(--accent-color); opacity: 0.7;"></i>
-              <h3 style="color: var(--text-main); margin-bottom: 6px; font-weight: 500;">No favorite games yet</h3>
-              <p style="font-size: 0.85rem; opacity: 0.7;">Hover any game card and click the star to pin your favorites here.</p>
-            </div>
-          `;
-        } else {
-          grid.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
-              <i class="fa-solid fa-spinner fa-spin" style="font-size: 32px; margin-bottom: 12px; color: var(--accent-color);"></i>
-              <h3 style="color: var(--text-main); margin-bottom: 6px; font-weight: 500;">Loading games...</h3>
-            </div>
-          `;
-        }
+      if (rawList.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
+            <i class="fa-solid fa-spinner fa-spin" style="font-size: 32px; margin-bottom: 12px; color: var(--accent-color);"></i>
+            <h3 style="color: var(--text-main); margin-bottom: 6px; font-weight: 500;">Loading games...</h3>
+          </div>
+        `;
         grid.style.opacity = '1';
         return;
       }
 
-      // Check for Recent Game or Curated Featured Game for Bento Hero Card
-      let recentGame = null;
-      try {
-        recentGame = JSON.parse(localStorage.getItem('12am_recent_game'));
-      } catch (e) {}
+      // Favoriting ordering logic:
+      // Pinned games are sorted to the very top in order of when they were starred!
+      const sectionPinned = [];
+      pinnedGames.forEach(name => {
+        const match = rawList.find(g => g.name === name);
+        if (match) sectionPinned.push(match);
+      });
+      const sectionUnpinned = rawList.filter(g => !pinnedGames.includes(g.name));
+      const sortedGames = [...sectionPinned, ...sectionUnpinned];
 
-      let heroIndex = -1;
-      if (recentGame && recentGame.name) {
-        heroIndex = games.findIndex(g => g.name === recentGame.name);
-      }
-      if (heroIndex === -1 && games.length > 0) {
-        heroIndex = 0;
-      }
-
-      const heroGame = games[heroIndex];
-      const otherGames = games.filter((_, idx) => idx !== heroIndex);
+      // The top game is the hero card (most recent favorited game, or first in list)
+      const heroGame = sortedGames[0];
+      const otherGames = sortedGames.slice(1);
+      const isHeroPinned = heroGame && pinnedGames.includes(heroGame.name);
 
       let cardsHtml = '';
       if (heroGame) {
-        const isRecent = recentGame && recentGame.name === heroGame.name;
-        cardsHtml += createGameCardHTML(heroGame, true, isRecent ? 'Continue Playing' : 'Featured Game');
+        cardsHtml += createGameCardHTML(heroGame, true, isHeroPinned);
       }
-      cardsHtml += otherGames.map(game => createGameCardHTML(game, false)).join('');
+      cardsHtml += otherGames.map(game => createGameCardHTML(game, false, pinnedGames.includes(game.name))).join('');
 
       grid.innerHTML = cardsHtml;
       grid.style.opacity = '1';
@@ -1102,18 +1107,14 @@
     }
 
     // Bento Squircle Card Generator
-    function createGameCardHTML(game, isHero = false, heroBadge = 'Featured Game') {
-      const isPinned = pinnedGames.has(game.name);
+    function createGameCardHTML(game, isHero = false, isPinned = false) {
       let catColorClass = 'color-vault';
       if (game.category === 'StrongdogXP') catColorClass = 'color-strongdog';
+      if (game.category === 'GN-Math') catColorClass = 'color-gnmath';
       if (game.category === 'TGLSC') catColorClass = 'color-tglsc';
 
-      const sizeTip = game.sizeBytes 
-        ? `Size: ${formatBytes(game.sizeBytes)}` 
-        : (game.status || (game.isLocal ? 'Offline Ready' : 'Fast Mirror'));
-
       const heroClass = isHero ? 'hero-card' : '';
-      const tagLabel = isHero ? heroBadge : (game.category === '12AM Vault' ? 'Vault' : (game.category === 'StrongdogXP' ? 'Classic' : 'Arcade'));
+      const tagLabel = isHero && isPinned ? '⭐ Favorite' : (game.category || 'Game');
 
       return `
         <div class="game-card ${heroClass}" onclick="launchGame('${encodeURIComponent(game.url)}', '${encodeURIComponent(game.name)}', ${game.isLocal || false}, '${game.category || ''}')">
@@ -1123,7 +1124,7 @@
           ` : ''}
           <div class="card-gradient-overlay"></div>
           <div class="card-info">
-            <span class="card-tag ${isHero ? 'hero-tag' : catColorClass}">${tagLabel}</span>
+            <span class="card-tag ${isHero && isPinned ? 'hero-tag' : catColorClass}">${tagLabel}</span>
             <span class="card-title">${escapeHTML(game.name)}</span>
           </div>
           <div class="card-hover-actions">
@@ -1134,9 +1135,6 @@
             <button type="button" class="card-btn-star ${isPinned ? 'pinned' : ''}" onclick="event.stopPropagation(); togglePin('${encodeURIComponent(game.name)}')" title="${isPinned ? 'Unstar' : 'Add to Favorites'}">
               <i class="fa-solid fa-star"></i>
             </button>
-            <span class="card-info-btn" title="${sizeTip}" onclick="event.stopPropagation();">
-              <i class="fa-solid fa-circle-info"></i>
-            </span>
           </div>
         </div>
       `;
@@ -1151,16 +1149,16 @@
       return url;
     }
 
-    // Toggle Pin / Favorite
+    // Toggle Pin / Favorite (Starred games go to top, most recent is big hero)
     function togglePin(nameEnc) {
       const name = decodeURIComponent(nameEnc);
-      if (pinnedGames.has(name)) {
-        pinnedGames.delete(name);
+      if (pinnedGames.includes(name)) {
+        pinnedGames = pinnedGames.filter(n => n !== name);
       } else {
-        pinnedGames.add(name);
+        pinnedGames.unshift(name); // Add to front as most recent favorite!
       }
       try {
-        localStorage.setItem('12am_pinned_games', JSON.stringify([...pinnedGames]));
+        localStorage.setItem('12am_pinned_games', JSON.stringify(pinnedGames));
       } catch (e) {}
 
       renderActiveTab();
@@ -1178,6 +1176,58 @@
           input.focus();
           input.select();
         }
+      });
+
+      input.addEventListener('input', () => {
+        const query = input.value.toLowerCase().trim();
+        if (!query) {
+          dropdown.style.display = 'none';
+          dropdown.innerHTML = '';
+          return;
+        }
+
+        const matches = allSearchableGames
+          .filter(g => g.name.toLowerCase().includes(query))
+          .slice(0, 8);
+
+        if (matches.length === 0) {
+          dropdown.innerHTML = `<div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">No games found for "${query}"</div>`;
+          dropdown.style.display = 'block';
+          return;
+        }
+
+        dropdown.innerHTML = matches.map(g => {
+          let catColor = 'color-vault';
+          if (g.category === 'StrongdogXP') catColor = 'color-strongdog';
+          if (g.category === 'GN-Math') catColor = 'color-gnmath';
+          if (g.category === 'TGLSC') catColor = 'color-tglsc';
+
+          return `
+            <div class="search-item" onclick="launchGame('${encodeURIComponent(g.url)}', '${encodeURIComponent(g.name)}', ${g.isLocal || false}, '${g.category || ''}')">
+              <div class="search-item-info">
+                <div class="search-item-icon"><i class="fa-solid fa-gamepad ${catColor}"></i></div>
+                <div class="search-item-meta">
+                  <div class="search-item-title">${escapeHTML(g.name)}</div>
+                  <div class="search-item-badge ${catColor}">${g.category}</div>
+                </div>
+              </div>
+              <button class="btn-sharp btn-primary-sharp" style="padding: 5px 12px; font-size: 11px;">
+                <i class="fa-solid fa-play"></i>
+                <span>Play</span>
+              </button>
+            </div>
+          `;
+        }).join('');
+
+        dropdown.style.display = 'block';
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-bar-wrap')) {
+          dropdown.style.display = 'none';
+        }
+      });
+    }
       });
 
       input.addEventListener('input', () => {

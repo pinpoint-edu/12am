@@ -3997,17 +3997,6 @@
                     }
                 });
             }
-
-                    if (window.createCustomTheme) {
-                        const created = window.createCustomTheme(name, c1, c2, c3);
-                        renderThemesGrid();
-                        showMessage(customThemeMessage, `Theme "${created.name}" created and applied!`, 'success');
-                        if (customThemeNameInput) customThemeNameInput.value = '';
-                    } else {
-                        showMessage(customThemeMessage, 'Theme engine not ready.', 'error');
-                    }
-                });
-            }
         }
         
         // --- NEW: Loads data and adds event listeners for the Data tab ---

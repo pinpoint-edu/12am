@@ -242,7 +242,13 @@
             <!-- Header with Battery & Time -->
             <header class="p-4 border-b border-[var(--border-main)] flex-shrink-0">
                 <div class="flex justify-between items-center">
-                    <span class="text-xl font-medium text-[var(--text-main)] tracking-tight">Messenger</span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl font-medium text-[var(--text-main)] tracking-tight">Messenger</span>
+                        <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-[var(--bg-page)] border border-[var(--border-main)]" title="Supabase Realtime Sync Status">
+                            <span id="connection-status-dot" class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                            <span id="connection-status-text" class="text-[10px] font-mono text-[var(--text-muted)]">Connecting</span>
+                        </div>
+                    </div>
                     <div class="flex items-center gap-3">
                         <div class="status-capsule flex items-center gap-2 px-3 py-1 rounded-xl bg-[var(--bg-page)] border border-[var(--border-main)] text-xs font-mono text-[var(--text-muted)]">
                             <span class="battery-wrap flex items-center gap-1.5" title="Battery">
@@ -477,32 +483,50 @@
         }
 
         // --- 2. SUPABASE REALTIME CONNECTION ---
+        function getOrInitSupabaseClient() {
+            if (window.TwelveAMSupabase && window.TwelveAMSupabase.client) {
+                return window.TwelveAMSupabase.client;
+            }
+            const url = (window.supabaseConfig && window.supabaseConfig.url) || "https://gsihkocouoigddbpahxd.supabase.co";
+            const anonKey = (window.supabaseConfig && window.supabaseConfig.anonKey) || "sb_publishable_oB5gQBtTFrhq6Vvas_938A_zq2DJVgL";
+
+            if (typeof window.supabase !== 'undefined' && typeof window.supabase.createClient === 'function') {
+                try {
+                    const client = window.supabase.createClient(url, anonKey);
+                    if (!window.TwelveAMSupabase) window.TwelveAMSupabase = { url, anonKey };
+                    window.TwelveAMSupabase.client = client;
+                    return client;
+                } catch(e) {
+                    console.error('Error creating Supabase client:', e);
+                }
+            }
+            return null;
+        }
+
         function setupSupabaseRealtime() {
-            if (!window.TwelveAMSupabase || !window.TwelveAMSupabase.client) {
-                console.warn('TwelveAMSupabase client not initialized yet, waiting...');
-                setTimeout(setupSupabaseRealtime, 500);
+            const supabase = getOrInitSupabaseClient();
+            if (!supabase) {
+                setTimeout(setupSupabaseRealtime, 300);
                 return;
             }
-
-            const supabase = window.TwelveAMSupabase.client;
 
             // Channel: 12am-messenger-global
             realtimeChannel = supabase.channel('12am-messenger-global', {
                 config: {
-                    broadcast: { self: false }
+                    broadcast: { self: false, ack: true }
                 }
             });
 
             // 1. Incoming Message
             realtimeChannel.on('broadcast', { event: 'message' }, ({ payload }) => {
-                if (payload.recipientId === myPublicId || payload.recipientId === '*') {
+                if (payload && (payload.recipientId === myPublicId || payload.recipientId === '*')) {
                     handleIncomingMessage(payload);
                 }
             });
 
             // 2. Incoming Typing Status
             realtimeChannel.on('broadcast', { event: 'typing' }, ({ payload }) => {
-                if (payload.recipientId === myPublicId && currentChatPartner && currentChatPartner.publicId === payload.senderId) {
+                if (payload && payload.recipientId === myPublicId && currentChatPartner && currentChatPartner.publicId === payload.senderId) {
                     if (payload.isTyping) {
                         dom.typingIndicatorEl.textContent = `${currentChatPartner.name} is typing...`;
                         dom.typingIndicatorEl.style.display = 'block';
@@ -514,10 +538,10 @@
 
             // 3. Incoming Friend / Contact Request
             realtimeChannel.on('broadcast', { event: 'contact_ping' }, ({ payload }) => {
-                if (payload.recipientId === myPublicId) {
+                if (payload && payload.recipientId === myPublicId) {
                     let existing = localContacts.find(c => c.publicId === payload.senderId);
                     if (!existing) {
-                        localContacts.push({
+                        localContacts.unshift({
                             publicId: payload.senderId,
                             name: payload.senderName || `User ${payload.senderId}`,
                             lastMessage: 'Added you as contact',
@@ -532,6 +556,15 @@
 
             realtimeChannel.subscribe((status) => {
                 console.log('Supabase Realtime Channel Status:', status);
+                const statusDot = document.getElementById('connection-status-dot');
+                const statusText = document.getElementById('connection-status-text');
+                if (status === 'SUBSCRIBED') {
+                    if (statusDot) { statusDot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]'; }
+                    if (statusText) { statusText.textContent = 'Live'; statusText.className = 'text-[10px] font-mono text-emerald-400'; }
+                } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                    if (statusDot) { statusDot.className = 'w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]'; }
+                    if (statusText) { statusText.textContent = 'Offline'; statusText.className = 'text-[10px] font-mono text-red-400'; }
+                }
             });
         }
 

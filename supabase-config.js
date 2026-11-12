@@ -10,8 +10,16 @@ if (typeof window !== 'undefined') {
     if (typeof window.TwelveAMSupabase === 'undefined') {
         window.TwelveAMSupabase = {
             url: supabaseConfig.url,
-            anonKey: supabaseConfig.anonKey
+            anonKey: supabaseConfig.anonKey,
+            client: null
         };
+    }
+    if (typeof window.supabase !== 'undefined' && typeof window.supabase.createClient === 'function') {
+        try {
+            window.TwelveAMSupabase.client = window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey);
+        } catch(e) {
+            console.warn('Failed to initialize Supabase client:', e);
+        }
     }
 }
 
