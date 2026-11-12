@@ -84,41 +84,56 @@
             `;
         }).join('');
 
-        // 3. Right Controls: Log In Button / User Pill (Strictly 1 Account Per Device, No Dropdown)
-        let currentUser = null;
-        try {
-            currentUser = JSON.parse(localStorage.getItem('12am_user') || 'null');
-        } catch(e) {
-            currentUser = null;
-        }
+        // 3. Right Controls: Log In Button / User Pill (Clean, No avatar circle, No buzzwords)
+        function getRightControlsHtml() {
+            let currentUser = null;
+            try {
+                if (window.TwelveAMAuth && typeof window.TwelveAMAuth.getCurrentUser === 'function') {
+                    currentUser = window.TwelveAMAuth.getCurrentUser();
+                } else {
+                    currentUser = JSON.parse(localStorage.getItem('12am_user') || 'null');
+                }
+            } catch(e) {
+                currentUser = null;
+            }
 
-        let rightControlsHtml = '';
-        if (currentUser && (currentUser.nickname || currentUser.firstName)) {
-            const displayName = currentUser.nickname || currentUser.firstName;
-            const initial = displayName.charAt(0).toUpperCase();
-
-            rightControlsHtml = `
-                <div class="nav-right-controls">
-                    <div class="nav-user-pill" title="Device Account: @${escapeHtml(displayName)}">
-                        <span class="user-avatar-badge">${escapeHtml(initial)}</span>
-                        <span class="user-nickname-text">@${escapeHtml(displayName)}</span>
-                        <button onclick="window.logOut12AM()" class="nav-logout-btn" title="Log Out">
-                            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            if (currentUser && (currentUser.nickname || currentUser.firstName)) {
+                const displayName = currentUser.nickname || currentUser.firstName;
+                return `
+                    <div class="nav-right-controls" id="navRightControls">
+                        <div class="nav-user-pill" title="@${escapeHtml(displayName)}">
+                            <span class="user-nickname-text">@${escapeHtml(displayName)}</span>
+                            <button onclick="window.logOut12AM()" class="nav-logout-btn" title="Log Out">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                return `
+                    <div class="nav-right-controls" id="navRightControls">
+                        <button type="button" onclick="if(window.TwelveAMAuth) window.TwelveAMAuth.showAuthModal();" class="nav-btn-pill nav-login-btn" id="navLoginBtn" title="Log In">
+                            <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                            <span>Log In</span>
                         </button>
                     </div>
-                </div>
-            `;
-        } else {
-            const isAuthPage = window.location.href.toLowerCase().includes('authentication.html');
-            rightControlsHtml = `
-                <div class="nav-right-controls">
-                    <a href="authentication.html" class="nav-btn-pill nav-login-btn ${isAuthPage ? 'active' : ''}" id="navLoginBtn" title="Log In to 12AM">
-                        <i class="fa-solid fa-arrow-right-to-bracket"></i>
-                        <span>Log In</span>
-                    </a>
-                </div>
-            `;
+                `;
+            }
         }
+
+        window.__updateNavbarUser = function() {
+            const ctrl = document.getElementById('navRightControls');
+            if (ctrl && ctrl.parentElement) {
+                const temp = document.createElement('div');
+                temp.innerHTML = getRightControlsHtml();
+                const newChild = temp.firstElementChild;
+                if (newChild) {
+                    ctrl.replaceWith(newChild);
+                }
+            }
+        };
+
+        const rightControlsHtml = getRightControlsHtml();
 
         container.innerHTML = `
             ${brandHtml}

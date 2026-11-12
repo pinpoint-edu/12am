@@ -3213,12 +3213,13 @@
 
                     if (error) throw error;
 
-                    // --- 2. Local Storage Cleanup ---
+                    // --- 2. Device Auth Cleanup ---
+                    if (window.TwelveAMAuth) await window.TwelveAMAuth.resetDevice();
                     localStorage.clear();
 
-                    // --- 3. Sign Out & Redirect ---
+                    // --- 3. Sign Out & Redirect to Home ---
                     if (window.supabase) await window.supabase.auth.signOut();
-                    window.location.href = 'authentication.html';
+                    window.location.href = 'index.html';
 
                 } catch (error) {
                     console.error("Error deleting account:", error);
@@ -4515,30 +4516,51 @@
                         switchTab('general');
                     }
                 } else {
-                    window.location.replace('authentication.html');
+                    // In-page modal popup instead of page redirect
+                    if (window.TwelveAMAuth) {
+                        window.TwelveAMAuth.showAuthModal((u) => {
+                            const synthetic = {
+                                id: u.deviceToken || 'dev_' + (u.nickname || 'user'),
+                                email: (u.nickname || 'user') + '@12am.local',
+                                user_metadata: {
+                                    full_name: (u.firstName || '') + ' ' + (u.lastName || ''),
+                                    global_name: u.nickname || u.firstName
+                                }
+                            };
+                            handleUser(synthetic, 'device');
+                        });
+                    }
                 }
             };
 
-            // Supabase Listener
-            if (window.supabase) {
-                window.supabase.auth.onAuthStateChange(async (event, session) => {
-                    if (session) {
-                        handleUser(session.user);
-                    } else {
-                        handleUser(null);
+            // 1. Check Device Auth first
+            const devUser = window.TwelveAMAuth ? window.TwelveAMAuth.getCurrentUser() : null;
+            if (devUser) {
+                const syntheticUser = {
+                    id: devUser.deviceToken || 'dev_' + (devUser.nickname || 'user'),
+                    email: (devUser.nickname || 'user') + '@12am.local',
+                    user_metadata: {
+                        full_name: (devUser.firstName || '') + ' ' + (devUser.lastName || ''),
+                        global_name: devUser.nickname || devUser.firstName
                     }
-                });
-
-                // Initial check
-                const { data: { session } } = await window.supabase.auth.getSession();
-                if (session) {
-                    handleUser(session.user);
-                } else {
-                    window.location.replace('authentication.html');
-                }
-            } else {
-                console.error("Supabase client not found.");
+                };
+                handleUser(syntheticUser, 'device');
+                return;
             }
+
+            // 2. Supabase Session Check
+            if (window.supabase) {
+                try {
+                    const { data: { session } } = await window.supabase.auth.getSession();
+                    if (session) {
+                        handleUser(session.user, 'supabase');
+                        return;
+                    }
+                } catch(e) {}
+            }
+
+            // If neither active, show modal popup
+            handleUser(null);
         }
         
         // Use a short timeout to allow the rest of the script to run before auth check

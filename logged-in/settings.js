@@ -4516,30 +4516,49 @@
                         switchTab('general');
                     }
                 } else {
-                    window.location.replace('../authentication.html');
+                    if (window.TwelveAMAuth) {
+                        window.TwelveAMAuth.showAuthModal((u) => {
+                            const synthetic = {
+                                id: u.deviceToken || 'dev_' + (u.nickname || 'user'),
+                                email: (u.nickname || 'user') + '@12am.local',
+                                user_metadata: {
+                                    full_name: (u.firstName || '') + ' ' + (u.lastName || ''),
+                                    global_name: u.nickname || u.firstName
+                                }
+                            };
+                            handleUser(synthetic, 'device');
+                        });
+                    }
                 }
             };
 
+            // Check Device Auth first
+            const devUser = window.TwelveAMAuth ? window.TwelveAMAuth.getCurrentUser() : null;
+            if (devUser) {
+                const syntheticUser = {
+                    id: devUser.deviceToken || 'dev_' + (devUser.nickname || 'user'),
+                    email: (devUser.nickname || 'user') + '@12am.local',
+                    user_metadata: {
+                        full_name: (devUser.firstName || '') + ' ' + (devUser.lastName || ''),
+                        global_name: devUser.nickname || devUser.firstName
+                    }
+                };
+                handleUser(syntheticUser, 'device');
+                return;
+            }
+
             // Supabase Listener
             if (window.supabase) {
-                window.supabase.auth.onAuthStateChange(async (event, session) => {
+                try {
+                    const { data: { session } } = await window.supabase.auth.getSession();
                     if (session) {
                         handleUser(session.user);
-                    } else {
-                        handleUser(null);
+                        return;
                     }
-                });
-
-                // Initial check
-                const { data: { session } } = await window.supabase.auth.getSession();
-                if (session) {
-                    handleUser(session.user);
-                } else {
-                    window.location.replace('../authentication.html');
-                }
-            } else {
-                console.error("Supabase client not found.");
+                } catch(e) {}
             }
+
+            handleUser(null);
         }
         
         // Use a short timeout to allow the rest of the script to run before auth check

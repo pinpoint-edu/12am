@@ -276,8 +276,8 @@
     <main class="hero">
         <span class="hero-tag">12AM Web</span>
         <h1 class="hero-h1">Games, movies, music, and messenger.</h1>
-        <p class="hero-sub">Simple, fast, and unblocked. One account per device.</p>
-        <a href="authentication.html" class="hero-cta-btn" id="heroCtaBtn">
+        <p class="hero-sub">Simple, fast, and unblocked.</p>
+        <a href="dashboard.html" class="hero-cta-btn" id="heroCtaBtn">
             <span>Get Started</span>
             <i class="fa-solid fa-arrow-right text-xs"></i>
         </a>
@@ -349,9 +349,10 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const user = window.TwelveAMAuth ? window.TwelveAMAuth.getCurrentUser() : null;
+            const navBtn = document.getElementById('navAuthBtn');
+            const heroBtn = document.getElementById('heroCtaBtn');
+
             if (user) {
-                const navBtn = document.getElementById('navAuthBtn');
-                const heroBtn = document.getElementById('heroCtaBtn');
                 if (navBtn) {
                     navBtn.textContent = 'Dashboard';
                     navBtn.href = 'dashboard.html';
@@ -359,6 +360,23 @@
                 if (heroBtn) {
                     heroBtn.innerHTML = `<span>Open Dashboard</span> <i class="fa-solid fa-arrow-right text-xs"></i>`;
                     heroBtn.href = 'dashboard.html';
+                }
+            } else {
+                if (navBtn) {
+                    navBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (window.TwelveAMAuth) {
+                            window.TwelveAMAuth.showAuthModal(() => { window.location.href = 'dashboard.html'; });
+                        }
+                    });
+                }
+                if (heroBtn) {
+                    heroBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (window.TwelveAMAuth) {
+                            window.TwelveAMAuth.showAuthModal(() => { window.location.href = 'dashboard.html'; });
+                        }
+                    });
                 }
             }
         });

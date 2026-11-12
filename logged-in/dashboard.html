@@ -453,27 +453,48 @@
                         location.reload();
                     }
                 } else if (!window._LOCAL_MODE && source === 'firebase') {
-                    // Only redirect if both fail. We check Supabase first.
-                    const { data: { session } } = await supabase.auth.getSession();
-                    if (!session) {
-                        window.location.replace('/index.html');
+                    const devUser = window.TwelveAMAuth ? window.TwelveAMAuth.getCurrentUser() : null;
+                    if (!devUser && window.TwelveAMAuth) {
+                        window.TwelveAMAuth.showAuthModal((u) => location.reload());
                     }
                 }
             };
 
-            // Supabase session check
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                handleUser(session.user, 'supabase');
+            // Device auth check
+            const devUser = window.TwelveAMAuth ? window.TwelveAMAuth.getCurrentUser() : null;
+            if (devUser) {
+                const syntheticUser = {
+                    id: devUser.deviceToken || 'dev_' + (devUser.nickname || 'user'),
+                    email: (devUser.nickname || 'user') + '@12am.local',
+                    user_metadata: {
+                        custom_claims: { global_name: devUser.nickname || devUser.firstName }
+                    }
+                };
+                handleUser(syntheticUser, 'device');
+                startClock();
+                return;
             }
 
-            // Firebase fallback/sync
-            onAuthStateChanged(auth, async (user) => {
+            // Supabase session check
+            let hasSession = false;
+            try {
                 const { data: { session } } = await supabase.auth.getSession();
-                if (!session) {
-                    handleUser(user, 'firebase');
+                if (session) {
+                    hasSession = true;
+                    handleUser(session.user, 'supabase');
                 }
-            });
+            } catch(e) {}
+
+            // Firebase fallback/sync
+            if (!hasSession) {
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        handleUser(user, 'firebase');
+                    } else if (window.TwelveAMAuth) {
+                        window.TwelveAMAuth.showAuthModal((u) => location.reload());
+                    }
+                });
+            }
 
             startClock();
         }
