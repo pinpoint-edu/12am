@@ -286,14 +286,14 @@
                 const styleEl = document.createElement('style');
                 styleEl.id = '12am-auth-styles';
                 styleEl.textContent = `
-                    @keyframes twelveAmFadeIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+                    @keyframes twelveAmFadeIn { from { opacity: 0; transform: scale(0.96) translateY(6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
                     #12am-auth-overlay {
                         position: fixed;
                         inset: 0;
                         z-index: 9999999;
-                        background: rgba(3, 3, 5, 0.88);
-                        backdrop-filter: blur(24px);
-                        -webkit-backdrop-filter: blur(24px);
+                        background: rgba(3, 3, 6, 0.88);
+                        backdrop-filter: blur(28px);
+                        -webkit-backdrop-filter: blur(28px);
                         display: flex;
                         align-items: center;
                         justify-content: center;
@@ -301,15 +301,15 @@
                         font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
                     }
                     .auth-modal-card {
-                        background: #09090c;
-                        border: 1px solid rgba(255, 255, 255, 0.08);
-                        border-radius: 22px;
+                        background: var(--bg-card, #0c0c11);
+                        border: 1px solid var(--navbar-border, rgba(255, 140, 0, 0.28));
+                        border-radius: 26px;
                         max-width: 380px;
                         width: 100%;
                         padding: 2.25rem 2rem;
-                        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(139, 92, 246, 0.15);
+                        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.85), 0 0 45px var(--accent-glow, rgba(255, 140, 0, 0.25));
                         color: #ffffff;
-                        animation: twelveAmFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+                        animation: twelveAmFadeIn 0.24s cubic-bezier(0.16, 1, 0.3, 1);
                         box-sizing: border-box;
                         position: relative;
                     }
@@ -319,11 +319,11 @@
                         right: 14px;
                         background: transparent;
                         border: none;
-                        color: #71717a;
+                        color: #a1a1aa;
                         font-size: 15px;
-                        width: 28px;
-                        height: 28px;
-                        border-radius: 8px;
+                        width: 32px;
+                        height: 32px;
+                        border-radius: 12px;
                         cursor: pointer;
                         display: flex;
                         align-items: center;
@@ -332,33 +332,33 @@
                     }
                     .auth-modal-close:hover {
                         color: #ffffff;
-                        background: rgba(255, 255, 255, 0.06);
+                        background: rgba(255, 255, 255, 0.08);
                     }
                     .auth-modal-input {
                         width: 100%;
-                        height: 46px;
-                        background: #050508;
-                        border: 1px solid #202028;
-                        border-radius: 14px;
+                        height: 48px;
+                        background: var(--bg-page, #060608);
+                        border: 1px solid var(--border-main, rgba(255, 255, 255, 0.12));
+                        border-radius: 16px;
                         color: #ffffff;
                         font-size: 0.95rem;
-                        padding: 0 14px;
+                        padding: 0 16px;
                         outline: none;
                         transition: border-color 0.2s, box-shadow 0.2s;
                         box-sizing: border-box;
                     }
                     .auth-modal-input:focus {
-                        border-color: #8b5cf6;
-                        box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.35);
+                        border-color: var(--accent-primary, #ff8800);
+                        box-shadow: 0 0 0 3px var(--accent-secondary, rgba(255, 136, 0, 0.35));
                     }
                     .auth-modal-btn {
                         width: 100%;
-                        height: 44px;
-                        background: #8b5cf6;
+                        height: 48px;
+                        background: linear-gradient(135deg, var(--accent-primary, #ff8800) 0%, #ea580c 100%);
                         border: none;
-                        border-radius: 14px;
+                        border-radius: 16px;
                         color: #ffffff;
-                        font-size: 0.92rem;
+                        font-size: 0.95rem;
                         font-weight: 500;
                         cursor: pointer;
                         display: flex;
@@ -366,11 +366,13 @@
                         justify-content: center;
                         gap: 8px;
                         transition: all 0.2s ease;
-                        margin-top: 4px;
+                        margin-top: 6px;
+                        box-shadow: 0 8px 24px var(--accent-secondary, rgba(255, 136, 0, 0.35));
                     }
                     .auth-modal-btn:hover {
-                        background: #7c3aed;
-                        box-shadow: 0 0 20px rgba(139, 92, 246, 0.45);
+                        background: linear-gradient(135deg, #ffa028 0%, #f97316 100%);
+                        box-shadow: 0 12px 30px var(--accent-glow, rgba(255, 136, 0, 0.45));
+                        transform: translateY(-1px);
                     }
                 `;
                 document.head.appendChild(styleEl);
@@ -382,34 +384,37 @@
             const card = document.createElement('div');
             card.className = 'auth-modal-card';
 
+            const prefix = window.location.pathname.includes('/logged-in/') ? '../' : '';
+            const logoPath = `${prefix}images/logo.png`;
+
             if (bound) {
-                // UNLOCK MODE (Proper 12AM Card Styling with placeholder PFP)
+                // UNLOCK MODE (Theme Synced Squircle Card Styling with placeholder PFP)
                 const displayName = bound.firstName ? `${bound.firstName} ${bound.lastName || ''}`.trim() : (bound.nickname || 'user');
                 const handle = bound.nickname || 'user';
                 card.innerHTML = `
                     <button type="button" class="auth-modal-close" id="modalCloseBtn" title="Close">✕</button>
                     <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1.5rem;">
-                        <img src="images/logo-white.png" alt="12AM" style="height: 18px; margin-bottom: 1.15rem; opacity: 0.85;">
-                        <div style="margin-bottom: 0.85rem; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-                            ${render12AMAvatar(bound, 62, '22px', '18px')}
+                        <img src="${logoPath}" alt="12AM" style="height: 20px; margin-bottom: 1.25rem; opacity: 0.95;" onerror="this.style.display='none'">
+                        <div style="margin-bottom: 0.85rem; box-shadow: 0 12px 28px rgba(0,0,0,0.6);">
+                            ${render12AMAvatar(bound, 64, '24px', '20px')}
                         </div>
-                        <h2 style="font-size: 1.2rem; font-weight: 500; margin: 0 0 4px; color: #fff;">${escapeHtml(displayName)}</h2>
-                        <p style="font-size: 0.82rem; color: #888896; margin: 0;">@${escapeHtml(handle)}</p>
+                        <h2 style="font-size: 1.25rem; font-weight: 500; margin: 0 0 4px; color: #fff;">${escapeHtml(displayName)}</h2>
+                        <p style="font-size: 0.85rem; color: var(--accent-primary, #ff8800); margin: 0; font-family: monospace; font-weight: 500;">@${escapeHtml(handle)}</p>
                     </div>
 
                     <form id="modalAuthForm" style="display: flex; flex-direction: column; gap: 14px;">
                         <div>
-                            <input type="password" id="modalPinInput" class="auth-modal-input" placeholder="••••" maxlength="6" pattern="[0-9]{4,6}" inputmode="numeric" required style="text-align: center; letter-spacing: 0.35em; font-size: 1.3rem; font-family: monospace;" autofocus autocomplete="off">
+                            <input type="password" id="modalPinInput" class="auth-modal-input" placeholder="••••" maxlength="6" pattern="[0-9]{4,6}" inputmode="numeric" required style="text-align: center; letter-spacing: 0.4em; font-size: 1.35rem; font-family: monospace;" autofocus autocomplete="off">
                         </div>
-                        <div id="modalAuthError" style="font-size: 0.78rem; color: #f87171; text-align: center; min-height: 16px;"></div>
+                        <div id="modalAuthError" style="font-size: 0.8rem; color: #f87171; text-align: center; min-height: 18px;"></div>
                         <button type="submit" class="auth-modal-btn">
                             <span>Unlock Session</span>
-                            <i class="fa-solid fa-arrow-right" style="font-size: 11px;"></i>
+                            <i class="fa-solid fa-arrow-right" style="font-size: 12px;"></i>
                         </button>
                     </form>
 
                     <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06); text-align: center;">
-                        <button type="button" id="modalResetBtn" style="background: none; border: none; color: #71717a; font-size: 0.75rem; cursor: pointer; transition: color 0.2s;">Reset Account</button>
+                        <button type="button" id="modalResetBtn" style="background: none; border: none; color: #71717a; font-size: 0.78rem; cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='#71717a'">Reset Account</button>
                     </div>
                 `;
 
@@ -460,11 +465,13 @@
                 });
 
             } else {
-                // REGISTER MODE (Clean, minimal, no buzzwords)
+                // REGISTER MODE (Clean, minimal, squircle styling)
                 card.innerHTML = `
+                    <button type="button" class="auth-modal-close" id="modalCloseBtn" title="Close">✕</button>
                     <div style="text-align: center; margin-bottom: 1.25rem;">
-                        <img src="images/logo-white.png" alt="12AM" style="height: 22px; margin: 0 auto 0.75rem; display: block; opacity: 0.95;">
-                        <h2 style="font-size: 1.15rem; font-weight: 500; margin: 0; color: #fff;">Create Account</h2>
+                        <img src="${logoPath}" alt="12AM" style="height: 22px; margin: 0 auto 0.75rem; display: block; opacity: 0.95;" onerror="this.style.display='none'">
+                        <h2 style="font-size: 1.2rem; font-weight: 500; margin: 0; color: #fff;">Create Account</h2>
+                        <p style="font-size: 0.8rem; color: #a1a1aa; margin: 4px 0 0;">Bind a quick profile to this device</p>
                     </div>
 
                     <form id="modalRegisterForm" style="display: flex; flex-direction: column; gap: 10px;">
@@ -484,6 +491,9 @@
 
                 overlay.appendChild(card);
                 document.body.appendChild(overlay);
+
+                const regCloseBtn = document.getElementById('modalCloseBtn');
+                if (regCloseBtn) regCloseBtn.onclick = () => overlay.remove();
 
                 document.getElementById('modalRegisterForm').addEventListener('submit', async (e) => {
                     e.preventDefault();

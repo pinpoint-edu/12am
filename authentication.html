@@ -23,24 +23,24 @@
 
     <style>
         :root {
-            --bg-page: var(--bg-primary, #040404);
-            --bg-card: var(--bg-secondary, #09090b);
+            --bg-page: var(--bg-primary, #070709);
+            --bg-card: var(--bg-secondary, #0f0f14);
             --text-main: var(--text-primary, #ffffff);
-            --text-muted: var(--text-secondary, #a1a1aa);
-            --accent-color: var(--accent-primary, #8b5cf6);
-            --accent-glow: var(--accent-secondary, rgba(139, 92, 246, 0.4));
-            --border-main: var(--border-primary, #18181b);
-            --border-hover: #27272a;
+            --text-muted: var(--text-secondary, #ffd700);
+            --accent-color: var(--accent-primary, #ff8800);
+            --accent-glow: var(--accent-secondary, rgba(255, 136, 0, 0.4));
+            --border-main: var(--border-primary, rgba(255, 140, 0, 0.25));
+            --border-hover: rgba(255, 140, 0, 0.4);
         }
 
         body { 
             font-family: 'Geist', sans-serif; 
             background-color: var(--bg-page); 
             color: var(--text-muted); 
-            font-weight: 300;
+            font-weight: 400;
             overflow-x: hidden;
             min-height: 100vh;
-            padding-top: var(--navbar-height, 64px);
+            padding: 2rem 1rem;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -50,11 +50,11 @@
         .auth-card {
             background-color: var(--bg-card);
             border: 1px solid var(--border-main);
-            border-radius: 1.75rem;
-            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8), 0 0 40px -10px var(--accent-glow);
+            border-radius: 26px;
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8), 0 0 45px -10px var(--accent-glow);
             overflow: hidden;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
             transition: all 0.3s ease;
         }
 
@@ -62,10 +62,10 @@
             width: 100%; 
             padding: 0.85rem 1rem; 
             border: 1px solid var(--border-main); 
-            background-color: #050507; 
-            border-radius: 14px; 
+            background-color: #050508; 
+            border-radius: 16px; 
             color: var(--text-main); 
-            font-size: 0.9375rem;
+            font-size: 0.95rem;
             transition: all 0.25s ease;
             outline: none;
         }
@@ -76,12 +76,12 @@
         }
 
         .btn-primary-purple {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.25) 0%, rgba(124, 58, 237, 0.35) 100%);
-            border: 1px solid var(--accent-color);
+            background: linear-gradient(135deg, var(--accent-primary, #ff8800) 0%, #ea580c 100%);
+            border: none;
             color: #ffffff;
             font-weight: 500;
             padding: 0.85rem 1.25rem;
-            border-radius: 14px;
+            border-radius: 16px;
             width: 100%;
             display: inline-flex;
             align-items: center;
@@ -89,11 +89,11 @@
             gap: 8px;
             cursor: pointer;
             transition: all 0.25s ease;
-            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.2);
+            box-shadow: 0 8px 24px var(--accent-glow);
         }
         .btn-primary-purple:hover {
-            background: var(--accent-color);
-            box-shadow: 0 0 24px var(--accent-glow);
+            background: linear-gradient(135deg, #ffa028 0%, #f97316 100%);
+            box-shadow: 0 12px 30px var(--accent-glow);
             transform: translateY(-1px);
         }
 
@@ -132,7 +132,7 @@
     <div class="brand-bg-glow"></div>
     <div id="dynamic-background"></div>
 
-    <div class="w-full max-w-md auth-card p-8 sm:p-10 my-auto">
+    <div id="page-content" class="w-full max-w-md auth-card p-8 sm:p-10 my-auto">
         <!-- Logo and Brand Header -->
         <div class="text-center mb-6">
             <img src="images/logo-white.png" alt="12AM Logo" class="h-9 mx-auto mb-2 object-contain opacity-95">

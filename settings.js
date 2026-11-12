@@ -11,6 +11,16 @@
             window.supabase = supabase;
         }
 
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
         // --- Global State and Element References ---
         const sidebarTabs = document.querySelectorAll('.settings-tab');
         const mainView = document.getElementById('settings-main-view');
@@ -2733,6 +2743,7 @@
          * Contains ONLY: Profile Picture editing, Username editing, and PIN editing requiring current PIN verification.
          */
         async function loadGeneralTab() {
+            try {
             let devUser = null;
             if (window.TwelveAMAuth && typeof window.TwelveAMAuth.getCurrentUser === 'function') {
                 devUser = window.TwelveAMAuth.getCurrentUser();
@@ -3578,6 +3589,9 @@
                     confirmNewPinInput.value = '';
                     showMessage(pinMsg, 'PIN updated successfully!', 'success');
                 });
+            }
+            } catch (err) {
+                console.error("Error in loadGeneralTab:", err);
             }
         }
 

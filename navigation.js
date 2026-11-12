@@ -242,18 +242,12 @@
                 </div>
             `;
         } else {
-            // LOGGED OUT: No auth menu! Buttons directly in the dock under the line
+            // LOGGED OUT: No settings button, clean single Authenticate squircle button matching dock style
             return `
-                <div class="sidebar-auth-wrapper logged-out-buttons">
-                    <button type="button" onclick="window.open12AMAuth()" class="sidebar-btn sidebar-primary-btn" aria-label="Authenticate">
-                        <i class="fa-solid fa-lock"></i>
-                        <span class="sidebar-tooltip">Authenticate</span>
-                    </button>
-                    <a href="${prefix}settings.html" class="sidebar-btn ${activeId === 'settings' ? 'active' : ''}" aria-label="Settings">
-                        <i class="fa-solid fa-gear"></i>
-                        <span class="sidebar-tooltip">Settings</span>
-                    </a>
-                </div>
+                <button type="button" onclick="window.open12AMAuth()" class="sidebar-btn nav-tab" id="sidebarAuthBtn" aria-label="Authenticate">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    <span class="sidebar-tooltip">Authenticate</span>
+                </button>
             `;
         }
     }
@@ -262,6 +256,29 @@
         const toggleBtn = document.getElementById('sidebarAuthToggle');
         const menu = document.getElementById('auth-menu-container');
         const collapseBtn = document.getElementById('authCollapseDocksBtn');
+
+        let authMenuHoverTimer = null;
+        const closeMenuIfHoverAway = () => {
+            clearTimeout(authMenuHoverTimer);
+            authMenuHoverTimer = setTimeout(() => {
+                const isHoveringMenu = menu && menu.matches(':hover');
+                const isHoveringToggle = toggleBtn && toggleBtn.matches(':hover');
+                if (!isHoveringMenu && !isHoveringToggle && menu && menu.classList.contains('open')) {
+                    menu.classList.remove('open');
+                    menu.classList.add('closed');
+                    if (toggleBtn) toggleBtn.classList.remove('active');
+                }
+            }, 250);
+        };
+
+        if (menu) {
+            menu.addEventListener('mouseleave', () => {
+                closeMenuIfHoverAway();
+            });
+            menu.addEventListener('mouseenter', () => {
+                clearTimeout(authMenuHoverTimer);
+            });
+        }
 
         if (toggleBtn && menu) {
             toggleBtn.onclick = (e) => {
@@ -277,6 +294,13 @@
                     toggleBtn.classList.add('active');
                 }
             };
+
+            toggleBtn.addEventListener('mouseleave', () => {
+                closeMenuIfHoverAway();
+            });
+            toggleBtn.addEventListener('mouseenter', () => {
+                clearTimeout(authMenuHoverTimer);
+            });
 
             document.addEventListener('click', (e) => {
                 if (!menu.contains(e.target) && !toggleBtn.contains(e.target)) {
@@ -395,6 +419,20 @@
         if (legacySidebar) {
             legacySidebar.style.display = 'none';
         }
+
+        // Align top of sub-dock with the top of main sidebar
+        function alignSubDocks() {
+            const mainSidebar = document.getElementById('floating-sidebar');
+            const subDock = document.getElementById('settings-floating-dock');
+            if (mainSidebar && subDock) {
+                const rect = mainSidebar.getBoundingClientRect();
+                subDock.style.top = rect.top + 'px';
+            }
+        }
+        alignSubDocks();
+        window.addEventListener('resize', alignSubDocks);
+        setTimeout(alignSubDocks, 50);
+        setTimeout(alignSubDocks, 250);
     }
 
     // Left Edge Sensor & Hover Peek Logic for Collapsed Docks
@@ -458,12 +496,28 @@
         const activeId = getActivePageId();
         const logoSrc = getLogoSrc();
         const prefix = window.location.pathname.includes('/logged-in/') ? '../' : '';
-        const simplified = isSimplifiedPage();
+
+        // Check if user is logged in
+        let currentUser = null;
+        try {
+            if (window.TwelveAMAuth && typeof window.TwelveAMAuth.getCurrentUser === 'function') {
+                currentUser = window.TwelveAMAuth.getCurrentUser();
+            } else {
+                currentUser = JSON.parse(localStorage.getItem('12am_user') || 'null');
+            }
+        } catch(e) {
+            currentUser = null;
+        }
+
+        const isSignedIn = !!(currentUser && (currentUser.nickname || currentUser.firstName));
+        // Simplified dock (Home & Legal only) ONLY applies if user is logged out on landing/legal pages.
+        // If user is logged in, ALWAYS show all app page redirects!
+        const simplified = !isSignedIn && isSimplifiedPage();
 
         let topSectionHtml = '';
 
         if (simplified) {
-            // Simplified Dock on index.html and legal.html: ONLY Home and Legal redirects
+            // Simplified Dock on index.html and legal.html when logged out: ONLY Home and Legal redirects
             const isHome = activeId === 'home';
             const isLegal = activeId === 'legal';
 
@@ -478,9 +532,9 @@
                 </a>
             `;
         } else {
-            // Regular Dock: Home logo + full suite of daily apps
+            // Full Dock: Home logo + complete catalog of daily apps
             const logoBtnHtml = `
-                <a href="${prefix}index.html" class="sidebar-btn sidebar-logo-btn" aria-label="12AM Home">
+                <a href="${prefix}index.html" class="sidebar-btn sidebar-logo-btn ${activeId === 'home' ? 'active' : ''}" aria-label="12AM Home">
                     <img src="${logoSrc}" alt="12AM Logo" class="sidebar-logo-img navbar-logo" id="sidebar-logo">
                     <span class="sidebar-tooltip">Home</span>
                 </a>
@@ -502,13 +556,6 @@
             </div>
         `;
 
-        // Restore collapse state if user is logged in
-        let currentUser = null;
-        try {
-            currentUser = JSON.parse(localStorage.getItem('12am_user') || 'null');
-        } catch(e) {}
-
-        const isSignedIn = !!(currentUser && (currentUser.nickname || currentUser.firstName));
         if (isSignedIn && localStorage.getItem('12am_sidebar_collapsed') === 'true') {
             document.body.classList.add('sidebar-collapsed');
         } else {
@@ -529,15 +576,12 @@
             footer = document.createElement('footer');
             footer.id = 'minimal-footer-cluster';
             footer.className = 'minimal-footer-cluster';
-            document.body.appendChild(footer);
+            const host = document.getElementById('page-content') || document.querySelector('main') || document.body;
+            host.appendChild(footer);
         }
-        const logoSrc = getLogoSrc();
         const prefix = window.location.pathname.includes('/logged-in/') ? '../' : '';
 
         footer.innerHTML = `
-            <a href="${prefix}legal.html" class="minimal-footer-icon-link" aria-label="12AM Legal &amp; Policies" title="Terms &amp; Policies">
-                <img src="${logoSrc}" alt="12AM" class="minimal-footer-logo navbar-logo">
-            </a>
             <a href="${prefix}legal.html" class="minimal-footer-link">Terms &amp; Privacy Policy</a>
             <span class="minimal-footer-dot">•</span>
             <span class="minimal-footer-copy">All rights reserved</span>

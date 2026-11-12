@@ -92,8 +92,8 @@ body {
 #navbar-container {
   position: fixed !important;
   left: 18px !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
+  top: max(24px, calc(50% - 240px)) !important;
+  transform: none !important;
   bottom: auto !important;
   right: auto !important;
   z-index: 9990 !important;
@@ -271,8 +271,8 @@ body {
 .settings-floating-dock {
   position: fixed !important;
   left: 88px !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
+  top: max(24px, calc(50% - 240px)) !important;
+  transform: none !important;
   bottom: auto !important;
   right: auto !important;
   z-index: 9988 !important;
@@ -294,9 +294,45 @@ body {
   transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
+/* Offset page content so elements wrap around the floating docks and never clip under them */
+#page-content,
+main,
+.page-container,
+.main-content,
+.dashboard-container,
+.app-container,
+.soundboard-layout,
+#soundboard-container,
+#music-app,
+#games-container,
+#movies-container {
+  padding-left: 96px !important;
+  box-sizing: border-box !important;
+  transition: padding-left 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+body.sidebar-collapsed #page-content,
+body.sidebar-collapsed main,
+body.sidebar-collapsed .page-container,
+body.sidebar-collapsed .main-content,
+body.sidebar-collapsed .dashboard-container,
+body.sidebar-collapsed .app-container,
+body.sidebar-collapsed .soundboard-layout,
+body.sidebar-collapsed #soundboard-container,
+body.sidebar-collapsed #music-app,
+body.sidebar-collapsed #games-container,
+body.sidebar-collapsed #movies-container {
+  padding-left: 28px !important;
+}
+
 /* Offset settings content to clear both docks */
 body:has(#settings-floating-dock) #settings-container {
   padding-left: 175px !important;
+  transition: padding-left 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+body.sidebar-collapsed:has(#settings-floating-dock) #settings-container {
+  padding-left: 28px !important;
 }
 
 #settings-sidebar {
@@ -437,20 +473,20 @@ body.sidebar-collapsed .sidebar-edge-sensor {
 
 body.sidebar-collapsed #floating-sidebar,
 body.sidebar-collapsed #navbar-container {
-  transform: translateY(-50%) translateX(-120px) !important;
+  transform: translateX(-120px) !important;
 }
 
 body.sidebar-collapsed #settings-floating-dock {
-  transform: translateY(-50%) translateX(-220px) !important;
+  transform: translateX(-220px) !important;
 }
 
 body.sidebar-collapsed.sidebar-peek-open #floating-sidebar,
 body.sidebar-collapsed.sidebar-peek-open #navbar-container {
-  transform: translateY(-50%) translateX(0) !important;
+  transform: translateX(0) !important;
 }
 
 body.sidebar-collapsed.sidebar-peek-open #settings-floating-dock {
-  transform: translateY(-50%) translateX(0) !important;
+  transform: translateX(0) !important;
 }
 
 /* ==========================================================================
@@ -468,7 +504,7 @@ body.sidebar-collapsed.sidebar-peek-open #settings-floating-dock {
   align-items: center !important;
   gap: 8px !important;
   padding: 6px 14px !important;
-  border-radius: 9999px !important; /* pill squircle */
+  border-radius: 12px !important; /* squircle */
   background: var(--bg-card, rgba(12, 12, 16, 0.75)) !important;
   backdrop-filter: blur(16px) !important;
   -webkit-backdrop-filter: blur(16px) !important;

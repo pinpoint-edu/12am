@@ -2207,79 +2207,92 @@
     <style>
         :root {
             --parabola-ease: cubic-bezier(0.16, 1, 0.3, 1);
-            --bg-page: var(--bg-primary, #040404);
-            --bg-card: var(--bg-secondary, #0c0c0e);
+            --bg-page: var(--bg-primary, #070709);
+            --bg-card: var(--bg-secondary, #0f0f14);
             --text-main: var(--text-primary, #ffffff);
-            --text-muted: var(--text-secondary, #a1a1aa);
-            --accent-color: var(--accent-primary, #8b5cf6);
-            --accent-glow: var(--accent-secondary, rgba(139, 92, 246, 0.4));
-            --border-main: var(--border-primary, #1c1c20);
+            --text-muted: var(--text-secondary, #ffd700);
+            --accent-color: var(--accent-primary, #ff8800);
+            --accent-glow: var(--accent-secondary, rgba(255, 136, 0, 0.4));
+            --border-main: var(--border-primary, rgba(255, 140, 0, 0.26));
         }
         *, html, body, input, button, select, textarea {
             font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif !important;
         }
         html, body {
-            background-color: var(--bg-primary, #040404) !important;
+            background-color: var(--bg-primary, #070709) !important;
             color: var(--text-main, #ffffff) !important;
             overflow-x: hidden;
         }
         body {
-            padding-top: calc(var(--navbar-height, 64px) + 1.25rem) !important;
+            padding-top: 1rem !important;
         }
         .dark, .dark-mode {
-            background-color: var(--bg-primary, #040404) !important;
+            background-color: var(--bg-primary, #070709) !important;
             color: var(--text-main, #ffffff) !important;
         }
-        /* Top navbar pill in music */
+        /* Top navbar squircle in music */
         #main-header {
-            top: calc(var(--navbar-height, 64px) + 0.85rem) !important;
+            top: 1rem !important;
         }
         #top-nav-bar {
-            background: var(--navbar-bg, var(--bg-secondary, rgba(24, 24, 29, 0.88))) !important;
-            border: 1px solid var(--navbar-border, var(--border-primary, rgba(255, 255, 255, 0.12))) !important;
-            backdrop-filter: blur(12px) !important;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+            background: var(--navbar-bg, var(--bg-secondary, rgba(12, 11, 15, 0.92))) !important;
+            border: 1px solid var(--navbar-border, var(--border-primary, rgba(255, 140, 0, 0.28))) !important;
+            backdrop-filter: blur(18px) !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+            border-radius: 18px !important;
         }
         #top-nav-bar a:not(.yolk-active) {
             color: var(--text-muted, #a1a1aa) !important;
+            border-radius: 12px !important;
         }
         #top-nav-bar a:not(.yolk-active):hover {
             color: var(--text-main, #ffffff) !important;
         }
         #top-nav-bar a.yolk-active, .yolk-active {
-            background: var(--accent-primary, #8b5cf6) !important;
+            background: var(--accent-primary, #ff8800) !important;
             color: #ffffff !important;
-            box-shadow: 0 0 12px var(--accent-secondary, rgba(139, 92, 246, 0.45)) !important;
+            border-radius: 12px !important;
+            box-shadow: 0 0 14px var(--accent-secondary, rgba(255, 136, 0, 0.45)) !important;
         }
-        /* Pushed down search block so it NEVER clips under navbar */
+        /* Pushed down search block */
         body.is-loaded:not(.is-searching) #search-block {
-            top: calc(50% + 24px) !important;
+            top: calc(50% + 14px) !important;
         }
         body.is-searching #search-block {
-            top: calc(var(--navbar-height, 64px) + 32px) !important;
+            top: 4.5rem !important;
         }
         #bottom-player {
-            background: var(--bg-secondary, rgba(12, 12, 14, 0.95)) !important;
-            border-color: var(--border-primary, rgba(255, 255, 255, 0.1)) !important;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px var(--accent-secondary, rgba(139, 92, 246, 0.15)) !important;
+            background: var(--bg-secondary, rgba(14, 14, 18, 0.95)) !important;
+            border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.12)) !important;
+            border-radius: 20px !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 18px var(--accent-secondary, rgba(255, 136, 0, 0.2)) !important;
         }
         #bottom-player-title { color: var(--text-main, #ffffff) !important; }
-        #bottom-player-artist { color: var(--text-muted, #a1a1aa) !important; }
+        #bottom-player-artist { color: var(--text-muted, #ffd700) !important; }
         #bottom-player-progress-fill, #now-playing-progress-fill {
-            background: var(--accent-primary, #8b5cf6) !important;
-            box-shadow: 0 0 10px var(--accent-secondary, rgba(139, 92, 246, 0.5)) !important;
+            background: var(--accent-primary, #ff8800) !important;
+            box-shadow: 0 0 12px var(--accent-secondary, rgba(255, 136, 0, 0.5)) !important;
+            border-radius: 6px !important;
         }
         #searchInput {
             background: var(--bg-secondary, rgba(18, 18, 22, 0.9)) !important;
-            border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.12)) !important;
+            border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.14)) !important;
             color: var(--text-main, #ffffff) !important;
+            border-radius: 18px !important;
         }
         #searchInput:focus {
-            border-color: var(--accent-primary, #8b5cf6) !important;
-            box-shadow: 0 0 0 3px var(--accent-secondary, rgba(139, 92, 246, 0.35)) !important;
+            border-color: var(--accent-primary, #ff8800) !important;
+            box-shadow: 0 0 0 3px var(--accent-secondary, rgba(255, 136, 0, 0.35)) !important;
         }
         .page-now-playing, #page-now-playing {
-            background: var(--bg-primary, #040404) !important;
+            background: var(--bg-primary, #070709) !important;
+        }
+        /* Squircles instead of pills throughout music app */
+        #search-block,
+        .modal-card,
+        button.rounded-full,
+        div.rounded-full:not(.avatar-circle) {
+            border-radius: 18px !important;
         }
         #top-white-fade-bar, #portrait-lock-overlay, #smallLogo, button[onclick="returnToMainHome()"] {
             display: none !important;

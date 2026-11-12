@@ -46,15 +46,20 @@
             min-height: 100vh;
             margin: 0;
             padding: 0;
-            padding-top: calc(var(--navbar-height, 64px) + 1.25rem);
+            padding-top: 2rem;
             padding-bottom: 7rem;
             overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .soundboard-layout {
             max-width: 1300px;
+            width: 100%;
             margin: 0 auto;
-            padding: 0 1.25rem;
+            padding: 0 1.5rem;
+            box-sizing: border-box;
+            flex: 1 0 auto;
         }
 
         /* Top Section Headers */
@@ -93,8 +98,8 @@
         .sound-card {
             background: var(--bg-card);
             border: 1px solid var(--border-main);
-            border-radius: 12px;
-            padding: 10px 12px;
+            border-radius: 16px;
+            padding: 10px 14px;
             min-height: 56px;
             display: flex;
             align-items: center;
@@ -331,7 +336,7 @@
     </style>
 </head>
 <body>
-    <div class="soundboard-layout">
+    <div id="page-content" class="soundboard-layout">
         <!-- Normal Sounds -->
         <section id="normalSection">
             <div class="section-header-wrap">

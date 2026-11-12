@@ -65,15 +65,17 @@
         #dynamic-background {
             position: fixed;
             inset: 0;
-            background: radial-gradient(circle at 65% 35%, var(--accent-glow), transparent 65%);
+            background: 
+                radial-gradient(circle 360px at 92% 10%, var(--accent-primary, #ff8800) 0%, rgba(255, 136, 0, 0.45) 45%, transparent 75%),
+                radial-gradient(circle 700px at 90% 14%, var(--accent-glow, rgba(255, 140, 0, 0.28)) 0%, transparent 65%);
             pointer-events: none;
             z-index: 0;
-            opacity: 0.55;
+            opacity: 0.9;
         }
 
         /* Thinner Gradient Text Animation */
         .gradient-text {
-            background-image: linear-gradient(90deg, #c084fc, #8b5cf6, #38bdf8, #c084fc);
+            background-image: linear-gradient(90deg, #ffd700, #ff8800, #f59e0b, #ffd700);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -87,13 +89,13 @@
             to { background-position: 300% center; }
         }
 
-        /* Hero Button (Fully Rounded Pill) */
+        /* Hero Button (Squircle) */
         .btn-primary-override {
             background-color: var(--btn-bg) !important;
             border: 1px solid var(--accent-color) !important;
             color: var(--accent-color) !important;
             outline: 1px solid var(--accent-glow);
-            border-radius: 9999px !important;
+            border-radius: 18px !important;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             font-weight: 500 !important;
             text-decoration: none;
@@ -106,7 +108,7 @@
             box-shadow: 0 12px 30px -8px var(--accent-glow);
         }
 
-        /* Fully Rounded Pill Action Buttons */
+        /* Squircle Action Buttons */
         .hero-btn-base {
             display: inline-flex;
             align-items: center;
@@ -115,7 +117,7 @@
             font-size: 0.85rem;
             font-weight: 400 !important;
             color: var(--text-muted);
-            border-radius: 9999px !important; 
+            border-radius: 14px !important; 
             text-decoration: none;
             background: var(--bg-card);
             border: 1px solid var(--border-main);
@@ -138,7 +140,7 @@
     <div id="dynamic-background"></div>
 
     <!-- Main Content Aligned to the Right -->
-    <main class="flex-1 min-w-0 flex items-center justify-end relative z-10 py-16 px-6 sm:px-12 md:px-16 lg:pr-24 xl:pr-32">
+    <main id="page-content" class="flex-1 min-w-0 flex items-center justify-end relative z-10 py-16 px-6 sm:px-12 md:px-16 lg:pr-24 xl:pr-32">
         <section class="text-right max-w-2xl sm:max-w-3xl ml-auto flex flex-col items-end">
             <h1 class="text-xs md:text-sm font-normal text-purple-400 uppercase tracking-widest mb-6 opacity-85 text-right">
                 Next-generation workspace &amp; entertainment platform
