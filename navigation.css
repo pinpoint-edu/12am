@@ -450,7 +450,22 @@ body.sidebar-collapsed:has(#settings-floating-dock) #settings-container {
 }
 
 .auth-menu-collapse:hover {
-  color: #ffffff;
+  background: var(--btn-bg, rgba(245, 158, 11, 0.14)) !important;
+  border-color: var(--border-main, rgba(255, 255, 255, 0.15)) !important;
+  color: var(--text-main, #ffffff) !important;
+  transform: translateX(2px);
+}
+
+.auth-menu-collapse:hover i {
+  color: var(--accent-color, #ff8800) !important;
+}
+
+.auth-menu-displayname {
+  color: var(--text-main, #ffffff) !important;
+}
+
+.auth-menu-handle {
+  color: var(--accent-color, #ff8800) !important;
 }
 
 /* ==========================================================================

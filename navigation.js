@@ -213,8 +213,8 @@
                         <div class="auth-menu-header" style="display: flex; align-items: center; gap: 12px; padding: 6px 4px 10px;">
                             <div style="flex-shrink: 0;">${menuAvatarHtml}</div>
                             <div style="min-width: 0; flex: 1;">
-                                <p class="auth-menu-displayname" style="margin: 0; font-size: 0.95rem; font-weight: 500; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(displayName)}</p>
-                                <p class="auth-menu-handle" style="margin: 2px 0 0; font-size: 0.78rem; color: #f59e0b;">@${escapeHtml(handle)}</p>
+                                <p class="auth-menu-displayname" style="margin: 0; font-size: 0.95rem; font-weight: 500; color: var(--text-main, #ffffff); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(displayName)}</p>
+                                <p class="auth-menu-handle" style="margin: 2px 0 0; font-size: 0.78rem; color: var(--accent-color, #ff8800);">@${escapeHtml(handle)}</p>
                             </div>
                         </div>
                         <div class="auth-menu-divider"></div>

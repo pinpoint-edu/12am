@@ -1,7 +1,7 @@
 window.__12AM_GAMES__ = [
   {
-    "title": "Yolk! - Minimalist Music",
-    "file": "yolk/index.html",
+    "title": "12AM Music",
+    "file": "music.html",
     "img": "yolk/icon-256.png",
     "sizeBytes": 983040,
     "isApp": true

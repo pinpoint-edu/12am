@@ -1147,10 +1147,10 @@
                 
                 <div class="w-full">
                     <!-- THEME SECTION -->
-                    <h3 class="text-xl font-bold text-[var(--text-main)] mb-2">Navigation Bar Theme</h3>
-                    <div id="themeSection" class="settings-box transition-all duration-300 p-4">
-                        <p class="text-sm font-light text-[var(--text-muted)] opacity-60 mb-4">
-                            Select a theme for your navigation bar. This setting is saved locally and will apply a live preview.
+                    <h3 class="text-xl font-bold text-[var(--text-main)] mb-2">Theme Selection</h3>
+                    <div id="themeSection" class="settings-box transition-all duration-300 p-6 mb-8">
+                        <p class="text-sm font-light text-[var(--text-muted)] opacity-70 mb-4">
+                            Select a curated theme for 12AM. Your choice is instantly applied across navigation, music, apps, and controls.
                         </p>
                         
                         <div id="theme-picker-container">
@@ -1159,7 +1159,68 @@
                             </div>
                         </div>
                         
-                        <div id="themeMessage" class="general-message-area text-sm"></div>
+                        <div id="themeMessage" class="general-message-area text-sm mt-3"></div>
+                    </div>
+
+                    <!-- CUSTOM THEME CREATOR -->
+                    <h3 class="text-xl font-bold text-[var(--text-main)] mb-2">Create Custom Theme</h3>
+                    <div id="customThemeSection" class="settings-box transition-all duration-300 p-6">
+                        <p class="text-sm font-light text-[var(--text-muted)] opacity-70 mb-5">
+                            Craft your own custom theme by choosing 1 to 3 colors. Primary accent is required, while background shade and glow are optional.
+                        </p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
+                            <!-- Color 1: Primary Accent (Required) -->
+                            <div class="flex flex-col gap-2.5 p-4 rounded-2xl border border-[var(--border-main)] bg-[var(--bg-page)]">
+                                <label class="text-xs font-semibold text-[var(--text-main)] flex items-center justify-between">
+                                    <span>1. Primary Accent <span class="text-[var(--accent-color)]">*</span></span>
+                                    <span id="hexLabel1" class="font-mono text-[11px] text-[var(--text-muted)]">#ff8800</span>
+                                </label>
+                                <div class="flex items-center gap-3">
+                                    <input type="color" id="customColor1" value="#ff8800" class="w-10 h-10 rounded-xl cursor-pointer bg-transparent border-0">
+                                    <span class="text-xs text-[var(--text-muted)]">Buttons, icons &amp; highlights</span>
+                                </div>
+                            </div>
+
+                            <!-- Color 2: Background Shade (Optional) -->
+                            <div class="flex flex-col gap-2.5 p-4 rounded-2xl border border-[var(--border-main)] bg-[var(--bg-page)]">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-xs font-semibold text-[var(--text-main)]">2. Background Tint</label>
+                                    <div class="flex items-center gap-1.5">
+                                        <input type="checkbox" id="enableColor2" class="cursor-pointer">
+                                        <label for="enableColor2" class="text-[11px] text-[var(--text-muted)] cursor-pointer">Enable</label>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <input type="color" id="customColor2" value="#0a0a0f" disabled class="w-10 h-10 rounded-xl cursor-pointer bg-transparent border-0 opacity-40">
+                                    <span id="descColor2" class="text-xs text-[var(--text-muted)] opacity-60">Defaults to deep carbon black</span>
+                                </div>
+                            </div>
+
+                            <!-- Color 3: Secondary Glow (Optional) -->
+                            <div class="flex flex-col gap-2.5 p-4 rounded-2xl border border-[var(--border-main)] bg-[var(--bg-page)]">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-xs font-semibold text-[var(--text-main)]">3. Glow / Secondary</label>
+                                    <div class="flex items-center gap-1.5">
+                                        <input type="checkbox" id="enableColor3" class="cursor-pointer">
+                                        <label for="enableColor3" class="text-[11px] text-[var(--text-muted)] cursor-pointer">Enable</label>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <input type="color" id="customColor3" value="#ffd700" disabled class="w-10 h-10 rounded-xl cursor-pointer bg-transparent border-0 opacity-40">
+                                    <span id="descColor3" class="text-xs text-[var(--text-muted)] opacity-60">Defaults to primary glow</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Name & Actions Row -->
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+                            <input type="text" id="customThemeNameInput" placeholder="Name your theme (e.g. Solar Eclipse)..." maxlength="20" class="input-text-style flex-1">
+                            <button type="button" id="saveCustomThemeBtn" class="btn-toolbar-style btn-primary-override px-6 py-2.5 font-medium shrink-0">
+                                <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Create &amp; Apply
+                            </button>
+                        </div>
+                        <div id="customThemeMessage" class="general-message-area text-sm mt-3"></div>
                     </div>
                 </div>
              `;
@@ -2777,7 +2838,7 @@
             let currentColor = devUser?.avatar_color || '#ffffff';
 
             mainView.innerHTML = `
-                <div class="w-full max-w-2xl">
+                <div class="w-full max-w-5xl">
                     <h2 class="text-3xl font-bold text-[var(--text-main)] mb-6">General Settings</h2>
 
                     <!-- 1. Profile Picture Section (Unified with Mibi & Letter Creator) -->
@@ -3598,7 +3659,7 @@
 
         /**
          * Loads data and adds event listeners for the Personalization tab.
-         * Exclusively handles Theme Selection now that PFP is in General.
+         * Exclusively handles Theme Selection and Custom Theme Creator.
          */
         async function loadPersonalizationTab() {
             const themePickerContainer = document.getElementById('theme-picker-container');
@@ -3607,118 +3668,153 @@
 
             const lightThemeNames = ['Light'];
 
-            try {
-                // 1. Fetch themes
-                let themes = [];
-                try {
-                    const response = await fetch('themes.json');
-                    if (response.ok) {
-                        themes = await response.json();
-                    }
-                } catch(e) {}
-
-                if (!themes || themes.length === 0) {
-                    if (window.EMBEDDED_THEMES) {
-                        themes = window.EMBEDDED_THEMES;
-                    }
-                }
-
-                if (!themes || themes.length === 0) {
-                    throw new Error('Could not load themes list');
-                }
-
-                // 2. Get currently saved theme to set the active state
+            function renderThemesGrid() {
+                const allAvail = window.getThemes ? window.getThemes() : [];
                 let savedTheme = null;
                 try {
                     savedTheme = JSON.parse(localStorage.getItem(THEME_STORAGE_KEY));
-                } catch (e) {
-                    console.warn('Could not parse saved theme.');
-                }
+                } catch (e) {}
                 const activeThemeName = savedTheme ? savedTheme.name : 'Original';
 
-                // 3. Process and render themes
                 let themeButtonsHtml = '';
-                
-                for (const theme of themes) {
+                for (const theme of allAvail) {
                     if (lightThemeNames.includes(theme.name)) {
                         theme['logo-src'] = '/images/logo-dark.png'; 
                     } else {
                         theme['logo-src'] = '/images/logo.png';
                     }
                     
-                    const isActive = (theme.name === activeThemeName);
-                    
+                    const isActive = (theme.name.toLowerCase() === activeThemeName.toLowerCase());
                     let activeText = theme['text-primary'] || theme['tab-active-text'] || '#ffffff';
-                    if (lightThemeNames.includes(theme.name)) {
-                        activeText = '#12131c';
-                    }
+                    if (lightThemeNames.includes(theme.name)) activeText = '#12131c';
+
                     const activeBorder = theme['accent-primary'] || theme['tab-active-border'] || '#ff8c00';
-                    const activeBg = theme['avatar-gradient'] || theme['bg-primary'] || theme['navbar-bg'] || '#000000'; 
-                    
+                    const activeBg = theme['bg-primary'] || '#08080a';
                     const hoverText = lightThemeNames.includes(theme.name) ? '#12131c' : (theme['text-primary'] || '#ffffff');
                     const hoverBorder = theme['accent-primary'] || '#ff8c00';
-                    const hoverBg = theme['accent-secondary'] || 'rgba(255, 140, 0, 0.2)';
+                    const hoverBg = theme['button-bg'] || 'rgba(255, 140, 0, 0.2)';
 
                     themeButtonsHtml += `
-                        <button 
-                            class="theme-button ${isActive ? 'active' : ''}" 
-                            data-theme-name="${theme.name}" 
-                            style="
-                                color: ${activeText} !important; 
-                                font-weight: 500;
-                                border-color: ${activeBorder}; 
-                                background: ${activeBg};
-                                --hover-color: ${hoverText};
-                                --hover-border: ${hoverBorder};
-                                --hover-bg: ${hoverBg};
-                            "
-                        >
-                            ${theme.name}
-                        </button>
+                        <div class="relative group">
+                            <button 
+                                type="button"
+                                class="theme-button ${isActive ? 'active' : ''}" 
+                                data-theme-name="${escapeHtml(theme.name)}" 
+                                style="
+                                    color: ${activeText} !important; 
+                                    font-weight: 500;
+                                    border-color: ${activeBorder}; 
+                                    background: ${activeBg};
+                                    --hover-color: ${hoverText};
+                                    --hover-border: ${hoverBorder};
+                                    --hover-bg: ${hoverBg};
+                                    position: relative;
+                                "
+                            >
+                                <span>${escapeHtml(theme.name)}</span>
+                            </button>
+                            ${theme.isCustom ? `
+                                <button type="button" class="delete-custom-theme-btn absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500/80 hover:bg-red-600 text-white flex items-center justify-center text-[10px] cursor-pointer shadow-md transition-all" data-delete-name="${escapeHtml(theme.name)}" title="Delete custom theme">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            ` : ''}
+                        </div>
                     `;
                 }
 
                 themePickerContainer.innerHTML = themeButtonsHtml;
-                
-                // 4. Add event listeners
-                const themeButtons = themePickerContainer.querySelectorAll('.theme-button');
-                themeButtons.forEach(button => {
+
+                // Wire up theme buttons
+                themePickerContainer.querySelectorAll('.theme-button').forEach(button => {
                     button.addEventListener('click', async () => {
                         const themeName = button.dataset.themeName;
-                        const themeToApply = themes.find(t => t.name === themeName);
+                        const themeToApply = allAvail.find(t => t.name.toLowerCase() === themeName.toLowerCase());
                         
                         if (themeToApply) {
-                            // 1. Save to localStorage
-                            localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(themeToApply));
-                            
-                            // 2. Apply theme for live preview
                             if (window.applyTheme) {
-                                window.applyTheme(themeToApply);
+                                window.applyTheme(themeToApply, true);
                             }
-
-                            // 3. Save to user profile if logged in
                             if (currentUser) {
                                 try {
                                     const uId = currentUser.uid || currentUser.deviceToken || currentUser.id || 'local_user';
                                     await saveUserData(uId, { navbarTheme: themeToApply });
-                                } catch (error) {
-                                    console.error('Error saving theme:', error);
-                                }
+                                } catch (error) {}
                             }
-                            
-                            // 4. Update active class
-                            themeButtons.forEach(btn => btn.classList.remove('active'));
-                            button.classList.add('active');
-                            
-                            // 5. Show success message
+                            renderThemesGrid();
                             showMessage(themeMessage, `${themeToApply.name} theme applied!`, 'success');
                         }
                     });
                 });
 
-            } catch (error) {
-                console.error('Error loading themes:', error);
-                themePickerContainer.innerHTML = `<p class="text-red-400">Error: Could not load themes. (${error.message})</p>`;
+                // Wire up custom delete buttons
+                themePickerContainer.querySelectorAll('.delete-custom-theme-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const delName = btn.dataset.deleteName;
+                        if (confirm(`Delete custom theme "${delName}"?`)) {
+                            if (window.deleteCustomTheme) {
+                                window.deleteCustomTheme(delName);
+                            }
+                            renderThemesGrid();
+                            showMessage(themeMessage, `Custom theme "${delName}" deleted.`, 'info');
+                        }
+                    });
+                });
+            }
+
+            renderThemesGrid();
+
+            // Wire up Custom Theme Creator (1 to 3 colors)
+            const customColor1 = document.getElementById('customColor1');
+            const customColor2 = document.getElementById('customColor2');
+            const customColor3 = document.getElementById('customColor3');
+            const enableColor2 = document.getElementById('enableColor2');
+            const enableColor3 = document.getElementById('enableColor3');
+            const hexLabel1 = document.getElementById('hexLabel1');
+            const customThemeNameInput = document.getElementById('customThemeNameInput');
+            const saveCustomThemeBtn = document.getElementById('saveCustomThemeBtn');
+            const customThemeMessage = document.getElementById('customThemeMessage');
+
+            if (customColor1 && hexLabel1) {
+                customColor1.addEventListener('input', () => {
+                    hexLabel1.textContent = customColor1.value;
+                });
+            }
+
+            if (enableColor2 && customColor2) {
+                enableColor2.addEventListener('change', () => {
+                    customColor2.disabled = !enableColor2.checked;
+                    customColor2.classList.toggle('opacity-40', !enableColor2.checked);
+                    const desc2 = document.getElementById('descColor2');
+                    if (desc2) desc2.textContent = enableColor2.checked ? 'Custom background tint' : 'Defaults to deep carbon black';
+                });
+            }
+
+            if (enableColor3 && customColor3) {
+                enableColor3.addEventListener('change', () => {
+                    customColor3.disabled = !enableColor3.checked;
+                    customColor3.classList.toggle('opacity-40', !enableColor3.checked);
+                    const desc3 = document.getElementById('descColor3');
+                    if (desc3) desc3.textContent = enableColor3.checked ? 'Custom secondary glow' : 'Defaults to primary glow';
+                });
+            }
+
+            if (saveCustomThemeBtn) {
+                saveCustomThemeBtn.addEventListener('click', () => {
+                    const c1 = customColor1 ? customColor1.value : '#ff8800';
+                    const c2 = (enableColor2 && enableColor2.checked && customColor2) ? customColor2.value : null;
+                    const c3 = (enableColor3 && enableColor3.checked && customColor3) ? customColor3.value : null;
+                    const name = (customThemeNameInput && customThemeNameInput.value.trim()) ? customThemeNameInput.value.trim() : 'Custom Theme';
+
+                    if (window.createCustomTheme) {
+                        const created = window.createCustomTheme(name, c1, c2, c3);
+                        renderThemesGrid();
+                        showMessage(customThemeMessage, `Theme "${created.name}" created and applied!`, 'success');
+                        if (customThemeNameInput) customThemeNameInput.value = '';
+                    } else {
+                        showMessage(customThemeMessage, 'Theme engine not ready.', 'error');
+                    }
+                });
             }
         }
         

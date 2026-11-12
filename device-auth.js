@@ -398,7 +398,7 @@
                         <div style="margin-bottom: 0.85rem; box-shadow: 0 12px 28px rgba(0,0,0,0.6);">
                             ${render12AMAvatar(bound, 64, '24px', '20px')}
                         </div>
-                        <h2 style="font-size: 1.25rem; font-weight: 500; margin: 0 0 4px; color: #fff;">${escapeHtml(displayName)}</h2>
+                        <h2 style="font-size: 1.25rem; font-weight: 500; margin: 0 0 4px; color: var(--text-main, #ffffff);">${escapeHtml(displayName)}</h2>
                         <p style="font-size: 0.85rem; color: var(--accent-primary, #ff8800); margin: 0; font-family: monospace; font-weight: 500;">@${escapeHtml(handle)}</p>
                     </div>
 

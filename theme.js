@@ -15,9 +15,10 @@
 
     const THEME_STORAGE_KEY = "12am-theme";
     const LEGACY_STORAGE_KEY = "user-navbar-theme";
+    const CUSTOM_THEMES_KEY = "12am-custom-themes";
     const lightThemeNames = ["Light"];
 
-    // Refined core themes with "Original" (sunset orange & gold on dark background) as the first and default
+    // Embedded Curated Themes with "Original" as default
     const EMBEDDED_THEMES = [
     {
         "name": "Original",
@@ -320,27 +321,70 @@
         "avatar-gradient": "linear-gradient(135deg, #facc15 0%, #ca8a04 100%)",
         "logo-src": "/images/logo.png"
     }
-]
+];
+
+    function hexToRgba(hex, alpha) {
+        if (!hex || typeof hex !== 'string') return "rgba(245, 158, 11, " + alpha + ")";
+        if (hex.startsWith('rgba') || hex.startsWith('rgb')) return hex;
+        let clean = hex.replace('#', '');
+        if (clean.length === 3) clean = clean.split('').map(c => c + c).join('');
+        const num = parseInt(clean, 16);
+        if (isNaN(num)) return "rgba(245, 158, 11, " + alpha + ")";
+        const r = (num >> 16) & 255;
+        const g = (num >> 8) & 255;
+        const b = num & 255;
+        return "rgba(" + r + ", " + g + ", " + b + ", " + alpha + ")";
+    }
+
+    function adjustHex(hex, percent) {
+        if (!hex || typeof hex !== 'string' || !hex.startsWith('#')) return hex || '#000000';
+        let clean = hex.replace('#', '');
+        if (clean.length === 3) clean = clean.split('').map(c => c + c).join('');
+        let num = parseInt(clean, 16);
+        if (isNaN(num)) return hex;
+        let r = Math.min(255, Math.max(0, ((num >> 16) & 255) + Math.round(255 * (percent / 100))));
+        let g = Math.min(255, Math.max(0, ((num >> 8) & 255) + Math.round(255 * (percent / 100))));
+        let b = Math.min(255, Math.max(0, (num & 255) + Math.round(255 * (percent / 100))));
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+
+    function loadCustomThemes() {
+        try {
+            const raw = localStorage.getItem(CUSTOM_THEMES_KEY);
+            if (raw) {
+                const list = JSON.parse(raw);
+                if (Array.isArray(list)) return list;
+            }
+        } catch (e) {}
+        return [];
+    }
 
     const DEFAULT_THEME = EMBEDDED_THEMES[0];
-    let allThemes = EMBEDDED_THEMES;
+    let allThemes = [...EMBEDDED_THEMES, ...loadCustomThemes()];
     let currentTheme = DEFAULT_THEME;
 
+    function mergeThemes(fetchedList) {
+        const base = (Array.isArray(fetchedList) && fetchedList.length > 0) ? fetchedList : EMBEDDED_THEMES;
+        const customs = loadCustomThemes();
+        allThemes = [...base, ...customs];
+        window.__12am_themes = allThemes;
+    }
+
     async function fetchThemes() {
+        let fetched = null;
         try {
             if (window.location.protocol.startsWith("http")) {
                 const res = await fetch("themes.json");
                 if (res.ok) {
                     const list = await res.json();
                     if (Array.isArray(list) && list.length > 0) {
-                        allThemes = list;
+                        fetched = list;
                     }
                 }
             }
-        } catch (e) {
-            // Keep embedded themes on file:/// or fetch failure
-        }
-        window.__12am_themes = allThemes;
+        } catch (e) {}
+        mergeThemes(fetched);
+
         const saved = getSavedThemeName();
         const matched = allThemes.find(t => t.name.toLowerCase() === saved.toLowerCase());
         if (matched) {
@@ -384,21 +428,21 @@
         root.style.setProperty("--bg-card", theme["bg-secondary"] || "#0c0c10");
         root.style.setProperty("--text-main", theme["text-primary"] || "#ffffff");
         root.style.setProperty("--text-muted", theme["text-secondary"] || "#c8c8d4");
-        root.style.setProperty("--accent-color", theme["accent-primary"] || "#f59e0b");
-        root.style.setProperty("--accent-glow", theme["accent-secondary"] || "rgba(245, 158, 11, 0.45)");
+        root.style.setProperty("--accent-color", theme["accent-primary"] || "#ff8800");
+        root.style.setProperty("--accent-glow", theme["accent-secondary"] || "rgba(255, 136, 0, 0.45)");
         root.style.setProperty("--border-main", theme["border-primary"] || "#1c1c24");
-        root.style.setProperty("--border-faint", theme["border-secondary"] || "rgba(245, 158, 11, 0.12)");
-        root.style.setProperty("--btn-bg", theme["button-bg"] || "rgba(245, 158, 11, 0.14)");
-        root.style.setProperty("--btn-text", theme["button-text"] || "#f59e0b");
+        root.style.setProperty("--border-faint", theme["border-secondary"] || "rgba(255, 136, 0, 0.12)");
+        root.style.setProperty("--btn-bg", theme["button-bg"] || "#14100c");
+        root.style.setProperty("--btn-text", theme["button-text"] || "#ff8800");
 
         const dynamicBg = document.getElementById("dynamic-background");
         if (dynamicBg) {
-            const glowColor = theme["accent-secondary"] || "rgba(245, 158, 11, 0.45)";
+            const glowColor = theme["accent-secondary"] || "rgba(255, 136, 0, 0.45)";
             dynamicBg.style.background = `radial-gradient(circle at 50% 20%, ${glowColor}, transparent 65%)`;
         }
 
-        // AMOLED Midnight Detection & 20% Player Brightness Reduction
-        const isAmoled = theme.name === 'AMOLED Midnight' || (theme.name && theme.name.toLowerCase().includes('amoled'));
+        // AMOLED Detection & 20% Player Brightness Reduction
+        const isAmoled = theme.name === 'AMOLED' || theme.name === 'AMOLED Midnight' || (theme.name && theme.name.toLowerCase().includes('amoled'));
         if (isAmoled) {
             root.classList.add("theme-amoled-midnight");
         } else {
@@ -416,6 +460,7 @@
                 html.theme-amoled-midnight #streamIframe,
                 html.theme-amoled-midnight #playerModal iframe,
                 html.theme-amoled-midnight #playerModal video,
+                html.theme-amoled-midnight #moss-player-frame,
                 html.theme-amoled-midnight .stream-iframe {
                     filter: brightness(0.8) !important;
                     transition: filter 0.3s ease;
@@ -454,7 +499,7 @@
         const prefix = window.location.pathname.includes("/logged-in/") ? "../" : "";
         const noFilterThemes = ['Dark', 'Light', 'Christmas'];
         const isNoFilter = noFilterThemes.includes(theme.name);
-        const tintColor = theme['accent-primary'] || theme['tab-active-text'] || '#f59e0b';
+        const tintColor = theme['accent-primary'] || theme['tab-active-text'] || '#ff8800';
 
         logos.forEach(img => {
             if (!img) return;
@@ -489,11 +534,81 @@
         return false;
     }
 
+    function saveCustomTheme(themeObj) {
+        if (!themeObj || !themeObj.name) return false;
+        themeObj.isCustom = true;
+        const customs = loadCustomThemes().filter(t => t.name.toLowerCase() !== themeObj.name.toLowerCase());
+        customs.push(themeObj);
+        try {
+            localStorage.setItem(CUSTOM_THEMES_KEY, JSON.stringify(customs));
+        } catch (e) {}
+        mergeThemes();
+        applyTheme(themeObj, true);
+        window.dispatchEvent(new CustomEvent("12am:themes-ready", { detail: allThemes }));
+        return true;
+    }
+
+    function deleteCustomTheme(name) {
+        if (!name) return false;
+        const customs = loadCustomThemes().filter(t => t.name.toLowerCase() !== name.toLowerCase());
+        try {
+            localStorage.setItem(CUSTOM_THEMES_KEY, JSON.stringify(customs));
+        } catch (e) {}
+        mergeThemes();
+        if (currentTheme && currentTheme.name.toLowerCase() === name.toLowerCase()) {
+            applyTheme(DEFAULT_THEME, true);
+        }
+        window.dispatchEvent(new CustomEvent("12am:themes-ready", { detail: allThemes }));
+        return true;
+    }
+
+    function createCustomTheme(name, color1, color2, color3) {
+        if (!color1) return null;
+        const bg1 = color2 || "#060608";
+        const bg2 = color2 ? adjustHex(color2, 14) : "#0d0d12";
+        const sec = color3 || color1;
+        const btnBg = color2 ? adjustHex(color2, 8) : "#0e0e14";
+        const themeName = name ? name.trim().slice(0, 20) : ("Custom " + (loadCustomThemes().length + 1));
+
+        const theme = {
+            name: themeName,
+            description: `Custom 12AM colorway (${[color1, color2, color3].filter(Boolean).join(', ')})`,
+            isCustom: true,
+            "bg-primary": bg1,
+            "bg-secondary": bg2,
+            "text-primary": "#ffffff",
+            "text-secondary": adjustHex(color1, 40),
+            "accent-primary": color1,
+            "accent-secondary": hexToRgba(sec, 0.45),
+            "accent-glow": hexToRgba(sec, 0.35),
+            "navbar-bg": hexToRgba(bg2, 0.88),
+            "navbar-border": hexToRgba(color1, 0.28),
+            "navbar-text": "#ffffff",
+            "tab-active-bg": hexToRgba(color1, 0.18),
+            "tab-active-text": color1,
+            "tab-active-border": color1,
+            "tab-hover-bg": "rgba(255, 255, 255, 0.05)",
+            "tab-hover-text": "#ffffff",
+            "button-bg": btnBg,
+            "button-text": color1,
+            "border-primary": hexToRgba(color1, 0.22),
+            "border-secondary": "rgba(255, 255, 255, 0.06)",
+            "avatar-gradient": `linear-gradient(135deg, ${color1} 0%, ${sec} 100%)`,
+            "logo-src": "/images/logo.png"
+        };
+        saveCustomTheme(theme);
+        return theme;
+    }
+
     window.applyTheme = applyTheme;
     window.setThemeByName = setThemeByName;
     window.getThemes = () => allThemes;
     window.getCurrentTheme = () => currentTheme;
     window.DEFAULT_THEME = DEFAULT_THEME;
+    window.saveCustomTheme = saveCustomTheme;
+    window.deleteCustomTheme = deleteCustomTheme;
+    window.createCustomTheme = createCustomTheme;
+    window.loadCustomThemes = loadCustomThemes;
 
     // Apply saved theme immediately
     try {

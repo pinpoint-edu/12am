@@ -563,22 +563,8 @@
             font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important;
         }
 
-        /* Top Small Fade Effect (theme-adaptive white/black gradient to prevent harsh cut off) */
+        /* Top Small Fade Effect completely removed */
         #top-white-fade-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 38px;
-            background: linear-gradient(180deg, #FCFBF8 0%, rgba(252, 251, 248, 0.88) 45%, rgba(252, 251, 248, 0) 100%);
-            z-index: 28;
-            pointer-events: none;
-            transition: background 0.15s ease, opacity 0.2s ease;
-        }
-        body.dark-mode #top-white-fade-bar {
-            background: linear-gradient(180deg, #0c0c0e 0%, rgba(12, 12, 14, 0.88) 45%, rgba(12, 12, 14, 0) 100%);
-        }
-        body[data-page="now-playing"] #top-white-fade-bar {
             display: none !important;
             opacity: 0 !important;
             pointer-events: none !important;
@@ -2204,7 +2190,7 @@
     <script type="module" src="supabase-config.js"></script>
     <script src="device-auth.js"></script>
     <script src="navigation.js" defer></script>
-    <style>
+    <style id="12am-music-redesign">
         :root {
             --parabola-ease: cubic-bezier(0.16, 1, 0.3, 1);
             --bg-page: var(--bg-primary, #070709);
@@ -2214,110 +2200,300 @@
             --accent-color: var(--accent-primary, #ff8800);
             --accent-glow: var(--accent-secondary, rgba(255, 136, 0, 0.4));
             --border-main: var(--border-primary, rgba(255, 140, 0, 0.26));
+            --btn-bg: var(--button-bg, #14100c);
         }
+
         *, html, body, input, button, select, textarea {
             font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif !important;
         }
-        html, body {
+
+        /* 1. Global Background & Text Theme Sync */
+        html, body, .page, #page-search, #page-library, #page-now-playing, #page-artist, #page-album, #page-settings {
             background-color: var(--bg-primary, #070709) !important;
-            color: var(--text-main, #ffffff) !important;
-            overflow-x: hidden;
+            color: var(--text-primary, #ffffff) !important;
         }
+
         body {
             padding-top: 1rem !important;
         }
-        .dark, .dark-mode {
-            background-color: var(--bg-primary, #070709) !important;
-            color: var(--text-main, #ffffff) !important;
+
+        /* 2. Hide Global Footer on Music & Remove TV Nav & Remove Search Top Fade */
+        #minimal-footer-cluster,
+        #top-white-fade-bar,
+        #now-playing-top-safari-fade,
+        #now-playing-top-fade,
+        #portrait-lock-overlay,
+        #smallLogo,
+        button[onclick="returnToMainHome()"],
+        #tv-remote-hud,
+        .tv-hud-bar {
+            display: none !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
         }
-        /* Top navbar squircle in music */
+
+        /* Dynamic cover tint: subtle opacity so it doesn't wash away the theme */
+        #dynamic-cover-tint, #page-artist-cover-tint, #page-album-cover-tint {
+            opacity: 0.22 !important;
+        }
+
+        /* 3. Left-Dock Squircle Roundness Scale Across Entire Music UI */
+        /* Large containers / cards: 18px squircle */
+        #top-nav-bar,
+        #bottom-player,
+        #search-block,
+        .modal-card,
+        .settings-box,
+        .bg-white\/85,
+        .dark\:bg-zinc-900\/85,
+        div[class*="rounded-3xl"] {
+            border-radius: 18px !important;
+        }
+
+        /* Medium elements (cards, song rows, dialogs): 14px squircle */
+        .search-result-card,
+        .song-item,
+        .library-card,
+        .eq-preset-row,
+        div[class*="rounded-2xl"],
+        #searchInput {
+            border-radius: 14px !important;
+        }
+
+        /* Buttons & interactive items: 12px squircle (NO pills / NO circular buttons) */
+        #top-nav-bar a,
+        #bp-desktop-nav a,
+        #play-pause-btn,
+        #now-playing-play-pause-btn,
+        .theme-choice-btn,
+        .crossfade-preset-pill,
+        .yolk-switch-btn,
+        .bubbly-hover,
+        button[class*="rounded-full"],
+        a[class*="rounded-full"],
+        .settings-icon-box {
+            border-radius: 12px !important;
+        }
+
+        /* Artwork & media thumbnails: 10px squircle */
+        #bottom-player-artwork,
+        .song-artwork,
+        .track-artwork,
+        img[class*="rounded-"],
+        div[class*="rounded-xl"] {
+            border-radius: 10px !important;
+        }
+
+        /* Small badges: 8px squircle */
+        span[class*="rounded-full"],
+        .badge {
+            border-radius: 8px !important;
+        }
+
+        /* 4. Complete Theme Styling & Overrides for Music Components */
+        /* Top Navigation Bar */
         #main-header {
             top: 1rem !important;
         }
+
         #top-nav-bar {
-            background: var(--navbar-bg, var(--bg-secondary, rgba(12, 11, 15, 0.92))) !important;
+            background: var(--navbar-bg, var(--bg-secondary, rgba(14, 14, 18, 0.92))) !important;
             border: 1px solid var(--navbar-border, var(--border-primary, rgba(255, 140, 0, 0.28))) !important;
-            backdrop-filter: blur(18px) !important;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
-            border-radius: 18px !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6) !important;
         }
-        #top-nav-bar a:not(.yolk-active) {
-            color: var(--text-muted, #a1a1aa) !important;
-            border-radius: 12px !important;
+
+        #top-nav-bar a:not(.yolk-active),
+        #bp-desktop-nav a:not(.yolk-active) {
+            color: var(--text-secondary, #a1a1aa) !important;
+            background: transparent !important;
         }
-        #top-nav-bar a:not(.yolk-active):hover {
-            color: var(--text-main, #ffffff) !important;
+
+        #top-nav-bar a:not(.yolk-active):hover,
+        #bp-desktop-nav a:not(.yolk-active):hover {
+            color: var(--text-primary, #ffffff) !important;
+            background: rgba(255, 255, 255, 0.05) !important;
         }
-        #top-nav-bar a.yolk-active, .yolk-active {
+
+        #top-nav-bar a.yolk-active,
+        #bp-desktop-nav a.yolk-active,
+        .yolk-active {
             background: var(--accent-primary, #ff8800) !important;
             color: #ffffff !important;
-            border-radius: 12px !important;
-            box-shadow: 0 0 14px var(--accent-secondary, rgba(255, 136, 0, 0.45)) !important;
+            box-shadow: 0 0 16px var(--accent-secondary, rgba(255, 136, 0, 0.45)) !important;
         }
-        /* Pushed down search block */
+
+        /* Search input bar */
         body.is-loaded:not(.is-searching) #search-block {
             top: calc(50% + 14px) !important;
         }
         body.is-searching #search-block {
             top: 4.5rem !important;
         }
-        #bottom-player {
-            background: var(--bg-secondary, rgba(14, 14, 18, 0.95)) !important;
-            border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.12)) !important;
-            border-radius: 20px !important;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 18px var(--accent-secondary, rgba(255, 136, 0, 0.2)) !important;
-        }
-        #bottom-player-title { color: var(--text-main, #ffffff) !important; }
-        #bottom-player-artist { color: var(--text-muted, #ffd700) !important; }
-        #bottom-player-progress-fill, #now-playing-progress-fill {
-            background: var(--accent-primary, #ff8800) !important;
-            box-shadow: 0 0 12px var(--accent-secondary, rgba(255, 136, 0, 0.5)) !important;
-            border-radius: 6px !important;
-        }
+
         #searchInput {
-            background: var(--bg-secondary, rgba(18, 18, 22, 0.9)) !important;
+            background: var(--bg-secondary, rgba(16, 16, 22, 0.92)) !important;
             border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.14)) !important;
-            color: var(--text-main, #ffffff) !important;
-            border-radius: 18px !important;
+            color: var(--text-primary, #ffffff) !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
         }
+
         #searchInput:focus {
             border-color: var(--accent-primary, #ff8800) !important;
             box-shadow: 0 0 0 3px var(--accent-secondary, rgba(255, 136, 0, 0.35)) !important;
         }
-        .page-now-playing, #page-now-playing {
-            background: var(--bg-primary, #070709) !important;
+
+        /* Bottom Player */
+        #bottom-player {
+            background: var(--bg-secondary, rgba(14, 14, 18, 0.95)) !important;
+            border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.12)) !important;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.85), 0 0 20px var(--accent-secondary, rgba(255, 136, 0, 0.18)) !important;
+            backdrop-filter: blur(24px) !important;
+            -webkit-backdrop-filter: blur(24px) !important;
         }
-        /* Squircles instead of pills throughout music app */
-        #search-block,
-        .modal-card,
-        button.rounded-full,
-        div.rounded-full:not(.avatar-circle) {
-            border-radius: 18px !important;
+
+        #bottom-player-title {
+            color: var(--text-primary, #ffffff) !important;
+            font-weight: 500 !important;
         }
-        #top-white-fade-bar, #portrait-lock-overlay, #smallLogo, button[onclick="returnToMainHome()"] {
-            display: none !important;
+
+        #bottom-player-artist {
+            color: var(--text-secondary, #ffd700) !important;
+        }
+
+        #bottom-player-progress-fill,
+        #now-playing-progress-fill {
+            background: var(--accent-primary, #ff8800) !important;
+            box-shadow: 0 0 12px var(--accent-glow, rgba(255, 136, 0, 0.5)) !important;
+            border-radius: 6px !important;
+        }
+
+        /* Play/Pause Button in Bottom Player */
+        #play-pause-btn {
+            background: var(--button-bg, #14100c) !important;
+            border: 1px solid var(--accent-primary, #ff8800) !important;
+            color: var(--accent-primary, #ff8800) !important;
+            transition: all 0.2s ease !important;
+        }
+
+        #play-pause-btn:hover {
+            background: var(--accent-primary, #ff8800) !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 14px var(--accent-glow, rgba(255, 136, 0, 0.5)) !important;
+            transform: scale(1.05);
+        }
+
+        /* Card background overrides in Library & Settings */
+        .bg-white\/85,
+        .dark\:bg-zinc-900\/85,
+        .bg-white,
+        .dark\:bg-zinc-900 {
+            background: var(--bg-secondary, #0f0f14) !important;
+            border-color: var(--border-primary, rgba(255, 255, 255, 0.08)) !important;
+        }
+
+        .bg-zinc-100,
+        .dark\:bg-zinc-800 {
+            background: var(--btn-bg, #14100c) !important;
+            border-color: var(--border-primary, rgba(255, 255, 255, 0.08)) !important;
+        }
+
+        /* Text colors across list items */
+        .text-zinc-900,
+        .dark\:text-white,
+        .dark\:text-zinc-100 {
+            color: var(--text-primary, #ffffff) !important;
+        }
+
+        .text-zinc-500,
+        .text-zinc-400,
+        .dark\:text-zinc-400,
+        .dark\:text-zinc-500 {
+            color: var(--text-secondary, #ffd700) !important;
+        }
+
+        /* Crossfade preset buttons */
+        .crossfade-preset-pill.bg-zinc-900,
+        .crossfade-preset-pill.active {
+            background: var(--accent-primary, #ff8800) !important;
+            color: #ffffff !important;
+            border-color: var(--accent-primary, #ff8800) !important;
+            box-shadow: 0 0 10px var(--accent-glow, rgba(255, 136, 0, 0.4)) !important;
+        }
+
+        .crossfade-preset-pill:not(.bg-zinc-900):not(.active) {
+            background: var(--btn-bg, #14100c) !important;
+            color: var(--text-secondary, #ffd700) !important;
+            border-color: var(--border-primary, rgba(255, 255, 255, 0.08)) !important;
+        }
+
+        /* EQ row active item */
+        .eq-preset-row.is-active {
+            border-color: var(--accent-primary, #ff8800) !important;
+            background: var(--btn-bg, #14100c) !important;
+        }
+
+        .eq-preset-row.is-active .eq-dot {
+            background: var(--accent-primary, #ff8800) !important;
+            box-shadow: 0 0 8px var(--accent-primary, #ff8800) !important;
+        }
+
+        /* Switches */
+        .yolk-switch-btn.is-on {
+            background: var(--accent-primary, #ff8800) !important;
+            border-color: var(--accent-primary, #ff8800) !important;
+            box-shadow: 0 0 10px var(--accent-glow, rgba(255, 136, 0, 0.4)) !important;
+        }
+
+        /* Range Sliders */
+        input[type="range"] {
+            accent-color: var(--accent-primary, #ff8800) !important;
         }
     </style>
 </head>
 <body class="dark dark-mode h-screen w-screen overflow-hidden selection:bg-purple-500/30 selection:text-white relative" data-page="search">
     <script>
-        try {
-            if (localStorage.getItem('yolk_theme_mode') === 'dark') {
-                document.body.classList.add('dark-mode');
-                document.body.classList.add('dark');
-                document.documentElement.classList.add('dark-mode');
-                document.documentElement.classList.add('dark');
-                const metaTheme = document.getElementById('meta-theme-color');
-                if (metaTheme) metaTheme.setAttribute('content', '#0c0c0e');
+        (function() {
+            function syncTheme(theme) {
+                if (!theme) return;
+                const isLight = theme.name === 'Light';
+                document.documentElement.classList.toggle('light', isLight);
+                document.documentElement.classList.toggle('dark', !isLight);
+                document.documentElement.classList.toggle('dark-mode', !isLight);
+                document.body.classList.toggle('light', isLight);
+                document.body.classList.toggle('dark', !isLight);
+                document.body.classList.toggle('dark-mode', !isLight);
+
+                const isAmoled = theme.name === 'AMOLED' || (theme.name && theme.name.toLowerCase().includes('amoled'));
+                document.documentElement.classList.toggle('theme-amoled-midnight', isAmoled);
+                document.body.classList.toggle('theme-amoled-midnight', isAmoled);
+
+                try {
+                    localStorage.setItem('yolk_theme_mode', isLight ? 'light' : 'dark');
+                } catch (_) {}
+
+                const meta = document.getElementById('meta-theme-color');
+                if (meta) meta.setAttribute('content', theme['bg-primary'] || (isLight ? '#f8fafc' : '#070709'));
             }
-            const isTvDevice = /TV|AndroidTV|GoogleTV|LargeScreen|SmartTV|AppleTV|AFT|CrKey|HbbTV|NetCast|Viera|BRAVIA/i.test(navigator.userAgent);
-            if (isTvDevice || localStorage.getItem('yolk_tv_mode') === 'true') {
-                document.body.classList.add('tv-mode');
-                document.documentElement.classList.add('tv-mode');
-            }
-        } catch (_) {}
+
+            window.addEventListener('12am:theme-changed', (e) => {
+                syncTheme(e.detail);
+            });
+
+            window.addEventListener('12am:themes-ready', (e) => {
+                if (window.getCurrentTheme) {
+                    syncTheme(window.getCurrentTheme());
+                }
+            });
+
+            document.addEventListener('DOMContentLoaded', () => {
+                if (window.getCurrentTheme) {
+                    syncTheme(window.getCurrentTheme());
+                }
+            });
+        })();
     </script>
-    <div id="top-white-fade-bar" aria-hidden="true"></div>
     <div id="yolk-notification-container" aria-live="polite"></div>
 
     <!-- Phone Portrait Orientation Lock Overlay -->
@@ -2845,34 +3021,6 @@
                 </div>
 
                 <div class="flex flex-col gap-5">
-                    <!-- 1. Theme Setting Card -->
-                    <div class="bg-white/85 dark:bg-zinc-900/85 backdrop-blur-xl rounded-3xl border border-zinc-200/80 dark:border-white/10 p-5 sm:p-7 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
-                        <div class="flex items-center gap-3.5">
-                            <div class="settings-icon-box w-11 h-11 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/80 dark:border-white/10 flex items-center justify-center text-zinc-800 dark:text-zinc-200 shrink-0">
-                                <span class="material-symbols-rounded text-[22px]">palette</span>
-                            </div>
-                            <div>
-                                <h2 class="text-base sm:text-lg font-bold text-zinc-900 dark:text-white">Theme</h2>
-                                <p class="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">Select light, dark, or system appearance</p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center justify-center gap-4 pt-3 border-t border-zinc-100 dark:border-white/10">
-                            <!-- Light Mode -->
-                            <button id="theme-btn-light" type="button" class="theme-choice-btn w-13 h-13 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all cursor-pointer bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:scale-105 active:scale-95" title="Light" aria-label="Light">
-                                <span class="material-symbols-rounded text-[24px]">light_mode</span>
-                            </button>
-                            <!-- Dark Mode -->
-                            <button id="theme-btn-dark" type="button" class="theme-choice-btn w-13 h-13 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all cursor-pointer bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:scale-105 active:scale-95" title="Dark" aria-label="Dark">
-                                <span class="material-symbols-rounded text-[24px]">dark_mode</span>
-                            </button>
-                            <!-- System Mode -->
-                            <button id="theme-btn-system" type="button" class="theme-choice-btn w-13 h-13 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all cursor-pointer bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:scale-105 active:scale-95" title="System" aria-label="System">
-                                <span class="material-symbols-rounded text-[24px]">desktop_windows</span>
-                            </button>
-                        </div>
-                    </div>
-
                     <!-- 2. Crossfade & Seamless Transitions Setting Card -->
                     <div class="bg-white/85 backdrop-blur-xl rounded-3xl border border-zinc-200/80 p-5 sm:p-7 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
                         <div class="flex items-center justify-between gap-4 flex-wrap">
@@ -3046,29 +3194,12 @@
                         </div>
                     </div>
 
-                    <!-- 6. TV Remote Navigation & 10-ft UI Card -->
-                    <div class="bg-white/85 dark:bg-zinc-900/85 backdrop-blur-xl rounded-3xl border border-zinc-200/80 dark:border-white/10 p-5 sm:p-7 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
-                        <div class="flex items-center justify-between gap-4">
-                            <div class="flex items-center gap-3.5 min-w-0">
-                                <div class="settings-icon-box w-11 h-11 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/80 dark:border-white/10 flex items-center justify-center text-zinc-800 dark:text-zinc-200 shrink-0">
-                                    <span class="material-symbols-rounded text-[22px]">tv</span>
-                                </div>
-                                <div class="min-w-0">
-                                    <div class="flex items-center gap-2">
-                                        <h2 class="text-base sm:text-lg font-bold text-zinc-900 dark:text-white">TV Remote Navigation</h2>
-                                        <span id="tv-mode-active-badge" class="px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200/80 dark:border-zinc-700">Auto</span>
-                                    </div>
-                                    <p class="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">Optimizes UI for Android TV screens and enables D-Pad remote navigation</p>
-                                </div>
-                            </div>
-
-                            <button id="tv-mode-toggle-btn" type="button" role="switch" aria-checked="false" class="yolk-switch-btn shrink-0" title="Toggle TV Mode">
-                                <span id="tv-mode-toggle-knob" class="yolk-switch-knob"></span>
-                            </button>
-                        </div>
-                        <div class="text-[11px] text-zinc-400 dark:text-zinc-500 font-medium pt-2 border-t border-zinc-100 dark:border-white/10 flex items-center justify-between">
-                            <span>Remote controls: ◀ ▲ ▼ ▶ Navigate • OK Select • ⮌ Back</span>
-                            <span id="tv-mode-status-text" class="text-zinc-500 font-semibold">Auto-detect</span>
+                    <!-- Terms & Policies Links exclusively at the bottom of Settings tab -->
+                    <div class="mt-8 pt-6 border-t border-[var(--border-primary,rgba(255,255,255,0.08))] flex items-center justify-between text-xs text-[var(--text-secondary,#a1a1aa)] flex-wrap gap-3">
+                        <span>&copy; 12AM Music &bull; All Rights Reserved</span>
+                        <div class="flex items-center gap-4">
+                            <a href="legal.html" class="hover:text-[var(--text-primary,#ffffff)] underline transition-colors">Terms of Service</a>
+                            <a href="legal.html" class="hover:text-[var(--text-primary,#ffffff)] underline transition-colors">Privacy Policy</a>
                         </div>
                     </div>
                 </div>
@@ -4008,17 +4139,6 @@
     </script>
     <div id="youtubePlayer"></div>
     <audio id="yolk-audio-player" playsinline webkit-playsinline x-webkit-airplay="allow" preload="auto" crossorigin="anonymous" class="hidden"></audio>
-    <!-- TV Remote Control On-Screen Navigation Guide HUD -->
-    <div id="tv-remote-hud" class="tv-hud-bar" aria-hidden="true">
-        <span class="material-symbols-rounded text-[18px] text-yellow-400">tv</span>
-        <span><strong>D-Pad</strong> Navigate</span>
-        <span class="opacity-40">•</span>
-        <span><strong>OK</strong> Select</span>
-        <span class="opacity-40">•</span>
-        <span><strong>Back</strong> Return</span>
-        <span class="opacity-40">•</span>
-        <span><strong>⏯</strong> Play/Pause</span>
-    </div>
     <script src="yolk/yolk-app.js"></script>
 </body>
 </html>
