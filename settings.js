@@ -1129,235 +1129,13 @@
 
         
         /**
-         * NEW: Generates the HTML for the "Personalization" section.
+         * Generates the HTML for the "Personalization" section.
          */
         function getPersonalizationContent() {
              return `
-                <style>
-                    /* Custom Range Slider Styling */
-                    .mac-slider {
-                        -webkit-appearance: none;
-                        appearance: none;
-                        background: transparent; /* Track color handled by Tailwind classes */
-                    }
-                    .mac-slider::-webkit-slider-thumb {
-                        -webkit-appearance: none;
-                        appearance: none;
-                        width: 20px;
-                        height: 20px;
-                        background: black;
-                        border: 2px solid white;
-                        border-radius: 50%;
-                        cursor: pointer;
-                        margin-top: -6px; /* Adjust based on track height */
-                    }
-                    .mac-slider::-moz-range-thumb {
-                        width: 20px;
-                        height: 20px;
-                        background: black;
-                        border: 2px solid white;
-                        border-radius: 50%;
-                        cursor: pointer;
-                    }
-                    .mac-slider::-webkit-slider-runnable-track {
-                        height: 0.5rem;
-                        border-radius: 0.5rem;
-                        background: #374151; /* gray-700 */
-                    }
-                    .mac-slider::-moz-range-track {
-                        height: 0.5rem;
-                        border-radius: 0.5rem;
-                        background: #374151;
-                    }
-                    /* Live preview scaling for orientation mode */
-                    .mac-preview-scaled {
-                        transition: transform 0.3s ease;
-                        transform-origin: center;
-                    }
-                </style>
                 <h2 class="text-3xl font-bold text-[var(--text-main)] mb-6">Personalization</h2>
                 
                 <div class="w-full">
-                    <!-- DISPLAY NAME SECTION -->
-                    <h3 class="text-xl font-bold text-[var(--text-main)] mb-2">Display Name</h3>
-                    <div class="settings-box transition-all duration-300 p-4 mb-8">
-                        <p class="text-sm font-light text-[var(--text-muted)] opacity-60 mb-4">
-                            Update your public display name. There are no limits on how often you can change this.
-                        </p>
-                        <div class="flex gap-2">
-                            <input type="text" id="display-name-input" class="flex-1 bg-white/5 border border-[var(--border-main)] rounded-xl p-3 text-sm outline-none focus:border-[var(--accent-color)] transition-all" placeholder="New display name...">
-                            <button id="save-display-name-btn" class="btn-toolbar-style btn-primary-override px-6">Save</button>
-                        </div>
-                        <p id="display-name-message" class="text-[10px] mt-2"></p>
-                    </div>
-
-                    <!-- PROFILE PICTURE SECTION -->
-                    <h3 class="text-xl font-bold text-[var(--text-main)] mb-2">Profile Picture</h3>
-                    <div id="pfpSection" class="settings-box transition-all duration-300 p-4 mb-8">
-                        <p class="text-sm font-light text-[var(--text-muted)] opacity-60 mb-4">
-                            Choose how you appear across the site.
-                        </p>
-                        
-                        <div class="flex flex-col gap-4">
-                            <!-- Mode Selection Buttons -->
-                            <div class="flex gap-4 mb-4 border-b border-[var(--border-main)] pb-4">
-                                <button class="pfp-mode-btn active btn-toolbar-style" data-mode="google">Google PFP</button>
-                                <button class="pfp-mode-btn btn-toolbar-style" data-mode="letter">Letter Avatar</button>
-                                <button class="pfp-mode-btn btn-toolbar-style" data-mode="mibi">Mibi Avatar</button>
-                                <button class="pfp-mode-btn btn-toolbar-style" data-mode="custom">Upload Image</button>
-                            </div>
-
-                            <!-- Letter Avatar Options -->
-                            <div id="pfpLetterSettings" class="hidden flex flex-col gap-4 mt-2">
-                                <div class="flex items-center gap-6 mb-4">
-                                    <!-- Interactive Preview -->
-                                    <div id="pfp-letter-preview" class="w-24 h-24 rounded-[24px] flex items-center justify-center text-[var(--text-main)] text-3xl font-bold shadow-lg border border-[var(--border-main)] cursor-text relative overflow-hidden group" style="background: linear-gradient(135deg, #374151 0%, #111827 100%);">
-                                        <input type="text" id="pfp-letter-input" maxlength="3" class="absolute inset-0 w-full h-full bg-transparent border-none outline-none text-center uppercase cursor-text placeholder-white/20" placeholder="A">
-                                    </div>
-                                    <div class="flex flex-col gap-1">
-                                        <label class="block text-[var(--text-muted)] opacity-60 text-xs uppercase tracking-wider font-bold">Letter Preview</label>
-                                        <p class="text-xs text-[var(--text-muted)] opacity-50 max-w-[200px]">Type directly in the box to set your avatar text (Max 3).</p>
-                                    </div>
-                                </div>
-                                
-                                <label class="block text-[var(--text-muted)] opacity-60 text-xs mb-2 uppercase tracking-wider font-bold">Background Color</label>
-                                <div class="color-palette-grid mb-6" id="pfp-color-grid"></div>
-                                
-                                <button id="save-letter-pfp-btn" class="btn-toolbar-style btn-primary-override w-full justify-center">
-                                    <i class="fa-solid fa-check mr-2"></i> Set Letter Avatar
-                                </button>
-                            </div>
-
-                            <!-- Mibi Avatar Settings (Hidden by default) -->
-                            <div id="pfpMibiSettings" class="hidden flex flex-col gap-4 mt-2">
-                                <p class="text-sm font-light text-[var(--text-muted)] opacity-60 mb-4">
-                                    Create your custom Mibi Avatar!
-                                </p>
-                                <button id="open-mac-menu-btn" class="btn-toolbar-style btn-primary-override">
-                                    <i class="fa-solid fa-paintbrush mr-2"></i> Open Mibi Avatar Creator
-                                </button>
-                                
-                                <!-- MAC Modal -->
-                                <div id="mibi-mac-menu" class="fixed inset-0 bg-[var(--bg-page)] bg-opacity-80 flex items-center justify-center z-[2000000] hidden backdrop-blur-sm">
-                                    <div class="relative bg-[var(--bg-secondary)] rounded-[16px] shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden border border-[var(--border-main)]">
-                                        
-                                        <!-- Header -->
-                                        <div class="flex justify-between items-center p-6 border-b border-[var(--border-main)] bg-[var(--bg-secondary)]">
-                                            <h3 class="text-2xl font-bold text-[var(--text-main)]">Mibi Avatar Creator</h3>
-                                            <button id="mac-close-x-btn" class="btn-toolbar-style w-10 h-10 flex items-center justify-center p-0">
-                                                <i class="fa-solid fa-xmark fa-xl"></i>
-                                            </button>
-                                        </div>
-                                        
-                                        <!-- Main Content Area (Split View) -->
-                                        <div class="flex flex-grow overflow-hidden relative">
-                                            
-                                            <!-- LEFT: Live Preview -->
-                                            <div id="mac-preview-wrapper" class="w-1/2 flex flex-col items-center justify-center bg-[var(--bg-page)] p-8 border-r border-[var(--border-main)] transition-all duration-500 ease-in-out z-10">
-                                                <div class="relative h-64 md:h-80 aspect-square rounded-[56px] overflow-hidden border-4 border-[var(--border-main)] shadow-lg mb-6 transition-all duration-300 hover:border-dashed hover:border-[var(--text-main)] cursor-pointer flex-shrink-0" id="mac-preview-container" style="aspect-ratio: 1/1;">
-                                                    <!-- Background (Static) -->
-                                                    <div id="mac-preview-bg" class="absolute inset-0 w-full h-full transition-colors duration-300"></div>
-                                                    
-                                                    <!-- Avatar Layers Container (Rotates/Scales/Moves) -->
-                                                    <div id="mac-layers-container" class="absolute inset-0 w-full h-full transition-transform duration-75 ease-out origin-center pointer-events-none">
-                                                        <img id="mac-layer-head" src="mibi-avatars/head.png" class="absolute inset-0 w-full h-full object-contain z-10">
-                                                        <img id="mac-layer-eyes" class="absolute inset-0 w-full h-full object-contain z-20 hidden">
-                                                        <img id="mac-layer-mouth" class="absolute inset-0 w-full h-full object-contain z-20 hidden">
-                                                        <img id="mac-layer-hat" class="absolute inset-0 w-full h-full object-contain z-30 hidden">
-                                                    </div>
-                                                </div>
-                                                
-                                                <div id="mac-sliders-container" class="hidden flex-col gap-6 w-full max-w-xs transition-opacity duration-300 opacity-0">
-                                                    <div class="flex flex-col gap-2">
-                                                        <label class="text-xs text-[var(--text-muted)] opacity-60 uppercase tracking-wider font-bold">Size</label>
-                                                        <input type="range" id="mac-size-slider" min="50" max="150" value="100" list="mac-size-ticks" class="mac-slider w-full h-2 bg-[var(--bg-secondary)] rounded-[16px] appearance-none cursor-pointer">
-                                                        <datalist id="mac-size-ticks">
-                                                            <option value="100"></option>
-                                                        </datalist>
-                                                    </div>
-                                                    <div class="flex flex-col gap-2">
-                                                        <label class="text-xs text-[var(--text-muted)] opacity-60 uppercase tracking-wider font-bold">Rotation</label>
-                                                        <input type="range" id="mac-rotation-slider" min="-180" max="180" value="0" list="mac-rotation-ticks" class="mac-slider w-full h-2 bg-[var(--bg-secondary)] rounded-[16px] appearance-none cursor-pointer">
-                                                        <datalist id="mac-rotation-ticks">
-                                                            <option value="0"></option>
-                                                        </datalist>
-                                                    </div>
-                                                    <p class="text-center text-[var(--text-muted)] opacity-50 text-xs mt-2"><i class="fa-solid fa-hand-pointer mr-1"></i> Drag avatar to position</p>
-                                                </div>
-                                                
-                                                <p class="text-[var(--text-muted)] opacity-50 text-sm font-mono mt-2" id="mac-preview-label">Click preview to adjust orientation</p>
-                                            </div>
-
-                                            <!-- RIGHT: Controls & Options -->
-                                            <div id="mac-controls-wrapper" class="w-1/2 flex flex-col bg-[var(--bg-secondary)] transition-transform duration-500 ease-in-out translate-x-0">
-                                                
-                                                <!-- Tabs -->
-                                                <div class="flex border-b border-[var(--border-main)]">
-                                                    <button class="mac-tab-btn flex-1 py-4 text-[var(--text-muted)] opacity-60 hover:text-[var(--text-main)] hover:bg-[var(--bg-page)] transition-colors border-b-2 border-transparent font-medium active-tab" data-tab="hats">
-                                                        <i class="fa-solid fa-hat-wizard mr-2"></i> Hats
-                                                    </button>
-                                                    <button class="mac-tab-btn flex-1 py-4 text-[var(--text-muted)] opacity-60 hover:text-[var(--text-main)] hover:bg-[var(--bg-page)] transition-colors border-b-2 border-transparent font-medium" data-tab="eyes">
-                                                        <i class="fa-solid fa-eye mr-2"></i> Eyes
-                                                    </button>
-                                                    <button class="mac-tab-btn flex-1 py-4 text-[var(--text-muted)] opacity-60 hover:text-[var(--text-main)] hover:bg-[var(--bg-page)] transition-colors border-b-2 border-transparent font-medium" data-tab="mouths">
-                                                        <i class="fa-solid fa-face-smile mr-2"></i> Mouths
-                                                    </button>
-                                                    <button class="mac-tab-btn flex-1 py-4 text-[var(--text-muted)] opacity-60 hover:text-[var(--text-main)] hover:bg-[var(--bg-page)] transition-colors border-b-2 border-transparent font-medium" data-tab="bg">
-                                                        <i class="fa-solid fa-palette mr-2"></i> Color
-                                                    </button>
-                                                </div>
-
-                                                <!-- Options Grid (Scrollable) -->
-                                                <div class="flex-grow overflow-y-auto p-6 custom-scrollbar" id="mac-options-container">
-                                                    <!-- Dynamic Content Loaded Here -->
-                                                    <div class="grid grid-cols-3 gap-4" id="mac-grid">
-                                                        <!-- JS populates this -->
-                                                    </div>
-                                                </div>
-
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Footer Actions -->
-                                        <div class="p-6 border-t border-[var(--border-main)] bg-[var(--bg-secondary)] flex justify-end gap-4 items-center">
-                                            <button id="mac-reset-btn" class="btn-toolbar-style mr-auto px-4 py-2 rounded-[16px]" title="Reset Avatar">
-                                                <i class="fa-solid fa-rotate-left"></i>
-                                            </button>
-                                            <button id="mac-cancel-btn" class="btn-toolbar-style px-6 py-2 rounded-[16px]">Cancel</button>
-                                            <button id="mac-confirm-btn" class="btn-toolbar-style btn-primary-override px-6 py-2 rounded-[16px]">
-                                                <i class="fa-solid fa-check mr-2"></i> Confirm Avatar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Custom Upload Settings (Hidden by default) -->
-                            <div id="pfpCustomSettings" class="hidden mt-2">
-                                <div class="flex items-center gap-4">
-                                    <!-- Preview -->
-                                    <div class="w-16 h-16 rounded-[24px] overflow-hidden border border-[var(--border-main)] flex-shrink-0 bg-black relative">
-                                        <img id="customPfpPreview" src="" class="w-full h-full object-cover" style="display: none;">
-                                        <div id="customPfpPlaceholder" class="w-full h-full flex items-center justify-center text-[var(--text-muted)] opacity-40">
-                                            <i class="fa-solid fa-user"></i>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Upload Button -->
-                                    <div>
-                                        <button id="uploadPfpBtn" class="btn-toolbar-style btn-primary-override">
-                                            <i class="fa-solid fa-upload mr-2"></i> Upload Image
-                                        </button>
-                                        <input type="file" id="pfpFileInput" accept="image/*" style="display: none;">
-                                        <p class="text-xs text-[var(--text-muted)] opacity-50 mt-1">Max size: 2MB. Images are cropped to square.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div id="pfpMessage" class="general-message-area text-sm"></div>
-                    </div>
-
                     <!-- THEME SECTION -->
                     <h3 class="text-xl font-bold text-[var(--text-main)] mb-2">Navigation Bar Theme</h3>
                     <div id="themeSection" class="settings-box transition-all duration-300 p-4">
@@ -3805,560 +3583,36 @@
 
 
         /**
-         * NEW: Loads data and adds event listeners for the Personalization tab.
+         * Loads data and adds event listeners for the Personalization tab.
+         * Exclusively handles Theme Selection now that PFP is in General.
          */
         async function loadPersonalizationTab() {
             const themePickerContainer = document.getElementById('theme-picker-container');
             const themeMessage = document.getElementById('themeMessage');
-            const pfpMessage = document.getElementById('pfpMessage');
-            const displayNameMessage = document.getElementById('display-name-message');
-            const displayNameInput = document.getElementById('display-name-input');
-            const saveDisplayNameBtn = document.getElementById('save-display-name-btn');
-
-            // --- 1. USER DATA LOADING (Supabase Primary) ---
-            if (currentUser) {
-                const uid = currentUser.uid || currentUser.id;
-                const userData = await getUserData(uid) || {};
-
-                if (displayNameInput) displayNameInput.value = userData.displayName || userData.display_name || "";
-
-                // Display Name Logic
-                if (saveDisplayNameBtn) {
-                    saveDisplayNameBtn.onclick = async () => {
-                        const newDisplayName = displayNameInput.value.trim();
-                        if (!newDisplayName || newDisplayName === (userData.displayName || userData.display_name)) return;
-
-                        // Simple validation
-                        if (newDisplayName.length < 2) {
-                            showMessage(displayNameMessage, 'Name too short (min 2).', 'error');
-                            return;
-                        }
-
-                        saveDisplayNameBtn.disabled = true;
-                        showMessage(displayNameMessage, 'Saving...', 'warning');
-
-                        try {
-                            await saveUserData(uid, {
-                                displayName: newDisplayName
-                            });
-
-                            userData.displayName = newDisplayName;
-                            showMessage(displayNameMessage, 'Display name updated!', 'success');
-
-                            // Instant update for local UI
-                            window.dispatchEvent(new CustomEvent('pfp-updated', {
-                                detail: { ...userData, displayName: newDisplayName }
-                            }));
-                        } catch (err) {
-                            console.error("Display Name update error:", err);
-                            showMessage(displayNameMessage, 'Error updating display name.', 'error');
-                        } finally {
-                            saveDisplayNameBtn.disabled = false;
-                        }
-                    };
-                }
-
-                // --- 2. PROFILE PICTURE LOGIC ---
-
-                // Initialize mibiAvatarState with saved config if available
-                if (userData.mibiConfig) {
-                    mibiAvatarState = { ...mibiAvatarState, ...userData.mibiConfig };
-                }
-
-                const currentPfpType = userData.pfpType || userData.pfp_type || 'google';
-                const pfpModeBtns = document.querySelectorAll('.pfp-mode-btn');
-                const pfpLetterSettings = document.getElementById('pfpLetterSettings');
-                const mibiSettings = document.getElementById('pfpMibiSettings');
-                const customSettings = document.getElementById('pfpCustomSettings');
-                const previewImg = document.getElementById('customPfpPreview');
-                const previewPlaceholder = document.getElementById('customPfpPlaceholder');
-                const macMenu = document.getElementById('mibi-mac-menu'); 
-                const openMacMenuBtn = document.getElementById('open-mac-menu-btn'); 
-
-                // Function to update UI visibility
-                const updatePfpUi = (type) => {
-                    if (pfpModeBtns) {
-                        pfpModeBtns.forEach(btn => {
-                            btn.classList.toggle('active', btn.dataset.mode === type);
-                            if (btn.dataset.mode === type) {
-                                btn.style.backgroundColor = 'var(--btn-bg)';
-                                btn.style.borderColor = 'var(--accent-color)';
-                            } else {
-                                btn.style.backgroundColor = '';
-                                btn.style.borderColor = '';
-                            }
-                        });
-                    }
-
-                    if (pfpLetterSettings) pfpLetterSettings.classList.toggle('hidden', type !== 'letter');
-                    if (mibiSettings) mibiSettings.classList.toggle('hidden', type !== 'mibi');
-                    if (customSettings) customSettings.classList.toggle('hidden', type !== 'custom');
-
-                    // Update preview if possible
-                    if (!previewImg || !previewPlaceholder) return;
-
-                    if (type === 'custom' && (userData.customPfp || userData.avatar_url)) {
-                        previewImg.src = userData.customPfp || userData.avatar_url;
-                        previewImg.style.display = 'block';
-                        previewPlaceholder.style.display = 'none';
-                    } else if (type === 'google') {
-                        const googlePfp = userData.avatar_url || userData.photoURL || (currentUser.user_metadata?.avatar_url || currentUser.user_metadata?.picture);
-                        if (googlePfp) {
-                            previewImg.src = googlePfp;
-                            previewImg.style.display = 'block';
-                            previewPlaceholder.style.display = 'none';
-                        } else {
-                            previewImg.style.display = 'none';
-                            previewPlaceholder.style.display = 'flex';
-                            previewPlaceholder.innerHTML = '<i class="fa-solid fa-user"></i>';
-                        }
-                    } else if (type === 'letter') {
-                        previewImg.style.display = 'none';
-                        previewPlaceholder.style.display = 'flex';
-                        const text = userData.letterAvatarText || userData.pfp_letter_char || (userData.username || 'U').charAt(0).toUpperCase();
-                        previewPlaceholder.innerText = text;
-                        previewPlaceholder.style.background = userData.pfpLetterBg || userData.pfp_letter_bg || '#3B82F6';
-                        previewPlaceholder.style.color = '#FFFFFF';
-                    } else {
-                        previewImg.style.display = 'none';
-                        previewPlaceholder.style.display = 'flex';
-                        previewPlaceholder.innerHTML = '<i class="fa-solid fa-user"></i>';
-                        previewPlaceholder.style.background = '';
-                    }
-                };
-                // Function to dispatch instant update event
-                const triggerNavbarUpdate = () => {
-                    const detail = { 
-                        pfpType: userData.pfpType || userData.pfp_type, 
-                        pfp_type: userData.pfpType || userData.pfp_type,
-                        customPfp: userData.customPfp || userData.avatar_url,
-                        avatar_url: userData.customPfp || userData.avatar_url,
-                        pfpLetterBg: userData.pfpLetterBg || userData.pfp_letter_bg,
-                        pfp_letter_bg: userData.pfpLetterBg || userData.pfp_letter_bg,
-                        letterAvatarText: userData.letterAvatarText || userData.pfp_letter_char,
-                        pfp_letter_char: userData.letterAvatarText || userData.pfp_letter_char,
-                        displayName: userData.displayName || userData.display_name,
-                        display_name: userData.displayName || userData.display_name
-                    };
-                    window.dispatchEvent(new CustomEvent('pfp-updated', { detail }));
-                };
-
-                // --- CONDITIONAL GOOGLE OPTION ---
-                const hasGoogle = (currentUser.providerData || []).some(p => p.providerId === 'google.com') || 
-                                  (currentUser.app_metadata?.provider === 'google') || 
-                                  (currentUser.user_metadata?.iss?.includes('google')) ||
-                                  (currentUser.user_metadata?.avatar_url?.includes('googleusercontent.com'));
-                
-                if (!hasGoogle) {
-                    const googleBtn = Array.from(pfpModeBtns).find(btn => btn.dataset.mode === 'google');
-                    if (googleBtn) googleBtn.remove();
-                }
-
-                // Mode Button Clicks
-                if (pfpModeBtns) {
-                    pfpModeBtns.forEach(btn => {
-                        btn.addEventListener('click', async () => {
-                            const type = btn.dataset.mode;
-                            updatePfpUi(type);
-                            try {
-                                const updates = { 
-                                    pfp_type: type,
-                                    pfpType: type // Keep for legacy
-                                };
-                                
-                                // If switching to Google, ensure we have the URL
-                                if (type === 'google') {
-                                    let googlePhoto = userData.avatar_url || userData.photoURL;
-                                    
-                                    // Try Supabase Metadata if missing
-                                    if (!googlePhoto && window.supabase) {
-                                        const { data: { session } } = await window.supabase.auth.getSession();
-                                        googlePhoto = session?.user?.user_metadata?.avatar_url || session?.user?.user_metadata?.picture;
-                                    }
-
-                                    if (googlePhoto) {
-                                        updates.avatar_url = googlePhoto;
-                                        updates.photoURL = googlePhoto;
-                                        userData.avatar_url = googlePhoto;
-                                        userData.photoURL = googlePhoto;
-                                    }
-                                }
-
-                                await saveUserData(uid, updates);
-                                userData.pfp_type = type;
-                                userData.pfpType = type;
-                                triggerNavbarUpdate();
-                                showMessage(pfpMessage, 'Preference saved!', 'success');
-                            } catch (e) { 
-                                console.error("PFP Preference Save Error:", e);
-                                showMessage(pfpMessage, 'Error saving preference.', 'error'); 
-                            }
-                        });
-                    });
-                }
-
-                // Initial UI state
-                updatePfpUi(currentPfpType);
-
-                // --- Letter Avatar Logic ---
-                const pfpLetterInput = document.getElementById('pfp-letter-input');
-                const pfpLetterPreview = document.getElementById('pfp-letter-preview');
-                const pfpColorGrid = document.getElementById('pfp-color-grid');
-                const saveLetterBtn = document.getElementById('save-letter-pfp-btn');
-                let selectedLetterColor = userData.pfpLetterBg || '#374151';
-
-                if (pfpLetterInput) pfpLetterInput.value = userData.letterAvatarText || "";
-                
-                if (pfpLetterPreview) {
-                    pfpLetterPreview.style.background = selectedLetterColor;
-                }
-
-                if (pfpColorGrid) {
-                    pfpColorGrid.innerHTML = '';
-                    letterColors.forEach(color => {
-                        const d = document.createElement('div');
-                        const hexColor = color.startsWith('#') ? color : '#' + color;
-                        const isSelected = selectedLetterColor === hexColor;
-                        
-                        d.className = `color-option ${isSelected ? 'selected' : ''}`;
-                        d.style.backgroundColor = hexColor;
-                        
-                        d.onclick = () => {
-                            selectedLetterColor = hexColor;
-                            pfpColorGrid.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
-                            d.classList.add('selected');
-                            // Update live preview
-                            if (pfpLetterPreview) {
-                                pfpLetterPreview.style.background = hexColor;
-                            }
-                        };
-                        pfpColorGrid.appendChild(d);
-                    });
-                }
-
-                if (saveLetterBtn) {
-                    saveLetterBtn.onclick = async () => {
-                        const text = pfpLetterInput.value.trim().toUpperCase();
-                        showMessage(pfpMessage, 'Saving...', 'warning');
-                        try {
-                            await saveUserData(uid, {
-                                pfpType: 'letter',
-                                pfpLetterBg: selectedLetterColor,
-                                letterAvatarText: text
-                            });
-                            userData.pfpType = 'letter';
-                            userData.pfpLetterBg = selectedLetterColor;
-                            userData.letterAvatarText = text;
-                            triggerNavbarUpdate();
-                            showMessage(pfpMessage, 'Letter avatar saved!', 'success');
-                        } catch (e) { showMessage(pfpMessage, 'Error saving letter avatar.', 'error'); }
-                    };
-                }
-
-                // Add event listener for the Open Mibi Avatar Creator button
-                if (openMacMenuBtn) {
-                    openMacMenuBtn.addEventListener('click', () => {
-                        macMenu.classList.remove('hidden'); // Show the MAC menu overlay
-                        currentMacSlide = 1; // Reset to first slide
-                        showMacSlide(currentMacSlide);
-                    });
-                }
-
-                const uploadBtn = document.getElementById('uploadPfpBtn');
-                const fileInput = document.getElementById('pfpFileInput');
-                const cropperModal = document.getElementById('cropperModal');
-                const cropperCanvas = document.getElementById('cropperCanvas');
-                const cancelCropBtn = document.getElementById('cancelCropBtn');
-                const submitCropBtn = document.getElementById('submitCropBtn');
-                
-                // Show existing custom pfp in preview
-                if (userData.customPfp) {
-                    previewImg.src = userData.customPfp;
-                    previewImg.style.display = 'block';
-                    previewPlaceholder.style.display = 'none';
-                }
-
-                if (uploadBtn) uploadBtn.addEventListener('click', () => fileInput.click());
-
-                let cropperImage = null;
-                let cropState = { x: 0, y: 0, radius: 100 };
-                let isDragging = false;
-                let dragStart = { x: 0, y: 0 };
-                const ctx = cropperCanvas.getContext('2d');
-
-                fileInput.addEventListener('change', (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    
-                    if (file.size > 2 * 1024 * 1024) {
-                        showMessage(pfpMessage, 'File is too large (max 2MB).', 'error');
-                        return;
-                    }
-
-                    const reader = new FileReader();
-                    reader.onload = (evt) => {
-                        cropperImage = new Image();
-                        cropperImage.onload = () => {
-                            // Setup canvas with fixed height for consistency
-                            const fixedHeight = 400;
-                            const scale = fixedHeight / cropperImage.height;
-                            cropperCanvas.height = fixedHeight;
-                            cropperCanvas.width = cropperImage.width * scale;
-                            
-                            // Initial crop state: center, 1/3 min dim
-                            cropState = {
-                                x: cropperCanvas.width / 2,
-                                y: cropperCanvas.height / 2,
-                                radius: Math.min(cropperCanvas.width, cropperCanvas.height) / 3
-                            };
-                            
-                            cropperModal.style.display = 'flex';
-                            requestAnimationFrame(drawCropper);
-                        };
-                        cropperImage.src = evt.target.result;
-                    };
-                    reader.readAsDataURL(file);
-                });
-                
-                const drawCropper = () => {
-                    if (!cropperImage) return;
-                    const w = cropperCanvas.width;
-                    const h = cropperCanvas.height;
-                    ctx.clearRect(0, 0, w, h);
-                    
-                    // Draw image filling canvas
-                    ctx.drawImage(cropperImage, 0, 0, w, h);
-                    
-                    // Draw overlay
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                    ctx.beginPath();
-                    ctx.rect(0, 0, w, h);
-                    ctx.fill();
-                    
-                    // Cut hole (Rounded Rect)
-                    ctx.globalCompositeOperation = 'destination-out';
-                    ctx.beginPath();
-                    
-                    const r = cropState.radius;
-                    const size = r * 2;
-                    const cornerRadius = size * 0.15;
-                    
-                    if (ctx.roundRect) {
-                        ctx.roundRect(cropState.x - r, cropState.y - r, size, size, cornerRadius);
-                    } else {
-                        ctx.rect(cropState.x - r, cropState.y - r, size, size);
-                    }
-                    ctx.fill();
-                    
-                    ctx.globalCompositeOperation = 'source-over';
-                    
-                    // Draw dashed border
-                    ctx.strokeStyle = '#fff';
-                    ctx.lineWidth = 2;
-                    ctx.setLineDash([6, 4]);
-                    ctx.beginPath();
-                    if (ctx.roundRect) {
-                        ctx.roundRect(cropState.x - r, cropState.y - r, size, size, cornerRadius);
-                    } else {
-                        ctx.rect(cropState.x - r, cropState.y - r, size, size);
-                    }
-                    ctx.stroke();
-                    ctx.setLineDash([]);
-                };
-
-                // Interaction Handlers
-                const handleStart = (x, y) => {
-                    const r = cropState.radius;
-                    if (x >= cropState.x - r && x <= cropState.x + r &&
-                        y >= cropState.y - r && y <= cropState.y + r) {
-                        isDragging = true;
-                        dragStart = { x, y };
-                    }
-                };
-                
-                const handleMove = (x, y) => {
-                    if (isDragging) {
-                        const dx = x - dragStart.x;
-                        const dy = y - dragStart.y;
-                        
-                        let newX = cropState.x + dx;
-                        let newY = cropState.y + dy;
-                        
-                        // Constraint: Circle must stay within canvas
-                        const r = cropState.radius;
-                        const w = cropperCanvas.width;
-                        const h = cropperCanvas.height;
-                        
-                        newX = Math.max(r, Math.min(newX, w - r));
-                        newY = Math.max(r, Math.min(newY, h - r));
-                        
-                        cropState.x = newX;
-                        cropState.y = newY;
-                        
-                        dragStart = { x, y };
-                        requestAnimationFrame(drawCropper);
-                    }
-                };
-
-                const handleEnd = () => { isDragging = false; };
-                
-                const handleScroll = (e) => {
-                    e.preventDefault();
-                    const delta = e.deltaY > 0 ? -5 : 5;
-                    let newRadius = cropState.radius + delta;
-                    const w = cropperCanvas.width;
-                    const h = cropperCanvas.height;
-                    const maxPossibleRadius = Math.min(w, h) / 2;
-                    newRadius = Math.max(20, Math.min(newRadius, maxPossibleRadius));
-                    const minX = newRadius;
-                    const maxX = w - newRadius;
-                    const minY = newRadius;
-                    const maxY = h - newRadius;
-                    cropState.x = Math.max(minX, Math.min(cropState.x, maxX));
-                    cropState.y = Math.max(minY, Math.min(cropState.y, maxY));
-                    cropState.radius = newRadius;
-                    requestAnimationFrame(drawCropper);
-                };
-
-                cropperCanvas.addEventListener('mousedown', e => handleStart(e.offsetX, e.offsetY));
-                cropperCanvas.addEventListener('mousemove', e => handleMove(e.offsetX, e.offsetY));
-                cropperCanvas.addEventListener('mouseup', handleEnd);
-                cropperCanvas.addEventListener('mouseleave', handleEnd);
-                cropperCanvas.addEventListener('wheel', handleScroll);
-                
-                cancelCropBtn.addEventListener('click', () => {
-                    cropperModal.style.display = 'none';
-                    fileInput.value = ''; 
-                });
-
-                submitCropBtn.addEventListener('click', async () => {
-                    const tempCanvas = document.createElement('canvas');
-                    const size = 128; // Output size
-                    tempCanvas.width = size;
-                    tempCanvas.height = size;
-                    const tCtx = tempCanvas.getContext('2d');
-                    const scale = cropperCanvas.height / cropperImage.height;
-                    const sourceX = (cropState.x - cropState.radius) / scale;
-                    const sourceY = (cropState.y - cropState.radius) / scale;
-                    const sourceSize = (cropState.radius * 2) / scale;
-                    tCtx.drawImage(cropperImage, sourceX, sourceY, sourceSize, sourceSize, 0, 0, size, size);
-                    const base64 = tempCanvas.toDataURL('image/jpeg', 0.8);
-                    try {
-                        submitCropBtn.disabled = true;
-                        submitCropBtn.textContent = "Saving...";
-                        await saveUserData(uid, { customPfp: base64, pfpType: 'custom' });
-                        userData.customPfp = base64;
-                        userData.pfpType = 'custom';
-                        triggerNavbarUpdate();
-                        updatePfpUi('custom');
-                        cropperModal.style.display = 'none';
-                        showMessage(pfpMessage, 'Profile picture updated!', 'success');
-                    } catch (e) {
-                        console.error(e);
-                        alert('Failed to save image.');
-                    } finally {
-                        submitCropBtn.disabled = false;
-                        submitCropBtn.innerHTML = '<i class="fa-solid fa-check mr-2"></i> Submit';
-                    }
-                });
-            }
-
-            // Setup MAC Menu Listeners
-            setupMacMenuListeners();
-
-            // --- MAC Menu: Slide 2 (Background Color) Event Listeners ---
-            const mibiColorPalette = document.getElementById('mibi-color-palette');
-            const mibiCustomColorPicker = document.getElementById('mibi-custom-color-picker');
-
-            if (mibiColorPalette) {
-                mibiColorPalette.querySelectorAll('.color-swatch').forEach(swatch => {
-                    swatch.addEventListener('click', () => {
-                        const color = swatch.dataset.color;
-                        if (color === 'custom') {
-                            mibiCustomColorPicker.click(); // Open color picker
-                        } else {
-                            mibiAvatarState.bgColor = color;
-                            updateMibiAvatarPreview();
-                        }
-                    });
-                });
-            }
-
-            if (mibiCustomColorPicker) {
-                mibiCustomColorPicker.addEventListener('input', (e) => {
-                    mibiAvatarState.bgColor = e.target.value;
-                    updateMibiAvatarPreview();
-                });
-            }
-
-            // --- MAC Menu: Slide 3 (Orientation) Event Listeners ---
-            const mibiSizeSlider = document.getElementById('mibi-size-slider');
-            const mibiRotationSlider = document.getElementById('mibi-rotation-slider');
-
-            if (mibiSizeSlider) {
-                mibiSizeSlider.addEventListener('input', (e) => {
-                    mibiAvatarState.size = parseInt(e.target.value, 10);
-                    updateMibiAvatarPreview();
-                });
-            }
-
-            if (mibiRotationSlider) {
-                mibiRotationSlider.addEventListener('input', (e) => {
-                    mibiAvatarState.rotation = parseInt(e.target.value, 10);
-                    updateMibiAvatarPreview();
-                });
-            }
-
-            // --- 2. THEME LOGIC (Existing) ---
-            
             if (!themePickerContainer) return;
-            
-            // From navigation.js
-            const lightThemeNames = ['Light', 'Lavender', 'Rose Gold', 'Mint', 'Pink', 'Birthday'];
+
+            const lightThemeNames = ['Light'];
 
             try {
                 // 1. Fetch themes
-                const response = await fetch('themes.json');
-                if (!response.ok) throw new Error('Failed to fetch themes.json');
-                let themes = await response.json(); // Use 'let' to reassign
-                
+                let themes = [];
+                try {
+                    const response = await fetch('themes.json');
+                    if (response.ok) {
+                        themes = await response.json();
+                    }
+                } catch(e) {}
+
                 if (!themes || themes.length === 0) {
-                     throw new Error('themes.json is empty or invalid');
+                    if (window.EMBEDDED_THEMES) {
+                        themes = window.EMBEDDED_THEMES;
+                    }
                 }
 
-                // --- NEW: Sorting Logic ---
-                const orderedThemeNames = ['Dark', 'AMOLED Midnight', 'Light', 'Christmas', 'The New Year', 'Tokyo Night'];
-                const sortedThemes = [];
-                let remainingThemes = [];
+                if (!themes || themes.length === 0) {
+                    throw new Error('Could not load themes list');
+                }
 
-                // 1. Extract explicit order
-                orderedThemeNames.forEach(name => {
-                    const theme = themes.find(t => t.name === name);
-                    if (theme) sortedThemes.push(theme);
-                });
-
-                // 2. Separate remaining
-                remainingThemes = themes.filter(t => !orderedThemeNames.includes(t.name));
-                
-                const darkThemes = remainingThemes.filter(t => !lightThemeNames.includes(t.name));
-                const lightThemes = remainingThemes.filter(t => lightThemeNames.includes(t.name));
-
-                // 3. Sort subgroups (Rainbow/Alphabetical)
-                const colorMap = {
-                    'Crimson': 1, 'Fire': 1, 'Orange': 2, 'Sunset': 2, 'Tokyo Night': 2, 'Ember': 2, 'Copper': 2, 'Gold': 3,
-                    'Green': 4, 'Forest': 4, 'Matrix': 4, 'Mint': 5, 'Ocean': 6, 'Deep Blue': 6,
-                    'Purple': 7, 'Royal': 7, 'Haze': 7, 'Lavender': 7, 'Pink': 8, 'Coral': 8, 'Rose Gold': 8,
-                    'Clanker': 9, 'Monochrome': 9, 'Silver': 9, 'Slate': 9
-                };
-                const sortFn = (a, b) => (colorMap[a.name] || 100) - (colorMap[b.name] || 100) || a.name.localeCompare(b.name);
-                
-                darkThemes.sort(sortFn);
-                lightThemes.sort(sortFn);
-
-                // 4. Combine
-                themes = [...sortedThemes, ...darkThemes, ...lightThemes];
-                // --- END NEW: Sorting Logic ---
-                
                 // 2. Get currently saved theme to set the active state
                 let savedTheme = null;
                 try {
@@ -4366,38 +3620,30 @@
                 } catch (e) {
                     console.warn('Could not parse saved theme.');
                 }
-                
+                const activeThemeName = savedTheme ? savedTheme.name : 'Original';
+
                 // 3. Process and render themes
-                const modifiedThemes = []; // Store themes with correct logo paths
                 let themeButtonsHtml = '';
                 
                 for (const theme of themes) {
-                    // --- This is the logic requested by the user ---
-                    // It modifies the theme object *in memory* before saving/applying
-                    // We use root-relative paths as defined in navigation.js
                     if (lightThemeNames.includes(theme.name)) {
                         theme['logo-src'] = '/images/logo-dark.png'; 
                     } else {
                         theme['logo-src'] = '/images/logo.png';
                     }
-                    // --- End of user logic ---
                     
-                    modifiedThemes.push(theme);
+                    const isActive = (theme.name === activeThemeName);
                     
-                    const isActive = savedTheme && savedTheme.name === theme.name;
-                    
-                    // Use the theme's own background/accent for the button preview
                     let activeText = theme['text-primary'] || theme['tab-active-text'] || '#ffffff';
-                    if (theme.name === 'Tokyo Night' || lightThemeNames.includes(theme.name)) {
+                    if (lightThemeNames.includes(theme.name)) {
                         activeText = '#12131c';
                     }
-                    const activeBorder = theme['accent-primary'] || theme['tab-active-border'] || '#4f46e5';
+                    const activeBorder = theme['accent-primary'] || theme['tab-active-border'] || '#ff8c00';
                     const activeBg = theme['avatar-gradient'] || theme['bg-primary'] || theme['navbar-bg'] || '#000000'; 
                     
-                    // Hover states (using accents)
-                    const hoverText = (theme.name === 'Tokyo Night' || lightThemeNames.includes(theme.name)) ? '#12131c' : (theme['text-primary'] || '#ffffff');
-                    const hoverBorder = theme['accent-primary'] || '#4f46e5';
-                    const hoverBg = theme['accent-secondary'] || 'rgba(79, 70, 229, 0.2)';
+                    const hoverText = lightThemeNames.includes(theme.name) ? '#12131c' : (theme['text-primary'] || '#ffffff');
+                    const hoverBorder = theme['accent-primary'] || '#ff8c00';
+                    const hoverBg = theme['accent-secondary'] || 'rgba(255, 140, 0, 0.2)';
 
                     themeButtonsHtml += `
                         <button 
@@ -4417,8 +3663,7 @@
                         </button>
                     `;
                 }
-                
-                // Inject buttons into the DOM
+
                 themePickerContainer.innerHTML = themeButtonsHtml;
                 
                 // 4. Add event listeners
@@ -4426,29 +3671,24 @@
                 themeButtons.forEach(button => {
                     button.addEventListener('click', async () => {
                         const themeName = button.dataset.themeName;
-                        const themeToApply = modifiedThemes.find(t => t.name === themeName);
+                        const themeToApply = themes.find(t => t.name === themeName);
                         
                         if (themeToApply) {
-                            // 1. Save to localStorage (Backup/Fast Load)
+                            // 1. Save to localStorage
                             localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(themeToApply));
                             
                             // 2. Apply theme for live preview
                             if (window.applyTheme) {
                                 window.applyTheme(themeToApply);
-                            } else {
-                                console.error('window.applyTheme is not defined. Is navigation.js loaded?');
-                                showMessage(themeMessage, 'Error applying theme preview.', 'error');
-                                return;
                             }
 
-                            // 3. Save to Firestore & Supabase (Persistence)
+                            // 3. Save to user profile if logged in
                             if (currentUser) {
                                 try {
                                     const uId = currentUser.uid || currentUser.deviceToken || currentUser.id || 'local_user';
                                     await saveUserData(uId, { navbarTheme: themeToApply });
                                 } catch (error) {
-                                    console.error("Error saving theme:", error);
-                                    // Don't block UI feedback for this
+                                    console.error('Error saving theme:', error);
                                 }
                             }
                             
@@ -4506,7 +3746,14 @@
             sidebarTabs.forEach(tab => {
                 tab.classList.remove('active');
             });
-            document.getElementById(`tab-${tabId}`).classList.add('active');
+            const currentTabEl = document.getElementById(`tab-${tabId}`);
+            if (currentTabEl) currentTabEl.classList.add('active');
+
+            // Sync with secondary floating settings dock
+            const dockBtns = document.querySelectorAll('#settings-floating-dock .settings-dock-btn');
+            dockBtns.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabId);
+            });
 
             // 2. Update the main view content and alignment
             mainView.style.justifyContent = 'flex-start';
@@ -4516,37 +3763,35 @@
                 await loadGeneralTab(); 
             }
             else if (tabId === 'privacy') {
-                // NEW: Load Privacy Tab
-                mainView.innerHTML = getPrivacyContent(); // Render HTML first
-                await loadPrivacyTab(); // Then load data and add listeners
+                mainView.innerHTML = getPrivacyContent();
+                await loadPrivacyTab();
             }
             else if (tabId === 'social') {
-                // NEW: Load Social Tab
-                mainView.innerHTML = getSocialContent(); // Render HTML first
-                await loadSocialTab(); // Then load data and add listeners
+                mainView.innerHTML = getSocialContent();
+                await loadSocialTab();
             }
-            else if (tabId === 'personalization') {                // --- NEW: Load Personalization Tab ---
-                mainView.innerHTML = getPersonalizationContent(); // Render HTML
-                await loadPersonalizationTab(); // Load data and add listeners
+            else if (tabId === 'personalization') {
+                mainView.innerHTML = getPersonalizationContent();
+                await loadPersonalizationTab();
             }
             else if (tabId === 'data') {
-                // --- NEW: Load Data Management Tab ---
-                mainView.innerHTML = getDataManagementContent(); // Render HTML
-                await loadDataTab(); // Load data and add listeners
+                mainView.innerHTML = getDataManagementContent();
+                await loadDataTab();
             }
             else if (tabId === 'about') {
                 mainView.innerHTML = getAboutContent();
             } else {
                 const content = tabContent[tabId];
-                mainView.innerHTML = getComingSoonContent(content.title);
+                mainView.innerHTML = getComingSoonContent(content ? content.title : tabId);
             }
 
-            // 3. New: Smoothly scroll the window back to the top (y=0)
+            // 3. Smoothly scroll the window back to the top (y=0)
             window.scrollTo({
                 top: 0,
                 behavior: 'smooth'
             });
         }
+        window.switchSettingsTab = switchTab;
 
         // --- Initialization on Load ---
         
@@ -4557,6 +3802,8 @@
             });
         });
 
+        // Immediately load General tab so settings view is never blank
+        switchTab('general');
 
         async function initializeAuth() {
             const handleUser = async (user, source = 'supabase') => {
@@ -4578,9 +3825,11 @@
                         if (adminTab) adminTab.classList.remove('hidden');
                     }
 
-                    // Set initial state to 'General' (or the first tab)
-                    if (mainView && mainView.children.length === 0) {
-                        switchTab('general');
+                    // Reload general tab with user data
+                    const activeTabBtn = document.querySelector('#settings-sidebar .settings-tab.active, #settings-floating-dock .settings-dock-btn.active');
+                    const activeTabId = activeTabBtn ? activeTabBtn.dataset.tab : 'general';
+                    if (activeTabId === 'general') {
+                        await loadGeneralTab();
                     }
                 } else {
                     // In-page modal popup instead of page redirect
@@ -4629,6 +3878,9 @@
             // If neither active, show modal popup
             handleUser(null);
         }
+        
+        // Use a short timeout to allow the rest of the script to run before auth check
+        setTimeout(() => { initializeAuth(); }, 100);
         
         // Use a short timeout to allow the rest of the script to run before auth check
         setTimeout(() => { initializeAuth(); }, 100);

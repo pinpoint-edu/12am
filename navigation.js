@@ -21,7 +21,7 @@
         { id: "dictionary", name: "Dictionary", icon: "fa-solid fa-book-bookmark", url: "dictionary.html" }
     ];
 
-    const lightThemeNames = ['Light', 'Lavender', 'Rose Gold', 'Mint', 'Pink', 'Birthday'];
+    const lightThemeNames = ['Light'];
 
     function isSimplifiedPage() {
         const path = (window.location.pathname || '').toLowerCase();
@@ -93,6 +93,11 @@
     }
 
     window.open12AMAuth = function() {
+        const menu = document.getElementById('auth-menu-container');
+        if (menu) {
+            menu.classList.remove('open');
+            menu.classList.add('closed');
+        }
         if (window.TwelveAMAuth && typeof window.TwelveAMAuth.showAuthModal === 'function') {
             window.TwelveAMAuth.showAuthModal();
         } else {
@@ -177,7 +182,7 @@
         return `<div style="width:${size}px; height:${size}px; border-radius:${radius}; background:${bg}; color:${color}; border:1px solid rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize}; text-transform:uppercase; letter-spacing:0.5px; user-select:none; flex-shrink:0;">${letters}</div>`;
     }
 
-    function renderAuthDockButtonsHtml(prefix, activeId) {
+    function renderAuthSectionHtml(prefix, activeId) {
         let currentUser = null;
         try {
             if (window.TwelveAMAuth && typeof window.TwelveAMAuth.getCurrentUser === 'function') {
@@ -190,40 +195,120 @@
         }
 
         const isSignedIn = !!(currentUser && (currentUser.nickname || currentUser.firstName));
-        const handle = isSignedIn ? (currentUser.nickname || 'user') : '';
-        const userTooltip = isSignedIn ? `@${handle}` : 'Account';
-        const avatarHtml = renderNavAvatar(currentUser, 32, '12px', '11px');
 
         if (isSignedIn) {
+            // LOGGED IN: Single squircle avatar button with dropdown menu + collapse button
+            const displayName = currentUser.firstName ? `${currentUser.firstName} ${currentUser.lastName || ''}`.trim() : currentUser.nickname;
+            const handle = currentUser.nickname || 'user';
+            const avatarHtml = renderNavAvatar(currentUser, 32, '12px', '11px');
+            const menuAvatarHtml = renderNavAvatar(currentUser, 42, '16px', '14px');
+
             return `
-                <div class="sidebar-btn sidebar-avatar-btn" title="@${escapeHtml(handle)}" aria-label="@${escapeHtml(handle)}">
-                    ${avatarHtml}
-                    <span class="sidebar-tooltip">@${escapeHtml(handle)}</span>
+                <div class="sidebar-auth-wrapper" id="sidebarAuthWrapper">
+                    <button type="button" class="sidebar-btn sidebar-avatar-btn auth-toggle-btn" id="sidebarAuthToggle" aria-label="Account Menu">
+                        ${avatarHtml}
+                        <span class="sidebar-tooltip">@${escapeHtml(handle)}</span>
+                    </button>
+                    <div id="auth-menu-container" class="auth-menu-container closed">
+                        <div class="auth-menu-header" style="display: flex; align-items: center; gap: 12px; padding: 6px 4px 10px;">
+                            <div style="flex-shrink: 0;">${menuAvatarHtml}</div>
+                            <div style="min-width: 0; flex: 1;">
+                                <p class="auth-menu-displayname" style="margin: 0; font-size: 0.95rem; font-weight: 500; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(displayName)}</p>
+                                <p class="auth-menu-handle" style="margin: 2px 0 0; font-size: 0.78rem; color: #f59e0b;">@${escapeHtml(handle)}</p>
+                            </div>
+                        </div>
+                        <div class="auth-menu-divider"></div>
+                        <a href="${prefix}settings.html" class="auth-menu-link">
+                            <i class="fa-solid fa-gear"></i>
+                            <span>Settings</span>
+                        </a>
+                        <a href="${prefix}legal.html" class="auth-menu-link">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span>Terms &amp; Policies</span>
+                        </a>
+                        <button type="button" onclick="window.open12AMAuth()" class="auth-menu-button">
+                            <i class="fa-solid fa-user-gear"></i>
+                            <span>Switch Account</span>
+                        </button>
+                        <button type="button" id="authCollapseDocksBtn" class="auth-menu-button auth-menu-collapse">
+                            <i class="fa-solid fa-angles-left"></i>
+                            <span>Collapse Docks</span>
+                        </button>
+                        <button type="button" onclick="window.logOut12AM()" class="auth-menu-button auth-menu-logout">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                            <span>Log Out</span>
+                        </button>
+                    </div>
                 </div>
-                <a href="${prefix}settings.html" class="sidebar-btn ${activeId === 'settings' ? 'active' : ''}" aria-label="Settings">
-                    <i class="fa-solid fa-gear"></i>
-                    <span class="sidebar-tooltip">Settings</span>
-                </a>
-                <button type="button" onclick="window.open12AMAuth()" class="sidebar-btn" aria-label="Switch Account">
-                    <i class="fa-solid fa-user-gear"></i>
-                    <span class="sidebar-tooltip">Switch Account</span>
-                </button>
-                <button type="button" onclick="window.logOut12AM()" class="sidebar-btn sidebar-logout-btn" aria-label="Log Out">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    <span class="sidebar-tooltip">Log Out</span>
-                </button>
             `;
         } else {
+            // LOGGED OUT: No auth menu! Buttons directly in the dock under the line
             return `
-                <button type="button" onclick="window.open12AMAuth()" class="sidebar-btn sidebar-primary-btn" aria-label="Authenticate">
-                    <i class="fa-solid fa-lock"></i>
-                    <span class="sidebar-tooltip">Authenticate</span>
-                </button>
-                <a href="${prefix}settings.html" class="sidebar-btn ${activeId === 'settings' ? 'active' : ''}" aria-label="Settings">
-                    <i class="fa-solid fa-gear"></i>
-                    <span class="sidebar-tooltip">Settings</span>
-                </a>
+                <div class="sidebar-auth-wrapper logged-out-buttons">
+                    <button type="button" onclick="window.open12AMAuth()" class="sidebar-btn sidebar-primary-btn" aria-label="Authenticate">
+                        <i class="fa-solid fa-lock"></i>
+                        <span class="sidebar-tooltip">Authenticate</span>
+                    </button>
+                    <a href="${prefix}settings.html" class="sidebar-btn ${activeId === 'settings' ? 'active' : ''}" aria-label="Settings">
+                        <i class="fa-solid fa-gear"></i>
+                        <span class="sidebar-tooltip">Settings</span>
+                    </a>
+                </div>
             `;
+        }
+    }
+
+    function setupAuthMenuListeners() {
+        const toggleBtn = document.getElementById('sidebarAuthToggle');
+        const menu = document.getElementById('auth-menu-container');
+        const collapseBtn = document.getElementById('authCollapseDocksBtn');
+
+        if (toggleBtn && menu) {
+            toggleBtn.onclick = (e) => {
+                e.stopPropagation();
+                const isOpen = menu.classList.contains('open');
+                if (isOpen) {
+                    menu.classList.remove('open');
+                    menu.classList.add('closed');
+                    toggleBtn.classList.remove('active');
+                } else {
+                    menu.classList.remove('closed');
+                    menu.classList.add('open');
+                    toggleBtn.classList.add('active');
+                }
+            };
+
+            document.addEventListener('click', (e) => {
+                if (!menu.contains(e.target) && !toggleBtn.contains(e.target)) {
+                    if (menu.classList.contains('open')) {
+                        menu.classList.remove('open');
+                        menu.classList.add('closed');
+                        toggleBtn.classList.remove('active');
+                    }
+                }
+            });
+        }
+
+        if (collapseBtn) {
+            collapseBtn.onclick = (e) => {
+                e.stopPropagation();
+                if (menu) {
+                    menu.classList.remove('open');
+                    menu.classList.add('closed');
+                }
+                if (toggleBtn) toggleBtn.classList.remove('active');
+                
+                // Toggle collapsed state
+                const isCurrentlyCollapsed = document.body.classList.contains('sidebar-collapsed');
+                if (isCurrentlyCollapsed) {
+                    document.body.classList.remove('sidebar-collapsed', 'sidebar-peek-open');
+                    localStorage.removeItem('12am_sidebar_collapsed');
+                } else {
+                    document.body.classList.add('sidebar-collapsed');
+                    document.body.classList.remove('sidebar-peek-open');
+                    localStorage.setItem('12am_sidebar_collapsed', 'true');
+                }
+            };
         }
     }
 
@@ -235,6 +320,123 @@
                 <span class="sidebar-tooltip">${escapeHtml(p.name)}</span>
             </a>
         `;
+    }
+
+    // Secondary Floating Dock for Settings Page
+    function setupSettingsSecondaryDock() {
+        const cleanName = (window.location.pathname || '').split('/').filter(Boolean).pop() || '';
+        const base = cleanName.replace(/\.html$/, '');
+
+        let secondDock = document.getElementById('settings-floating-dock');
+
+        if (base !== 'settings') {
+            if (secondDock) secondDock.remove();
+            return;
+        }
+
+        if (!secondDock) {
+            secondDock = document.createElement('nav');
+            secondDock.id = 'settings-floating-dock';
+            secondDock.className = 'floating-sidebar settings-floating-dock';
+            document.body.appendChild(secondDock);
+        }
+
+        const tabs = [
+            { id: 'general', name: 'General', icon: 'fa-solid fa-sliders' },
+            { id: 'privacy', name: 'Privacy & Security', icon: 'fa-solid fa-shield-halved' },
+            { id: 'personalization', name: 'Personalization', icon: 'fa-solid fa-palette' },
+            { id: 'data', name: 'Data Management', icon: 'fa-solid fa-database' },
+            { id: 'about', name: 'About 12AM', icon: 'fa-solid fa-circle-info' }
+        ];
+
+        let activeTab = 'general';
+        const currentActiveBtn = document.querySelector('#settings-sidebar .settings-tab.active');
+        if (currentActiveBtn && currentActiveBtn.dataset && currentActiveBtn.dataset.tab) {
+            activeTab = currentActiveBtn.dataset.tab;
+        }
+
+        const tabsHtml = tabs.map(t => `
+            <button type="button" class="sidebar-btn settings-dock-btn ${t.id === activeTab ? 'active' : ''}" data-tab="${t.id}" aria-label="${t.name}">
+                <i class="${t.icon}"></i>
+                <span class="sidebar-tooltip">${t.name}</span>
+            </button>
+        `).join('');
+
+        secondDock.innerHTML = `
+            <div class="sidebar-section sidebar-section-top">
+                <div class="sidebar-btn sidebar-page-badge" aria-label="Settings" title="Settings">
+                    <i class="fa-solid fa-gear" style="color: var(--accent-color); font-size: 20px;"></i>
+                    <span class="sidebar-tooltip">Settings</span>
+                </div>
+            </div>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section sidebar-section-tabs">
+                ${tabsHtml}
+            </div>
+        `;
+
+        // Wire tabs
+        secondDock.querySelectorAll('.settings-dock-btn').forEach(btn => {
+            btn.onclick = () => {
+                const tabId = btn.dataset.tab;
+                secondDock.querySelectorAll('.settings-dock-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                if (typeof window.switchSettingsTab === 'function') {
+                    window.switchSettingsTab(tabId);
+                } else {
+                    const pageTab = document.getElementById(`tab-${tabId}`);
+                    if (pageTab) pageTab.click();
+                }
+            };
+        });
+
+        // Hide legacy in-page tab bar
+        const legacySidebar = document.getElementById('settings-sidebar');
+        if (legacySidebar) {
+            legacySidebar.style.display = 'none';
+        }
+    }
+
+    // Left Edge Sensor & Hover Peek Logic for Collapsed Docks
+    function setupEdgeSensorAndPeek() {
+        let edgeSensor = document.getElementById('sidebar-edge-sensor');
+        if (!edgeSensor) {
+            edgeSensor = document.createElement('div');
+            edgeSensor.id = 'sidebar-edge-sensor';
+            edgeSensor.className = 'sidebar-edge-sensor';
+            document.body.appendChild(edgeSensor);
+        }
+
+        let collapseTimer = null;
+
+        function scheduleSidebarClose() {
+            clearTimeout(collapseTimer);
+            collapseTimer = setTimeout(() => {
+                document.body.classList.remove('sidebar-peek-open');
+            }, 450); // 450ms smooth delay so cursor can move between docks easily
+        }
+
+        function cancelSidebarClose() {
+            clearTimeout(collapseTimer);
+            if (document.body.classList.contains('sidebar-collapsed')) {
+                document.body.classList.add('sidebar-peek-open');
+            }
+        }
+
+        edgeSensor.onmouseenter = cancelSidebarClose;
+        edgeSensor.onmouseleave = scheduleSidebarClose;
+
+        const mainDock = document.getElementById('floating-sidebar');
+        if (mainDock) {
+            mainDock.onmouseenter = cancelSidebarClose;
+            mainDock.onmouseleave = scheduleSidebarClose;
+        }
+
+        const secondDock = document.getElementById('settings-floating-dock');
+        if (secondDock) {
+            secondDock.onmouseenter = cancelSidebarClose;
+            secondDock.onmouseleave = scheduleSidebarClose;
+        }
     }
 
     function createFloatingSidebar() {
@@ -287,8 +489,8 @@
             topSectionHtml = `${logoBtnHtml}${appButtonsHtml}`;
         }
 
-        // Bottom section: Auth buttons directly in the left dock (no menu needed)
-        const authButtonsHtml = renderAuthDockButtonsHtml(prefix, activeId);
+        // Bottom section: Auth section (auth toggle with menu when logged in, or direct buttons when logged out)
+        const authSectionHtml = renderAuthSectionHtml(prefix, activeId);
 
         container.innerHTML = `
             <div class="sidebar-section sidebar-section-top">
@@ -296,14 +498,31 @@
             </div>
             <div class="sidebar-divider"></div>
             <div class="sidebar-section sidebar-section-bottom">
-                ${authButtonsHtml}
+                ${authSectionHtml}
             </div>
         `;
 
+        // Restore collapse state if user is logged in
+        let currentUser = null;
+        try {
+            currentUser = JSON.parse(localStorage.getItem('12am_user') || 'null');
+        } catch(e) {}
+
+        const isSignedIn = !!(currentUser && (currentUser.nickname || currentUser.firstName));
+        if (isSignedIn && localStorage.getItem('12am_sidebar_collapsed') === 'true') {
+            document.body.classList.add('sidebar-collapsed');
+        } else {
+            document.body.classList.remove('sidebar-collapsed', 'sidebar-peek-open');
+        }
+
         setupPanicKey();
+        setupAuthMenuListeners();
+        setupSettingsSecondaryDock();
+        setupEdgeSensorAndPeek();
         injectMinimalFooter();
     }
 
+    // Injected Minimal Footer: Positioned at bottom right of the page (in normal flow, NOT fixed/floating)
     function injectMinimalFooter() {
         let footer = document.getElementById('minimal-footer-cluster');
         if (!footer) {
@@ -348,7 +567,7 @@
         const isLight = lightThemeNames.includes(t.name);
         const noFilterThemes = ['Dark', 'Light', 'Christmas'];
         const isNoFilter = noFilterThemes.includes(t.name);
-        const tintColor = t['accent-primary'] || t['tab-active-text'] || '#ffffff';
+        const tintColor = t['accent-primary'] || t['tab-active-text'] || '#f59e0b';
         const prefix = window.location.pathname.includes('/logged-in/') ? '../' : '';
 
         logos.forEach(logo => {

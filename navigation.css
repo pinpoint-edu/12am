@@ -4,16 +4,16 @@
 /* 12AM Base Navigation & Global V6 Styling */
 
 :root {
-  --bg-page: var(--bg-primary, #040404);
-  --bg-card: var(--bg-secondary, #080808);
+  --bg-page: var(--bg-primary, #060608);
+  --bg-card: var(--bg-secondary, #0c0c10);
   --text-main: var(--text-primary, #ffffff);
-  --text-muted: var(--text-secondary, #c0c0c0);
-  --accent-color: var(--accent-primary, #8b5cf6);
-  --accent-glow: var(--accent-secondary, rgba(139, 92, 246, 0.4));
-  --border-main: var(--border-primary, #1a1a1a);
-  --border-faint: var(--border-secondary, rgba(255, 255, 255, 0.05));
-  --btn-bg: var(--button-bg, rgba(139, 92, 246, 0.12));
-  --btn-text: var(--button-text, #8b5cf6);
+  --text-muted: var(--text-secondary, #c8c8d4);
+  --accent-color: var(--accent-primary, #f59e0b);
+  --accent-glow: var(--accent-secondary, rgba(245, 158, 11, 0.45));
+  --border-main: var(--border-primary, #1c1c24);
+  --border-faint: var(--border-secondary, rgba(245, 158, 11, 0.12));
+  --btn-bg: var(--button-bg, rgba(245, 158, 11, 0.14));
+  --btn-text: var(--button-text, #f59e0b);
   --navbar-height: 0px;
   --sidebar-width: 60px;
 }
@@ -51,14 +51,16 @@ b, strong, th,
   -webkit-font-smoothing: antialiased;
 }
 
-/* Body Reset: Backgrounds and gradients are allowed to go completely behind the floating dock */
+/* Body layout: flex column with min-h-screen, backgrounds go full bleed behind the dock */
 body {
-  margin: 0;
-  padding: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 100vh !important;
   font-family: 'Geist', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: var(--text-main);
   background-color: var(--bg-page);
-  min-height: 100vh;
   box-sizing: border-box;
   overflow-x: hidden;
   transition: background-color 0.3s ease, color 0.3s ease;
@@ -82,7 +84,7 @@ body {
 }
 
 /* ==========================================================================
-   FLOATING LEFT SIDEBAR (Larger Squircle Dock)
+   FLOATING LEFT SIDEBAR (Larger Squircle Primary Dock)
    ========================================================================== */
 
 #floating-sidebar,
@@ -110,7 +112,17 @@ body {
   gap: 6px !important;
   box-sizing: border-box !important;
   overflow: visible !important;
-  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Invisible hover buffer so moving between docks doesn't trigger mouseleave */
+#floating-sidebar::after,
+#settings-floating-dock::after {
+  content: "";
+  position: absolute;
+  inset: -15px -35px -15px -15px;
+  z-index: -1;
+  pointer-events: auto;
 }
 
 .sidebar-section {
@@ -165,10 +177,10 @@ body {
 }
 
 .sidebar-btn.active {
-  color: var(--tab-active-text, #8b5cf6) !important;
-  background: var(--tab-active-bg, rgba(139, 92, 246, 0.16)) !important;
-  border-color: var(--tab-active-border, #8b5cf6) !important;
-  box-shadow: 0 0 14px var(--accent-glow, rgba(139, 92, 246, 0.3)) !important;
+  color: var(--tab-active-text, #f59e0b) !important;
+  background: var(--tab-active-bg, rgba(245, 158, 11, 0.16)) !important;
+  border-color: var(--tab-active-border, #f59e0b) !important;
+  box-shadow: 0 0 14px var(--accent-glow, rgba(245, 158, 11, 0.35)) !important;
 }
 
 /* Brand Logo Squircle Button */
@@ -185,21 +197,24 @@ body {
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
 }
 
+.sidebar-page-badge {
+  cursor: default;
+}
+
 /* Specific button styles */
 .sidebar-avatar-btn {
-  cursor: default;
   padding: 0;
 }
 
 .sidebar-primary-btn {
-  background: var(--accent-color, #8b5cf6) !important;
-  color: #ffffff !important;
-  border-color: var(--accent-color, #8b5cf6) !important;
+  background: var(--accent-color, #f59e0b) !important;
+  color: #000000 !important;
+  border-color: var(--accent-color, #f59e0b) !important;
 }
 
 .sidebar-primary-btn:hover {
   filter: brightness(1.15);
-  box-shadow: 0 0 14px var(--accent-glow, rgba(139, 92, 246, 0.4)) !important;
+  box-shadow: 0 0 14px var(--accent-glow, rgba(245, 158, 11, 0.45)) !important;
 }
 
 .sidebar-logout-btn:hover {
@@ -249,16 +264,207 @@ body {
 }
 
 /* ==========================================================================
-   MINIMAL BOTTOM-RIGHT FOOTER CLUSTER
-   Injected into every page
+   SECONDARY SETTINGS FLOATING DOCK (Settings Page Only)
+   ========================================================================== */
+
+#settings-floating-dock,
+.settings-floating-dock {
+  position: fixed !important;
+  left: 88px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  bottom: auto !important;
+  right: auto !important;
+  z-index: 9988 !important;
+  width: 60px !important;
+  height: auto !important;
+  background: var(--navbar-bg, rgba(10, 10, 14, 0.82)) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border: 1px solid var(--navbar-border, rgba(255, 255, 255, 0.09)) !important;
+  border-radius: 22px !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 24px rgba(0, 0, 0, 0.3) !important;
+  padding: 10px 7px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 6px !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Offset settings content to clear both docks */
+body:has(#settings-floating-dock) #settings-container {
+  padding-left: 175px !important;
+}
+
+#settings-sidebar {
+  display: none !important;
+}
+
+/* ==========================================================================
+   AUTH DROPDOWN MENU (For Logged In Users)
+   ========================================================================== */
+
+.sidebar-auth-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.auth-menu-container {
+  position: absolute;
+  left: calc(100% + 14px);
+  bottom: 0;
+  width: 17rem;
+  background: var(--bg-card, #0d0d12);
+  border: 1px solid var(--border-main, rgba(255, 255, 255, 0.12));
+  border-radius: 20px;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(245, 158, 11, 0.15);
+  z-index: 100010;
+  transform-origin: bottom left;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.auth-menu-container.closed {
+  display: none !important;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-10px) scale(0.96);
+}
+
+.auth-menu-container.open {
+  display: flex !important;
+  animation: authMenuSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes authMenuSlideIn {
+  from { opacity: 0; transform: translateX(-10px) scale(0.96); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+.auth-menu-header {
+  padding: 0.25rem 0.5rem 0.5rem;
+  min-width: 0;
+}
+
+.auth-menu-divider {
+  height: 1px;
+  background: var(--border-main, rgba(255, 255, 255, 0.1));
+  margin: 0.2rem 0 0.4rem;
+}
+
+.auth-menu-link,
+.auth-menu-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.86rem;
+  color: var(--text-muted, #a1a1aa);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.auth-menu-link:hover,
+.auth-menu-button:hover {
+  background: var(--btn-bg, rgba(245, 158, 11, 0.14));
+  border-color: var(--border-main, rgba(255, 255, 255, 0.15));
+  color: var(--text-main, #ffffff);
+  transform: translateX(2px);
+}
+
+.auth-menu-link i,
+.auth-menu-button i {
+  width: 18px;
+  text-align: center;
+  color: var(--accent-color, #f59e0b);
+}
+
+.auth-menu-logout {
+  color: #f87171 !important;
+}
+
+.auth-menu-logout i {
+  color: #f87171 !important;
+}
+
+.auth-menu-logout:hover {
+  background: rgba(248, 113, 113, 0.15) !important;
+  border-color: rgba(248, 113, 113, 0.3) !important;
+}
+
+.auth-menu-collapse {
+  color: var(--text-muted, #c8c8d4);
+}
+
+.auth-menu-collapse:hover {
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   COLLAPSE MODE & LEFT EDGE SENSOR (With smooth delay & peek open)
+   ========================================================================== */
+
+.sidebar-edge-sensor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  z-index: 9995;
+  pointer-events: none;
+}
+
+body.sidebar-collapsed .sidebar-edge-sensor {
+  pointer-events: auto !important;
+}
+
+body.sidebar-collapsed #floating-sidebar,
+body.sidebar-collapsed #navbar-container {
+  transform: translateY(-50%) translateX(-120px) !important;
+}
+
+body.sidebar-collapsed #settings-floating-dock {
+  transform: translateY(-50%) translateX(-220px) !important;
+}
+
+body.sidebar-collapsed.sidebar-peek-open #floating-sidebar,
+body.sidebar-collapsed.sidebar-peek-open #navbar-container {
+  transform: translateY(-50%) translateX(0) !important;
+}
+
+body.sidebar-collapsed.sidebar-peek-open #settings-floating-dock {
+  transform: translateY(-50%) translateX(0) !important;
+}
+
+/* ==========================================================================
+   MINIMAL FOOTER (In Bottom Right of Page, NOT Floating over Screen)
    ========================================================================== */
 
 .minimal-footer-cluster {
-  position: fixed !important;
-  right: 20px !important;
-  bottom: 16px !important;
-  z-index: 9980 !important;
-  display: flex !important;
+  position: relative !important;
+  margin-top: auto !important;
+  margin-left: auto !important;
+  margin-right: 28px !important;
+  margin-bottom: 24px !important;
+  align-self: flex-end !important;
+  display: inline-flex !important;
   align-items: center !important;
   gap: 8px !important;
   padding: 6px 14px !important;
@@ -274,11 +480,11 @@ body {
   pointer-events: auto !important;
   user-select: none !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  margin: 0 !important;
+  z-index: 10 !important;
 }
 
 .minimal-footer-cluster:hover {
-  border-color: var(--accent-color, rgba(139, 92, 246, 0.45)) !important;
+  border-color: var(--accent-color, rgba(245, 158, 11, 0.45)) !important;
   color: var(--text-main, #ffffff) !important;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.65) !important;
   transform: translateY(-1px);
@@ -314,7 +520,7 @@ body {
 }
 
 .minimal-footer-link:hover {
-  color: var(--accent-color, #8b5cf6) !important;
+  color: var(--accent-color, #f59e0b) !important;
   text-decoration: underline !important;
 }
 
@@ -339,7 +545,8 @@ footer:not(.minimal-footer-cluster),
    ========================================================================== */
 
 @media (max-height: 820px) {
-  #floating-sidebar, .floating-sidebar, #navbar-container {
+  #floating-sidebar, .floating-sidebar, #navbar-container,
+  #settings-floating-dock, .settings-floating-dock {
     padding: 8px 5px !important;
     gap: 4px !important;
     border-radius: 18px !important;
@@ -360,7 +567,8 @@ footer:not(.minimal-footer-cluster),
 }
 
 @media (max-height: 650px) {
-  #floating-sidebar, .floating-sidebar, #navbar-container {
+  #floating-sidebar, .floating-sidebar, #navbar-container,
+  #settings-floating-dock, .settings-floating-dock {
     top: 8px !important;
     bottom: 8px !important;
     transform: none !important;
@@ -370,6 +578,7 @@ footer:not(.minimal-footer-cluster),
     scrollbar-width: none !important;
   }
   #floating-sidebar::-webkit-scrollbar,
+  #settings-floating-dock::-webkit-scrollbar,
   #navbar-container::-webkit-scrollbar {
     display: none !important;
   }
@@ -399,8 +608,8 @@ footer:not(.minimal-footer-cluster),
     height: 40px !important;
   }
   .minimal-footer-cluster {
-    right: 12px !important;
-    bottom: 12px !important;
+    margin-right: 14px !important;
+    margin-bottom: 14px !important;
     padding: 5px 10px !important;
     font-size: 0.68rem !important;
   }
