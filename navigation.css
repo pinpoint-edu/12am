@@ -620,3 +620,15 @@ body {
 .auth-menu-primary:hover {
   filter: brightness(1.15);
 }
+
+/* AMOLED Midnight Player Dimming: Decreases game & movie/series/anime player brightness by 20% */
+html.theme-amoled-midnight #gameIframe,
+html.theme-amoled-midnight #player-view iframe,
+html.theme-amoled-midnight #player-view canvas,
+html.theme-amoled-midnight #streamIframe,
+html.theme-amoled-midnight #playerModal iframe,
+html.theme-amoled-midnight #playerModal video,
+html.theme-amoled-midnight .stream-iframe {
+  filter: brightness(0.8) !important;
+  transition: filter 0.3s ease;
+}

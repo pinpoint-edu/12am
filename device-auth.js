@@ -27,17 +27,38 @@
             return `<div class="pfp-squircle" style="width:${size}px; height:${size}px; border-radius:${radius}; background:#000000; color:#ffffff; border:1px solid rgba(255,255,255,0.16); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize};">?</div>`;
         }
 
-        const type = user.avatar_type || (user.avatar_url || user.avatar || user.pfp || localStorage.getItem('12am_profile_picture') ? 'image' : 'letter');
+        const type = user.avatar_type || user.pfpType || (user.mibiConfig ? 'mibi' : (user.avatar_url || user.avatar || user.pfp || localStorage.getItem('12am_profile_picture') ? 'image' : 'letter'));
         const imgUrl = user.avatar_url || user.avatar || user.pfp || user.photoURL || localStorage.getItem('12am_profile_picture');
+
+        // Mibi Avatar Rendering
+        if (type === 'mibi' && user.mibiConfig) {
+            const m = user.mibiConfig;
+            const bg = escapeHtml(m.bgColor || '#3B82F6');
+            const scale = (m.size || 100) / 100;
+            const rot = m.rotation || 0;
+            const ox = m.offsetX || 0;
+            const oy = m.offsetY || 0;
+            const eyes = m.eyes ? `<img src="mibi-avatars/eyes/${escapeHtml(m.eyes)}" alt="" style="position:absolute; inset:0; width:100%; height:100%; object-fit:contain; z-index:20;">` : '';
+            const mouths = m.mouths ? `<img src="mibi-avatars/mouths/${escapeHtml(m.mouths)}" alt="" style="position:absolute; inset:0; width:100%; height:100%; object-fit:contain; z-index:20;">` : '';
+            const hats = m.hats ? `<img src="mibi-avatars/hats/${escapeHtml(m.hats)}" alt="" style="position:absolute; inset:0; width:100%; height:100%; object-fit:contain; z-index:30;">` : '';
+            return `<div class="pfp-squircle" style="width:${size}px; height:${size}px; border-radius:${radius}; background:${bg}; position:relative; overflow:hidden; border:1px solid rgba(255,255,255,0.16); flex-shrink:0;">
+                <div style="position:absolute; inset:0; transform:translate(${ox}%, ${oy}%) rotate(${rot}deg) scale(${scale}); transform-origin:center; pointer-events:none;">
+                    <img src="mibi-avatars/head.png" alt="" style="position:absolute; inset:0; width:100%; height:100%; object-fit:contain; z-index:10;">
+                    ${eyes}
+                    ${mouths}
+                    ${hats}
+                </div>
+            </div>`;
+        }
 
         if (type === 'image' && imgUrl) {
             const fallbackInitial = escapeHtml(((user.firstName || user.nickname || 'U')[0] || 'U').toUpperCase());
             return `<img src="${escapeHtml(imgUrl)}" alt="Avatar" class="pfp-squircle" style="width:${size}px; height:${size}px; border-radius:${radius}; object-fit:cover; display:block; border:1px solid rgba(255,255,255,0.16);" onerror="this.outerHTML='<div class=\\'pfp-squircle\\' style=\\'width:${size}px; height:${size}px; border-radius:${radius}; background:#000000; color:#ffffff; border:1px solid rgba(255,255,255,0.16); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize};\\'>${fallbackInitial}</div>'">`;
         }
 
-        const rawLetters = user.avatar_letter || (user.firstName || user.nickname || 'U')[0] || 'U';
+        const rawLetters = user.avatar_letter || user.pfp_letter_char || user.letterAvatarText || (user.firstName || user.nickname || 'U')[0] || 'U';
         const letters = escapeHtml(String(rawLetters).slice(0, 3).toUpperCase());
-        const bg = escapeHtml(user.avatar_bg || '#000000');
+        const bg = escapeHtml(user.avatar_bg || user.pfpLetterBg || user.pfp_letter_bg || '#000000');
         const color = escapeHtml(user.avatar_color || '#ffffff');
 
         return `<div class="pfp-squircle" style="width:${size}px; height:${size}px; border-radius:${radius}; background:${bg}; color:${color}; border:1px solid rgba(255,255,255,0.16); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize}; text-transform:uppercase; letter-spacing:0.5px; user-select:none; flex-shrink:0;">${letters}</div>`;

@@ -68,6 +68,54 @@
         "button-text": "#8b5cf6"
     },
     {
+        "name": "AMOLED Midnight",
+        "logo-src": "/images/logo.png",
+        "navbar-bg": "#000000",
+        "navbar-border": "#111111",
+        "avatar-gradient": "linear-gradient(135deg, #18181b 0%, #000000 100%)",
+        "avatar-border": "#27272a",
+        "menu-bg": "#000000",
+        "menu-border": "#141416",
+        "menu-divider": "#111111",
+        "menu-text": "#a1a1aa",
+        "menu-item-hover-bg": "#09090b",
+        "menu-item-hover-text": "#ffffff",
+        "glass-menu-bg": "rgba(0, 0, 0, 0.95)",
+        "glass-menu-border": "rgba(20, 20, 22, 0.9)",
+        "logged-out-icon-bg": "#000000",
+        "logged-out-icon-border": "#18181b",
+        "logged-out-icon-color": "#e4e4e7",
+        "glide-btn-color": "#8b5cf6",
+        "glide-gradient-left": "linear-gradient(to right, #000000, transparent)",
+        "glide-gradient-right": "linear-gradient(to left, #000000, transparent)",
+        "tab-text": "#71717a",
+        "tab-hover-text": "#ffffff",
+        "tab-hover-border": "#27272a",
+        "tab-hover-bg": "rgba(139, 92, 246, 0.05)",
+        "tab-active-text": "#8b5cf6",
+        "tab-active-border": "#8b5cf6",
+        "tab-active-bg": "rgba(139, 92, 246, 0.12)",
+        "tab-active-hover-text": "#a78bfa",
+        "tab-active-hover-border": "#a78bfa",
+        "tab-active-hover-bg": "rgba(139, 92, 246, 0.18)",
+        "pin-btn-border": "#18181b",
+        "pin-btn-hover-bg": "#09090b",
+        "pin-btn-icon-color": "#a1a1aa",
+        "hint-bg": "#000000",
+        "hint-border": "#18181b",
+        "hint-text": "#ffffff",
+        "bg-primary": "#000000",
+        "bg-secondary": "#000000",
+        "text-primary": "#ffffff",
+        "text-secondary": "#71717a",
+        "accent-primary": "#8b5cf6",
+        "accent-secondary": "rgba(139, 92, 246, 0.15)",
+        "border-primary": "#111111",
+        "border-secondary": "rgba(255, 255, 255, 0.03)",
+        "button-bg": "rgba(139, 92, 246, 0.12)",
+        "button-text": "#8b5cf6"
+    },
+    {
         "name": "Light",
         "logo-src": "/images/logo-dark.png",
         "navbar-bg": "#ffffff",
@@ -1459,6 +1507,33 @@
         if (dynamicBg) {
             const glowColor = theme["accent-secondary"] || "rgba(79, 70, 229, 0.4)";
             dynamicBg.style.background = `radial-gradient(circle at 50% 20%, ${glowColor}, transparent 65%)`;
+        }
+
+        // AMOLED Midnight Detection & 20% Player Brightness Reduction
+        const isAmoled = theme.name === 'AMOLED Midnight' || (theme.name && theme.name.toLowerCase().includes('amoled'));
+        if (isAmoled) {
+            root.classList.add("theme-amoled-midnight");
+        } else {
+            root.classList.remove("theme-amoled-midnight");
+        }
+
+        let amoledStyle = document.getElementById("12am-amoled-player-dim");
+        if (!amoledStyle) {
+            amoledStyle = document.createElement("style");
+            amoledStyle.id = "12am-amoled-player-dim";
+            amoledStyle.textContent = `
+                html.theme-amoled-midnight #gameIframe,
+                html.theme-amoled-midnight #player-view iframe,
+                html.theme-amoled-midnight #player-view canvas,
+                html.theme-amoled-midnight #streamIframe,
+                html.theme-amoled-midnight #playerModal iframe,
+                html.theme-amoled-midnight #playerModal video,
+                html.theme-amoled-midnight .stream-iframe {
+                    filter: brightness(0.8) !important;
+                    transition: filter 0.3s ease;
+                }
+            `;
+            document.head.appendChild(amoledStyle);
         }
 
         if (isLightTheme) {

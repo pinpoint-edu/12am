@@ -2725,14 +2725,72 @@
                 showMessage(pfpMessage, '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Saving Mibi Avatar...', 'warning');
                 
                 try {
-                    const uid = currentUser.uid || currentUser.id;
+                    const uid = (currentUser ? (currentUser.uid || currentUser.id) : null) || (devUser ? (devUser.id || devUser.deviceToken) : null) || localStorage.getItem('12am_device_token');
                     
                     // Save to Firestore & Supabase
-                    await saveUserData(uid, {
-                        pfpType: 'mibi',
-                        mibiConfig: mibiAvatarState
-                    });
+                    if (uid) {
+                        await saveUserData(uid, {
+                            pfpType: 'mibi',
+                            mibiConfig: mibiAvatarState
+                        });
+                    }
                     
+                    // Update local storage device accounts
+                    try {
+                        let u = JSON.parse(localStorage.getItem('12am_user') || '{}');
+                        u.avatar_type = 'mibi';
+                        u.pfpType = 'mibi';
+                        u.mibiConfig = mibiAvatarState;
+                        localStorage.setItem('12am_user', JSON.stringify(u));
+                        let bound = JSON.parse(localStorage.getItem('12am_device_account') || 'null');
+                        if (bound) {
+                            bound.avatar_type = 'mibi';
+                            bound.pfpType = 'mibi';
+                            bound.mibiConfig = mibiAvatarState;
+                            localStorage.setItem('12am_device_account', JSON.stringify(bound));
+                        }
+                    } catch(e) {}
+
+                    // Update live squircle preview in settings if present
+                    const previewSquircle = document.getElementById('mibiCurrentPreviewSquircle');
+                    const previewInner = document.getElementById('mibiCurrentPreviewInner');
+                    const curEyes = document.getElementById('mibiCurrentEyes');
+                    const curMouth = document.getElementById('mibiCurrentMouth');
+                    const curHat = document.getElementById('mibiCurrentHat');
+                    if (previewSquircle) previewSquircle.style.backgroundColor = mibiAvatarState.bgColor || '#3B82F6';
+                    if (previewInner) {
+                        const scale = (mibiAvatarState.size || 100) / 100;
+                        previewInner.style.transform = `translate(${mibiAvatarState.offsetX || 0}%, ${mibiAvatarState.offsetY || 0}%) rotate(${mibiAvatarState.rotation || 0}deg) scale(${scale})`;
+                    }
+                    if (curEyes) {
+                        if (mibiAvatarState.eyes) {
+                            curEyes.src = `mibi-avatars/eyes/${mibiAvatarState.eyes}`;
+                            curEyes.classList.remove('hidden');
+                        } else {
+                            curEyes.classList.add('hidden');
+                        }
+                    }
+                    if (curMouth) {
+                        if (mibiAvatarState.mouths) {
+                            curMouth.src = `mibi-avatars/mouths/${mibiAvatarState.mouths}`;
+                            curMouth.classList.remove('hidden');
+                        } else {
+                            curMouth.classList.add('hidden');
+                        }
+                    }
+                    if (curHat) {
+                        if (mibiAvatarState.hats) {
+                            curHat.src = `mibi-avatars/hats/${mibiAvatarState.hats}`;
+                            curHat.classList.remove('hidden');
+                        } else {
+                            curHat.classList.add('hidden');
+                        }
+                    }
+
+                    if (typeof window.__updateNavbarUser === 'function') {
+                        window.__updateNavbarUser();
+                    }
+
                     // Update local dispatch for immediate feedback
                     const newUserData = {
                         pfpType: 'mibi',
@@ -2746,9 +2804,7 @@
                     
                     // Update dropdown to reflect choice
                     if (pfpModeSelect) {
-                        // Logic to handle the custom dropdown implementation if it exists
                         pfpModeSelect.value = 'mibi';
-                        // Trigger change event if needed, or manually update custom dropdown UI
                         const wrapper = pfpModeSelect.parentElement.querySelector('.custom-select-trigger');
                          if (wrapper) {
                              const option = Array.from(pfpModeSelect.options).find(o => o.value === 'mibi');
@@ -2912,88 +2968,237 @@
                 devUser = await window.TwelveAMAuth.getBoundDeviceAccount();
             }
 
+            if (devUser && devUser.mibiConfig) {
+                mibiAvatarState = { ...mibiAvatarState, ...devUser.mibiConfig };
+            }
+
             const currentUsername = devUser?.nickname || devUser?.firstName || 'user';
             const avatarUrl = devUser?.avatar_url || devUser?.avatar || devUser?.pfp || localStorage.getItem('12am_profile_picture') || '';
             const safeUsername = String(currentUsername).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-            let avatarMode = devUser?.avatar_type || (avatarUrl ? 'image' : 'letter');
-            let currentLetters = (devUser?.avatar_letter || (devUser?.firstName || devUser?.nickname || 'U')[0] || 'U').slice(0, 3).toUpperCase();
-            let currentBg = devUser?.avatar_bg || '#000000';
+            let rawMode = devUser?.avatar_type || devUser?.pfpType || (devUser?.mibiConfig ? 'mibi' : (avatarUrl ? 'custom' : 'letter'));
+            let currentPfpMode = 'letter';
+            if (rawMode === 'google' || rawMode === 'default') currentPfpMode = 'google';
+            else if (rawMode === 'mibi') currentPfpMode = 'mibi';
+            else if (rawMode === 'custom' || rawMode === 'image') currentPfpMode = 'custom';
+            else currentPfpMode = 'letter';
+
+            let currentLetters = (devUser?.avatar_letter || devUser?.letterAvatarText || devUser?.pfp_letter_char || (devUser?.firstName || devUser?.nickname || 'U')[0] || 'U').slice(0, 3).toUpperCase();
+            let currentBg = devUser?.avatar_bg || devUser?.pfpLetterBg || '#000000';
             let currentColor = devUser?.avatar_color || '#ffffff';
 
             mainView.innerHTML = `
                 <div class="w-full max-w-2xl">
                     <h2 class="text-3xl font-bold text-[var(--text-main)] mb-6">General Settings</h2>
 
-                    <!-- 1. Profile Picture & Letter Avatar Customization -->
-                    <div class="settings-box p-6 mb-6">
+                    <!-- 1. Profile Picture Section (Unified with Mibi & Letter Creator) -->
+                    <div id="pfpSection" class="settings-box transition-all duration-300 p-6 mb-6">
                         <h3 class="text-xl font-bold text-[var(--text-main)] mb-1">Profile Picture</h3>
-                        <p class="text-xs text-[var(--text-muted)] mb-4">Choose between custom letter initials (with customizable colors) or an uploaded image.</p>
+                        <p class="text-xs text-[var(--text-muted)] mb-4">Choose how you appear across 12AM: default initial, custom letters, interactive Mibi Avatar, or custom image.</p>
                         
-                        <!-- Mode Tabs -->
-                        <div class="flex items-center gap-2 mb-5 p-1 rounded-xl bg-[var(--bg-page)] border border-[var(--border-main)] inline-flex">
-                            <button type="button" id="avatarModeLetterBtn" class="px-4 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors ${avatarMode === 'letter' ? 'bg-[var(--accent-color)] text-white' : 'text-[var(--text-muted)] hover:text-white'}">Letter Avatar</button>
-                            <button type="button" id="avatarModeImageBtn" class="px-4 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors ${avatarMode === 'image' ? 'bg-[var(--accent-color)] text-white' : 'text-[var(--text-muted)] hover:text-white'}">Custom Image</button>
-                        </div>
+                        <div class="flex flex-col gap-4">
+                            <!-- Mode Selection Buttons -->
+                            <div class="flex flex-wrap gap-2 mb-4 border-b border-[var(--border-main)] pb-4">
+                                <button type="button" class="pfp-mode-btn btn-toolbar-style ${currentPfpMode === 'google' ? 'active' : ''}" data-mode="google">Default / Initial</button>
+                                <button type="button" class="pfp-mode-btn btn-toolbar-style ${currentPfpMode === 'letter' ? 'active' : ''}" data-mode="letter">Letter Avatar</button>
+                                <button type="button" class="pfp-mode-btn btn-toolbar-style ${currentPfpMode === 'mibi' ? 'active' : ''}" data-mode="mibi">Mibi Avatar</button>
+                                <button type="button" class="pfp-mode-btn btn-toolbar-style ${currentPfpMode === 'custom' ? 'active' : ''}" data-mode="custom">Upload Image</button>
+                            </div>
 
-                        <!-- Letter Avatar Customizer -->
-                        <div id="letterAvatarSection" class="${avatarMode === 'letter' ? 'block' : 'hidden'}">
-                            <div class="flex flex-col sm:flex-row items-center gap-6">
-                                <div id="letterAvatarPreview" style="width: 80px; height: 80px; border-radius: 18px; background: ${currentBg}; color: ${currentColor}; border: 1px solid rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center; font-weight: 500; font-size: 26px; text-transform: uppercase; letter-spacing: 0.5px; user-select: none; flex-shrink: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-                                    ${currentLetters}
+                            <!-- Google / Default Options -->
+                            <div id="pfpGoogleSettings" class="${currentPfpMode === 'google' ? 'flex' : 'hidden'} items-center gap-6 mt-1">
+                                <div class="w-20 h-20 rounded-[20px] bg-black text-white border border-[var(--border-main)] flex items-center justify-center font-bold text-2xl uppercase flex-shrink-0 shadow-lg">
+                                    ${escapeHtml((devUser?.firstName || devUser?.nickname || 'U')[0] || 'U')}
                                 </div>
-                                <div class="flex-1 flex flex-col gap-3 w-full">
-                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                        <div>
-                                            <label class="text-xs text-[var(--text-muted)] mb-1 block">Initials (1–3)</label>
-                                            <input type="text" id="avatarLetterInput" value="${currentLetters}" maxlength="3" class="input-text-style font-mono text-center text-sm uppercase" style="width: 100%;">
-                                        </div>
-                                        <div>
-                                            <label class="text-xs text-[var(--text-muted)] mb-1 block">Background</label>
-                                            <div class="flex items-center gap-2 h-10 px-2 rounded-xl bg-[var(--bg-page)] border border-[var(--border-main)]">
-                                                <input type="color" id="avatarBgInput" value="${currentBg}" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent">
-                                                <span id="avatarBgHex" class="text-xs font-mono text-[var(--text-muted)]">${currentBg}</span>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label class="text-xs text-[var(--text-muted)] mb-1 block">Text Color</label>
-                                            <div class="flex items-center gap-2 h-10 px-2 rounded-xl bg-[var(--bg-page)] border border-[var(--border-main)]">
-                                                <input type="color" id="avatarColorInput" value="${currentColor}" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent">
-                                                <span id="avatarColorHex" class="text-xs font-mono text-[var(--text-muted)]">${currentColor}</span>
-                                            </div>
+                                <div class="flex flex-col gap-2">
+                                    <p class="text-xs text-[var(--text-muted)]">Using the standard white initial against a sleek black squircle.</p>
+                                    <button type="button" id="resetToDefaultPfpBtn" class="btn-toolbar-style self-start">
+                                        <i class="fa-solid fa-rotate-left mr-2"></i> Reset to Default
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Letter Avatar Options -->
+                            <div id="pfpLetterSettings" class="${currentPfpMode === 'letter' ? 'flex' : 'hidden'} flex-col gap-4 mt-1">
+                                <div class="flex items-center gap-6 mb-2">
+                                    <!-- Interactive Preview -->
+                                    <div id="pfp-letter-preview" class="w-20 h-20 rounded-[20px] flex items-center justify-center text-2xl font-bold shadow-lg border border-[var(--border-main)] cursor-text relative overflow-hidden group flex-shrink-0" style="background: ${currentBg}; color: ${currentColor};">
+                                        <input type="text" id="pfp-letter-input" maxlength="3" class="absolute inset-0 w-full h-full bg-transparent border-none outline-none text-center uppercase cursor-text font-mono" placeholder="U" value="${currentLetters}">
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <label class="block text-[var(--text-muted)] opacity-70 text-xs uppercase tracking-wider font-bold">Live Letter Preview</label>
+                                        <p class="text-xs text-[var(--text-muted)] opacity-60 max-w-[260px]">Type up to 3 initials in the squircle or customize the background below.</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-2">
+                                    <div>
+                                        <label class="block text-[var(--text-muted)] opacity-70 text-xs mb-2 uppercase tracking-wider font-bold">Background Color</label>
+                                        <div class="flex items-center gap-2 h-10 px-3 rounded-xl bg-[var(--bg-page)] border border-[var(--border-main)]">
+                                            <input type="color" id="pfpLetterBgInput" value="${currentBg}" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent">
+                                            <span id="pfpLetterBgHex" class="text-xs font-mono text-[var(--text-muted)]">${currentBg}</span>
                                         </div>
                                     </div>
-                                    <button type="button" id="saveLetterAvatarBtn" class="btn-toolbar-style btn-primary-override self-start mt-1">
-                                        <i class="fa-solid fa-floppy-disk"></i>
-                                        <span>Save Avatar</span>
+                                    <div>
+                                        <label class="block text-[var(--text-muted)] opacity-70 text-xs mb-2 uppercase tracking-wider font-bold">Text Color</label>
+                                        <div class="flex items-center gap-2 h-10 px-3 rounded-xl bg-[var(--bg-page)] border border-[var(--border-main)]">
+                                            <input type="color" id="pfpLetterTextColorInput" value="${currentColor}" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent">
+                                            <span id="pfpLetterTextColorHex" class="text-xs font-mono text-[var(--text-muted)]">${currentColor}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <label class="block text-[var(--text-muted)] opacity-70 text-xs uppercase tracking-wider font-bold mt-1">Preset Palettes</label>
+                                <div class="color-palette-grid mb-3" id="pfp-color-grid"></div>
+                                
+                                <button type="button" id="save-letter-pfp-btn" class="btn-toolbar-style btn-primary-override self-start">
+                                    <i class="fa-solid fa-check mr-2"></i> Save Letter Avatar
+                                </button>
+                            </div>
+
+                            <!-- Mibi Avatar Settings -->
+                            <div id="pfpMibiSettings" class="${currentPfpMode === 'mibi' ? 'flex' : 'hidden'} flex-col gap-4 mt-1">
+                                <div class="flex items-center gap-6">
+                                    <div id="mibiCurrentPreviewSquircle" class="w-20 h-20 rounded-[20px] overflow-hidden border border-[var(--border-main)] relative flex-shrink-0 shadow-lg" style="background: ${mibiAvatarState.bgColor || '#3B82F6'};">
+                                        <div id="mibiCurrentPreviewInner" class="absolute inset-0" style="transform: translate(${mibiAvatarState.offsetX || 0}%, ${mibiAvatarState.offsetY || 0}%) rotate(${mibiAvatarState.rotation || 0}deg) scale(${(mibiAvatarState.size || 100)/100}); transform-origin: center; pointer-events: none;">
+                                            <img src="mibi-avatars/head.png" alt="Head" class="absolute inset-0 w-full h-full object-contain z-10">
+                                            <img id="mibiCurrentEyes" src="${mibiAvatarState.eyes ? `mibi-avatars/eyes/${mibiAvatarState.eyes}` : ''}" alt="" class="absolute inset-0 w-full h-full object-contain z-20 ${mibiAvatarState.eyes ? '' : 'hidden'}">
+                                            <img id="mibiCurrentMouth" src="${mibiAvatarState.mouths ? `mibi-avatars/mouths/${mibiAvatarState.mouths}` : ''}" alt="" class="absolute inset-0 w-full h-full object-contain z-20 ${mibiAvatarState.mouths ? '' : 'hidden'}">
+                                            <img id="mibiCurrentHat" src="${mibiAvatarState.hats ? `mibi-avatars/hats/${mibiAvatarState.hats}` : ''}" alt="" class="absolute inset-0 w-full h-full object-contain z-30 ${mibiAvatarState.hats ? '' : 'hidden'}">
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col gap-2">
+                                        <p class="text-sm font-light text-[var(--text-muted)] opacity-80">
+                                            Create and customize your animated squircle Mibi Avatar with hats, eyes, expressions, and custom positioning.
+                                        </p>
+                                        <button type="button" id="open-mac-menu-btn" class="btn-toolbar-style btn-primary-override self-start">
+                                            <i class="fa-solid fa-paintbrush mr-2"></i> Open Mibi Avatar Creator
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Custom Upload Settings -->
+                            <div id="pfpCustomSettings" class="${currentPfpMode === 'custom' ? 'block' : 'hidden'} mt-1">
+                                <div class="flex items-center gap-6">
+                                    <div class="w-20 h-20 rounded-[20px] overflow-hidden border border-[var(--border-main)] flex-shrink-0 bg-black relative shadow-lg">
+                                        <img id="customPfpPreview" src="${avatarUrl || ''}" class="w-full h-full object-cover" style="${avatarUrl ? 'display:block;' : 'display:none;'}">
+                                        <div id="customPfpPlaceholder" class="w-full h-full flex items-center justify-center text-[var(--text-muted)] opacity-40" style="${avatarUrl ? 'display:none;' : 'display:flex;'}">
+                                            <i class="fa-solid fa-user text-2xl"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex flex-col gap-2">
+                                        <div class="flex items-center gap-3">
+                                            <button type="button" id="uploadPfpBtn" class="btn-toolbar-style btn-primary-override">
+                                                <i class="fa-solid fa-upload mr-2"></i> Upload Image
+                                            </button>
+                                            <button type="button" id="settingsRemoveAvatarBtn" class="btn-toolbar-style">
+                                                <i class="fa-solid fa-trash-can mr-2"></i> Remove
+                                            </button>
+                                        </div>
+                                        <input type="file" id="pfpFileInput" accept="image/*" style="display: none;">
+                                        <p class="text-xs text-[var(--text-muted)] opacity-50">Images are cropped into high-resolution squircles (PNG, JPG, or WEBP up to 5MB).</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="pfpMessage" class="general-message-area text-sm mt-3"></div>
+
+                        <!-- MAC Modal -->
+                        <div id="mibi-mac-menu" class="fixed inset-0 bg-[var(--bg-page)] bg-opacity-80 flex items-center justify-center z-[2000000] hidden backdrop-blur-sm">
+                            <div class="relative bg-[var(--bg-secondary)] rounded-[16px] shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden border border-[var(--border-main)]">
+                                
+                                <!-- Header -->
+                                <div class="flex justify-between items-center p-6 border-b border-[var(--border-main)] bg-[var(--bg-secondary)]">
+                                    <h3 class="text-2xl font-bold text-[var(--text-main)]">Mibi Avatar Creator</h3>
+                                    <button type="button" id="mac-close-x-btn" class="btn-toolbar-style w-10 h-10 flex items-center justify-center p-0">
+                                        <i class="fa-solid fa-xmark fa-xl"></i>
+                                    </button>
+                                </div>
+                                
+                                <!-- Main Content Area (Split View) -->
+                                <div class="flex flex-grow overflow-hidden relative">
+                                    
+                                    <!-- LEFT: Live Preview -->
+                                    <div id="mac-preview-wrapper" class="w-1/2 flex flex-col items-center justify-center bg-[var(--bg-page)] p-8 border-r border-[var(--border-main)] transition-all duration-500 ease-in-out z-10">
+                                        <div class="relative h-64 md:h-80 aspect-square rounded-[56px] overflow-hidden border-4 border-[var(--border-main)] shadow-lg mb-6 transition-all duration-300 hover:border-dashed hover:border-[var(--text-main)] cursor-pointer flex-shrink-0" id="mac-preview-container" style="aspect-ratio: 1/1;">
+                                            <!-- Background (Static) -->
+                                            <div id="mac-preview-bg" class="absolute inset-0 w-full h-full transition-colors duration-300" style="background-color: ${mibiAvatarState.bgColor || '#3B82F6'};"></div>
+                                            
+                                            <!-- Avatar Layers Container (Rotates/Scales/Moves) -->
+                                            <div id="mac-layers-container" class="absolute inset-0 w-full h-full transition-transform duration-75 ease-out origin-center pointer-events-none">
+                                                <img id="mac-layer-head" src="mibi-avatars/head.png" class="absolute inset-0 w-full h-full object-contain z-10">
+                                                <img id="mac-layer-eyes" class="absolute inset-0 w-full h-full object-contain z-20 hidden">
+                                                <img id="mac-layer-mouth" class="absolute inset-0 w-full h-full object-contain z-20 hidden">
+                                                <img id="mac-layer-hat" class="absolute inset-0 w-full h-full object-contain z-30 hidden">
+                                            </div>
+                                        </div>
+                                        
+                                        <div id="mac-sliders-container" class="hidden flex-col gap-6 w-full max-w-xs transition-opacity duration-300 opacity-0">
+                                            <div class="flex flex-col gap-2">
+                                                <label class="text-xs text-[var(--text-muted)] opacity-60 uppercase tracking-wider font-bold">Size</label>
+                                                <input type="range" id="mac-size-slider" min="50" max="150" value="100" list="mac-size-ticks" class="mac-slider w-full h-2 bg-[var(--bg-secondary)] rounded-[16px] appearance-none cursor-pointer">
+                                                <datalist id="mac-size-ticks">
+                                                    <option value="100"></option>
+                                                </datalist>
+                                            </div>
+                                            <div class="flex flex-col gap-2">
+                                                <label class="text-xs text-[var(--text-muted)] opacity-60 uppercase tracking-wider font-bold">Rotation</label>
+                                                <input type="range" id="mac-rotation-slider" min="-180" max="180" value="0" list="mac-rotation-ticks" class="mac-slider w-full h-2 bg-[var(--bg-secondary)] rounded-[16px] appearance-none cursor-pointer">
+                                                <datalist id="mac-rotation-ticks">
+                                                    <option value="0"></option>
+                                                </datalist>
+                                            </div>
+                                            <p class="text-center text-[var(--text-muted)] opacity-50 text-xs mt-2"><i class="fa-solid fa-hand-pointer mr-1"></i> Drag avatar to position</p>
+                                        </div>
+                                        
+                                        <p class="text-[var(--text-muted)] opacity-50 text-sm font-mono mt-2" id="mac-preview-label">Click preview to adjust orientation</p>
+                                    </div>
+
+                                    <!-- RIGHT: Controls & Options -->
+                                    <div id="mac-controls-wrapper" class="w-1/2 flex flex-col bg-[var(--bg-secondary)] transition-transform duration-500 ease-in-out translate-x-0">
+                                        
+                                        <!-- Tabs -->
+                                        <div class="flex border-b border-[var(--border-main)]">
+                                            <button type="button" class="mac-tab-btn flex-1 py-4 text-[var(--text-muted)] opacity-60 hover:text-[var(--text-main)] hover:bg-[var(--bg-page)] transition-colors border-b-2 border-transparent font-medium active-tab" data-tab="hats">
+                                                <i class="fa-solid fa-hat-wizard mr-2"></i> Hats
+                                            </button>
+                                            <button type="button" class="mac-tab-btn flex-1 py-4 text-[var(--text-muted)] opacity-60 hover:text-[var(--text-main)] hover:bg-[var(--bg-page)] transition-colors border-b-2 border-transparent font-medium" data-tab="eyes">
+                                                <i class="fa-solid fa-eye mr-2"></i> Eyes
+                                            </button>
+                                            <button type="button" class="mac-tab-btn flex-1 py-4 text-[var(--text-muted)] opacity-60 hover:text-[var(--text-main)] hover:bg-[var(--bg-page)] transition-colors border-b-2 border-transparent font-medium" data-tab="mouths">
+                                                <i class="fa-solid fa-face-smile mr-2"></i> Mouths
+                                            </button>
+                                            <button type="button" class="mac-tab-btn flex-1 py-4 text-[var(--text-muted)] opacity-60 hover:text-[var(--text-main)] hover:bg-[var(--bg-page)] transition-colors border-b-2 border-transparent font-medium" data-tab="bg">
+                                                <i class="fa-solid fa-palette mr-2"></i> Color
+                                            </button>
+                                        </div>
+
+                                        <!-- Options Grid (Scrollable) -->
+                                        <div class="flex-grow overflow-y-auto p-6 custom-scrollbar" id="mac-options-container">
+                                            <!-- Dynamic Content Loaded Here -->
+                                            <div class="grid grid-cols-3 gap-4" id="mac-grid">
+                                                <!-- JS populates this -->
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                                
+                                <!-- Footer Actions -->
+                                <div class="p-6 border-t border-[var(--border-main)] bg-[var(--bg-secondary)] flex justify-end gap-4 items-center">
+                                    <button type="button" id="mac-reset-btn" class="btn-toolbar-style mr-auto px-4 py-2 rounded-[16px]" title="Reset Avatar">
+                                        <i class="fa-solid fa-rotate-left"></i>
+                                    </button>
+                                    <button type="button" id="mac-cancel-btn" class="btn-toolbar-style px-6 py-2 rounded-[16px]">Cancel</button>
+                                    <button type="button" id="mac-confirm-btn" class="btn-toolbar-style btn-primary-override px-6 py-2 rounded-[16px]">
+                                        <i class="fa-solid fa-check mr-2"></i> Confirm Avatar
                                     </button>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Image Upload Customizer -->
-                        <div id="imageAvatarSection" class="${avatarMode === 'image' ? 'block' : 'hidden'}">
-                            <div class="flex items-center gap-6">
-                                <div class="w-20 h-20 rounded-2xl border border-[var(--border-main)] bg-[var(--bg-page)] overflow-hidden flex items-center justify-center relative flex-shrink-0">
-                                    <img id="settingsAvatarPreview" src="${avatarUrl || 'images/logo-white.png'}" alt="Avatar" class="w-full h-full object-cover">
-                                </div>
-                                <div class="flex flex-col gap-2">
-                                    <div class="flex items-center gap-3">
-                                        <label class="btn-toolbar-style btn-primary-override cursor-pointer">
-                                            <i class="fa-solid fa-cloud-arrow-up"></i>
-                                            <span>Upload Image</span>
-                                            <input type="file" id="settingsAvatarInput" accept="image/*" class="hidden">
-                                        </label>
-                                        <button type="button" id="settingsRemoveAvatarBtn" class="btn-toolbar-style">
-                                            <i class="fa-solid fa-trash-can"></i>
-                                            <span>Remove</span>
-                                        </button>
-                                    </div>
-                                    <p class="text-xs text-[var(--text-muted)]">PNG, JPG, or WEBP under 5MB.</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="avatarMessage" class="general-message-area"></div>
                     </div>
 
                     <!-- 2. Username Editing -->
@@ -3038,156 +3243,445 @@
                 </div>
             `;
 
-            // Avatar Mode Switchers & Handlers
-            const modeLetterBtn = document.getElementById('avatarModeLetterBtn');
-            const modeImageBtn = document.getElementById('avatarModeImageBtn');
-            const letterSection = document.getElementById('letterAvatarSection');
-            const imageSection = document.getElementById('imageAvatarSection');
-            const letterPreview = document.getElementById('letterAvatarPreview');
-            const letterInput = document.getElementById('avatarLetterInput');
-            const bgInput = document.getElementById('avatarBgInput');
-            const colorInput = document.getElementById('avatarColorInput');
-            const bgHex = document.getElementById('avatarBgHex');
-            const colorHex = document.getElementById('avatarColorHex');
-            const saveLetterBtn = document.getElementById('saveLetterAvatarBtn');
-            const avatarMsg = document.getElementById('avatarMessage');
+            // Setup Profile Picture Mode Switcher & Handlers
+            const pfpModeBtns = document.querySelectorAll('.pfp-mode-btn');
+            const googleSettings = document.getElementById('pfpGoogleSettings');
+            const letterSettings = document.getElementById('pfpLetterSettings');
+            const mibiSettings = document.getElementById('pfpMibiSettings');
+            const customSettings = document.getElementById('pfpCustomSettings');
+            const pfpMessage = document.getElementById('pfpMessage');
 
-            function updateLetterPreview() {
-                const letters = (letterInput.value || (devUser?.firstName || devUser?.nickname || 'U')[0] || 'U').slice(0, 3).toUpperCase();
-                const bg = bgInput.value || '#000000';
-                const col = colorInput.value || '#ffffff';
-                letterPreview.textContent = letters;
-                letterPreview.style.background = bg;
-                letterPreview.style.color = col;
-                bgHex.textContent = bg;
-                colorHex.textContent = col;
-            }
-
-            if (modeLetterBtn && modeImageBtn) {
-                modeLetterBtn.addEventListener('click', () => {
-                    modeLetterBtn.className = 'px-4 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors bg-[var(--accent-color)] text-white';
-                    modeImageBtn.className = 'px-4 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors text-[var(--text-muted)] hover:text-white';
-                    letterSection.classList.remove('hidden');
-                    letterSection.classList.add('block');
-                    imageSection.classList.remove('block');
-                    imageSection.classList.add('hidden');
+            const switchPfpMode = (mode) => {
+                pfpModeBtns.forEach(btn => {
+                    const isActive = btn.dataset.mode === mode;
+                    btn.classList.toggle('active', isActive);
+                    if (isActive) {
+                        btn.style.backgroundColor = 'var(--btn-bg)';
+                        btn.style.borderColor = 'var(--accent-color)';
+                    } else {
+                        btn.style.backgroundColor = '';
+                        btn.style.borderColor = '';
+                    }
                 });
 
-                modeImageBtn.addEventListener('click', () => {
-                    modeImageBtn.className = 'px-4 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors bg-[var(--accent-color)] text-white';
-                    modeLetterBtn.className = 'px-4 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors text-[var(--text-muted)] hover:text-white';
-                    imageSection.classList.remove('hidden');
-                    imageSection.classList.add('block');
-                    letterSection.classList.remove('block');
-                    letterSection.classList.add('hidden');
-                });
-            }
+                if (googleSettings) googleSettings.classList.toggle('hidden', mode !== 'google');
+                if (googleSettings) googleSettings.classList.toggle('flex', mode === 'google');
+                if (letterSettings) letterSettings.classList.toggle('hidden', mode !== 'letter');
+                if (letterSettings) letterSettings.classList.toggle('flex', mode === 'letter');
+                if (mibiSettings) mibiSettings.classList.toggle('hidden', mode !== 'mibi');
+                if (mibiSettings) mibiSettings.classList.toggle('flex', mode === 'mibi');
+                if (customSettings) customSettings.classList.toggle('hidden', mode !== 'custom');
+                if (customSettings) customSettings.classList.toggle('block', mode === 'custom');
+            };
 
-            if (letterInput) letterInput.addEventListener('input', updateLetterPreview);
-            if (bgInput) bgInput.addEventListener('input', updateLetterPreview);
-            if (colorInput) colorInput.addEventListener('input', updateLetterPreview);
-
-            if (saveLetterBtn) {
-                saveLetterBtn.addEventListener('click', () => {
-                    const letters = (letterInput.value || (devUser?.firstName || devUser?.nickname || 'U')[0] || 'U').slice(0, 3).toUpperCase();
-                    const bg = bgInput.value || '#000000';
-                    const col = colorInput.value || '#ffffff';
-
+            pfpModeBtns.forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const mode = btn.dataset.mode;
+                    switchPfpMode(mode);
+                    const uid = (currentUser ? (currentUser.uid || currentUser.id) : null) || (devUser ? (devUser.id || devUser.deviceToken) : null);
                     try {
                         if (devUser) {
+                            devUser.avatar_type = mode;
+                            devUser.pfpType = mode;
+                            localStorage.setItem('12am_user', JSON.stringify(devUser));
+                        }
+                        const bound = JSON.parse(localStorage.getItem('12am_device_account') || 'null');
+                        if (bound) {
+                            bound.avatar_type = mode;
+                            bound.pfpType = mode;
+                            localStorage.setItem('12am_device_account', JSON.stringify(bound));
+                        }
+                        if (uid) {
+                            await saveUserData(uid, { pfpType: mode, pfp_type: mode });
+                        }
+                        if (typeof window.__updateNavbarUser === 'function') {
+                            window.__updateNavbarUser();
+                        }
+                        window.dispatchEvent(new CustomEvent('pfp-updated', { detail: { pfpType: mode } }));
+                    } catch(e) {}
+                });
+            });
+
+            // Reset to Default button
+            const resetToDefaultBtn = document.getElementById('resetToDefaultPfpBtn');
+            if (resetToDefaultBtn) {
+                resetToDefaultBtn.addEventListener('click', async () => {
+                    try {
+                        localStorage.removeItem('12am_profile_picture');
+                        if (devUser) {
                             devUser.avatar_type = 'letter';
-                            devUser.avatar_letter = letters;
-                            devUser.avatar_bg = bg;
-                            devUser.avatar_color = col;
+                            devUser.pfpType = 'letter';
+                            delete devUser.avatar_url;
+                            delete devUser.avatar;
+                            delete devUser.pfp;
+                            devUser.avatar_bg = '#000000';
+                            devUser.avatar_color = '#ffffff';
                             localStorage.setItem('12am_user', JSON.stringify(devUser));
                         }
                         const bound = JSON.parse(localStorage.getItem('12am_device_account') || 'null');
                         if (bound) {
                             bound.avatar_type = 'letter';
-                            bound.avatar_letter = letters;
-                            bound.avatar_bg = bg;
-                            bound.avatar_color = col;
+                            bound.pfpType = 'letter';
+                            delete bound.avatar_url;
+                            delete bound.avatar;
+                            delete bound.pfp;
+                            bound.avatar_bg = '#000000';
+                            bound.avatar_color = '#ffffff';
                             localStorage.setItem('12am_device_account', JSON.stringify(bound));
                         }
-                    } catch(err) {}
-
-                    if (typeof window.__updateNavbarUser === 'function') {
-                        window.__updateNavbarUser();
+                        const uid = (currentUser ? (currentUser.uid || currentUser.id) : null) || (devUser ? (devUser.id || devUser.deviceToken) : null);
+                        if (uid) {
+                            await saveUserData(uid, { pfpType: 'letter', pfp_letter_bg: '#000000' });
+                        }
+                        if (typeof window.__updateNavbarUser === 'function') {
+                            window.__updateNavbarUser();
+                        }
+                        window.dispatchEvent(new CustomEvent('pfp-updated', { detail: { pfpType: 'letter' } }));
+                        showMessage(pfpMessage, 'Reset to default initial avatar.', 'success');
+                    } catch(e) {
+                        showMessage(pfpMessage, 'Error resetting avatar.', 'error');
                     }
-                    showMessage(avatarMsg, 'Letter avatar saved successfully!', 'success');
                 });
             }
 
-            // Image Upload Handlers
-            const avatarInput = document.getElementById('settingsAvatarInput');
-            const avatarPreview = document.getElementById('settingsAvatarPreview');
-            const removeAvatarBtn = document.getElementById('settingsRemoveAvatarBtn');
+            // Letter Avatar Logic
+            const pfpLetterInput = document.getElementById('pfp-letter-input');
+            const pfpLetterPreview = document.getElementById('pfp-letter-preview');
+            const pfpLetterBgInput = document.getElementById('pfpLetterBgInput');
+            const pfpLetterBgHex = document.getElementById('pfpLetterBgHex');
+            const pfpLetterTextColorInput = document.getElementById('pfpLetterTextColorInput');
+            const pfpLetterTextColorHex = document.getElementById('pfpLetterTextColorHex');
+            const pfpColorGrid = document.getElementById('pfp-color-grid');
+            const saveLetterBtn = document.getElementById('save-letter-pfp-btn');
 
-            if (avatarInput) {
-                avatarInput.addEventListener('change', (e) => {
+            let selectedBgColor = currentBg;
+            let selectedTextColor = currentColor;
+
+            const updateLetterPreviewLive = () => {
+                const text = (pfpLetterInput.value || (devUser?.firstName || devUser?.nickname || 'U')[0] || 'U').slice(0, 3).toUpperCase();
+                pfpLetterPreview.style.backgroundColor = selectedBgColor;
+                pfpLetterPreview.style.color = selectedTextColor;
+                pfpLetterBgHex.textContent = selectedBgColor;
+                pfpLetterTextColorHex.textContent = selectedTextColor;
+            };
+
+            if (pfpLetterInput) pfpLetterInput.addEventListener('input', updateLetterPreviewLive);
+            if (pfpLetterBgInput) {
+                pfpLetterBgInput.addEventListener('input', (e) => {
+                    selectedBgColor = e.target.value;
+                    updateLetterPreviewLive();
+                });
+            }
+            if (pfpLetterTextColorInput) {
+                pfpLetterTextColorInput.addEventListener('input', (e) => {
+                    selectedTextColor = e.target.value;
+                    updateLetterPreviewLive();
+                });
+            }
+
+            if (pfpColorGrid) {
+                pfpColorGrid.innerHTML = '';
+                letterColors.forEach(color => {
+                    const d = document.createElement('div');
+                    const hexColor = color.startsWith('#') ? color : '#' + color;
+                    d.className = `color-option ${selectedBgColor.toLowerCase() === hexColor.toLowerCase() ? 'selected' : ''}`;
+                    d.style.backgroundColor = hexColor;
+                    d.onclick = () => {
+                        selectedBgColor = hexColor;
+                        if (pfpLetterBgInput) pfpLetterBgInput.value = hexColor;
+                        pfpColorGrid.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
+                        d.classList.add('selected');
+                        updateLetterPreviewLive();
+                    };
+                    pfpColorGrid.appendChild(d);
+                });
+            }
+
+            if (saveLetterBtn) {
+                saveLetterBtn.addEventListener('click', async () => {
+                    const letters = (pfpLetterInput.value || (devUser?.firstName || devUser?.nickname || 'U')[0] || 'U').slice(0, 3).toUpperCase();
+                    showMessage(pfpMessage, 'Saving...', 'warning');
+                    try {
+                        if (devUser) {
+                            devUser.avatar_type = 'letter';
+                            devUser.pfpType = 'letter';
+                            devUser.avatar_letter = letters;
+                            devUser.letterAvatarText = letters;
+                            devUser.avatar_bg = selectedBgColor;
+                            devUser.pfpLetterBg = selectedBgColor;
+                            devUser.avatar_color = selectedTextColor;
+                            localStorage.setItem('12am_user', JSON.stringify(devUser));
+                        }
+                        const bound = JSON.parse(localStorage.getItem('12am_device_account') || 'null');
+                        if (bound) {
+                            bound.avatar_type = 'letter';
+                            bound.pfpType = 'letter';
+                            bound.avatar_letter = letters;
+                            bound.letterAvatarText = letters;
+                            bound.avatar_bg = selectedBgColor;
+                            bound.pfpLetterBg = selectedBgColor;
+                            bound.avatar_color = selectedTextColor;
+                            localStorage.setItem('12am_device_account', JSON.stringify(bound));
+                        }
+                        const uid = (currentUser ? (currentUser.uid || currentUser.id) : null) || (devUser ? (devUser.id || devUser.deviceToken) : null);
+                        if (uid) {
+                            await saveUserData(uid, {
+                                pfpType: 'letter',
+                                pfp_type: 'letter',
+                                pfpLetterBg: selectedBgColor,
+                                letterAvatarText: letters
+                            });
+                        }
+                        if (typeof window.__updateNavbarUser === 'function') {
+                            window.__updateNavbarUser();
+                        }
+                        window.dispatchEvent(new CustomEvent('pfp-updated', {
+                            detail: {
+                                pfpType: 'letter',
+                                pfpLetterBg: selectedBgColor,
+                                letterAvatarText: letters
+                            }
+                        }));
+                        showMessage(pfpMessage, 'Letter avatar saved successfully!', 'success');
+                    } catch(e) {
+                        showMessage(pfpMessage, 'Error saving letter avatar.', 'error');
+                    }
+                });
+            }
+
+            // Setup Mibi Avatar Creator modal listeners
+            setupMacMenuListeners();
+
+            // Custom Image Upload & Cropper Logic
+            const uploadBtn = document.getElementById('uploadPfpBtn');
+            const fileInput = document.getElementById('pfpFileInput');
+            const customPreviewImg = document.getElementById('customPfpPreview');
+            const customPreviewPlaceholder = document.getElementById('customPfpPlaceholder');
+            const removeAvatarBtn = document.getElementById('settingsRemoveAvatarBtn');
+            const cropperModal = document.getElementById('cropperModal');
+            const cropperCanvas = document.getElementById('cropperCanvas');
+            const cancelCropBtn = document.getElementById('cancelCropBtn');
+            const submitCropBtn = document.getElementById('submitCropBtn');
+
+            if (uploadBtn && fileInput) {
+                uploadBtn.addEventListener('click', () => fileInput.click());
+            }
+
+            let cropperImage = null;
+            let cropState = { x: 0, y: 0, radius: 100 };
+            let isCropperDragging = false;
+            let cropperDragStart = { x: 0, y: 0 };
+            const cropCtx = cropperCanvas ? cropperCanvas.getContext('2d') : null;
+
+            const drawCropper = () => {
+                if (!cropperImage || !cropperCanvas || !cropCtx) return;
+                const w = cropperCanvas.width;
+                const h = cropperCanvas.height;
+                cropCtx.clearRect(0, 0, w, h);
+                cropCtx.drawImage(cropperImage, 0, 0, w, h);
+
+                cropCtx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                cropCtx.beginPath();
+                cropCtx.rect(0, 0, w, h);
+                cropCtx.fill();
+
+                cropCtx.globalCompositeOperation = 'destination-out';
+                cropCtx.beginPath();
+                const r = cropState.radius;
+                const size = r * 2;
+                const cornerRadius = size * 0.22;
+                if (cropCtx.roundRect) {
+                    cropCtx.roundRect(cropState.x - r, cropState.y - r, size, size, cornerRadius);
+                } else {
+                    cropCtx.rect(cropState.x - r, cropState.y - r, size, size);
+                }
+                cropCtx.fill();
+
+                cropCtx.globalCompositeOperation = 'source-over';
+                cropCtx.strokeStyle = 'var(--accent-color, #8b5cf6)';
+                cropCtx.lineWidth = 2.5;
+                cropCtx.setLineDash([6, 4]);
+                cropCtx.beginPath();
+                if (cropCtx.roundRect) {
+                    cropCtx.roundRect(cropState.x - r, cropState.y - r, size, size, cornerRadius);
+                } else {
+                    cropCtx.rect(cropState.x - r, cropState.y - r, size, size);
+                }
+                cropCtx.stroke();
+                cropCtx.setLineDash([]);
+            };
+
+            if (fileInput) {
+                fileInput.addEventListener('change', (e) => {
                     const file = e.target.files && e.target.files[0];
                     if (!file) return;
                     if (file.size > 5 * 1024 * 1024) {
-                        showMessage(avatarMsg, 'File is too large (max 5MB).', 'error');
+                        showMessage(pfpMessage, 'File is too large (max 5MB).', 'error');
                         return;
                     }
                     const reader = new FileReader();
                     reader.onload = (evt) => {
-                        const dataUrl = evt.target.result;
-                        avatarPreview.src = dataUrl;
-                        try {
-                            localStorage.setItem('12am_profile_picture', dataUrl);
-                            if (devUser) {
-                                devUser.avatar_type = 'image';
-                                devUser.avatar_url = dataUrl;
-                                devUser.avatar = dataUrl;
-                                devUser.pfp = dataUrl;
-                                localStorage.setItem('12am_user', JSON.stringify(devUser));
-                            }
-                            const bound = JSON.parse(localStorage.getItem('12am_device_account') || 'null');
-                            if (bound) {
-                                bound.avatar_type = 'image';
-                                bound.avatar_url = dataUrl;
-                                bound.avatar = dataUrl;
-                                bound.pfp = dataUrl;
-                                localStorage.setItem('12am_device_account', JSON.stringify(bound));
-                            }
-                        } catch(err) {}
-                        if (typeof window.__updateNavbarUser === 'function') {
-                            window.__updateNavbarUser();
-                        }
-                        showMessage(avatarMsg, 'Profile image updated successfully!', 'success');
+                        cropperImage = new Image();
+                        cropperImage.onload = () => {
+                            const fixedHeight = 380;
+                            const scale = fixedHeight / cropperImage.height;
+                            cropperCanvas.height = fixedHeight;
+                            cropperCanvas.width = cropperImage.width * scale;
+                            cropState = {
+                                x: cropperCanvas.width / 2,
+                                y: cropperCanvas.height / 2,
+                                radius: Math.min(cropperCanvas.width, cropperCanvas.height) / 3
+                            };
+                            if (cropperModal) cropperModal.style.display = 'flex';
+                            requestAnimationFrame(drawCropper);
+                        };
+                        cropperImage.src = evt.target.result;
                     };
                     reader.readAsDataURL(file);
                 });
             }
 
-            if (removeAvatarBtn) {
-                removeAvatarBtn.addEventListener('click', () => {
-                    avatarPreview.src = 'images/logo-white.png';
+            if (cropperCanvas) {
+                cropperCanvas.onmousedown = (e) => {
+                    const r = cropState.radius;
+                    if (e.offsetX >= cropState.x - r && e.offsetX <= cropState.x + r &&
+                        e.offsetY >= cropState.y - r && e.offsetY <= cropState.y + r) {
+                        isCropperDragging = true;
+                        cropperDragStart = { x: e.offsetX, y: e.offsetY };
+                    }
+                };
+                cropperCanvas.onmousemove = (e) => {
+                    if (isCropperDragging) {
+                        const dx = e.offsetX - cropperDragStart.x;
+                        const dy = e.offsetY - cropperDragStart.y;
+                        const r = cropState.radius;
+                        const w = cropperCanvas.width;
+                        const h = cropperCanvas.height;
+                        cropState.x = Math.max(r, Math.min(cropState.x + dx, w - r));
+                        cropState.y = Math.max(r, Math.min(cropState.y + dy, h - r));
+                        cropperDragStart = { x: e.offsetX, y: e.offsetY };
+                        requestAnimationFrame(drawCropper);
+                    }
+                };
+                cropperCanvas.onmouseup = () => { isCropperDragging = false; };
+                cropperCanvas.onmouseleave = () => { isCropperDragging = false; };
+                cropperCanvas.onwheel = (e) => {
+                    e.preventDefault();
+                    const delta = e.deltaY > 0 ? -6 : 6;
+                    const maxR = Math.min(cropperCanvas.width, cropperCanvas.height) / 2;
+                    cropState.radius = Math.max(24, Math.min(cropState.radius + delta, maxR));
+                    cropState.x = Math.max(cropState.radius, Math.min(cropState.x, cropperCanvas.width - cropState.radius));
+                    cropState.y = Math.max(cropState.radius, Math.min(cropState.y, cropperCanvas.height - cropState.radius));
+                    requestAnimationFrame(drawCropper);
+                };
+            }
+
+            if (cancelCropBtn && cropperModal) {
+                cancelCropBtn.onclick = () => {
+                    cropperModal.style.display = 'none';
+                    if (fileInput) fileInput.value = '';
+                };
+            }
+
+            if (submitCropBtn && cropperModal) {
+                submitCropBtn.onclick = async () => {
+                    if (!cropperImage) return;
+                    const tempCanvas = document.createElement('canvas');
+                    const size = 160;
+                    tempCanvas.width = size;
+                    tempCanvas.height = size;
+                    const tCtx = tempCanvas.getContext('2d');
+                    const scale = cropperCanvas.height / cropperImage.height;
+                    const sourceX = (cropState.x - cropState.radius) / scale;
+                    const sourceY = (cropState.y - cropState.radius) / scale;
+                    const sourceSize = (cropState.radius * 2) / scale;
+                    tCtx.drawImage(cropperImage, sourceX, sourceY, sourceSize, sourceSize, 0, 0, size, size);
+                    const base64 = tempCanvas.toDataURL('image/jpeg', 0.85);
+
                     try {
-                        localStorage.removeItem('12am_profile_picture');
+                        submitCropBtn.disabled = true;
+                        submitCropBtn.textContent = 'Saving...';
+                        localStorage.setItem('12am_profile_picture', base64);
                         if (devUser) {
-                            devUser.avatar_type = 'letter';
-                            delete devUser.avatar_url;
-                            delete devUser.avatar;
-                            delete devUser.pfp;
+                            devUser.avatar_type = 'custom';
+                            devUser.pfpType = 'custom';
+                            devUser.customPfp = base64;
+                            devUser.avatar_url = base64;
+                            devUser.avatar = base64;
+                            devUser.pfp = base64;
                             localStorage.setItem('12am_user', JSON.stringify(devUser));
                         }
                         const bound = JSON.parse(localStorage.getItem('12am_device_account') || 'null');
                         if (bound) {
-                            bound.avatar_type = 'letter';
+                            bound.avatar_type = 'custom';
+                            bound.pfpType = 'custom';
+                            bound.customPfp = base64;
+                            bound.avatar_url = base64;
+                            bound.avatar = base64;
+                            bound.pfp = base64;
+                            localStorage.setItem('12am_device_account', JSON.stringify(bound));
+                        }
+
+                        if (customPreviewImg) {
+                            customPreviewImg.src = base64;
+                            customPreviewImg.style.display = 'block';
+                        }
+                        if (customPreviewPlaceholder) {
+                            customPreviewPlaceholder.style.display = 'none';
+                        }
+
+                        const uid = (currentUser ? (currentUser.uid || currentUser.id) : null) || (devUser ? (devUser.id || devUser.deviceToken) : null);
+                        if (uid) {
+                            await saveUserData(uid, { customPfp: base64, pfpType: 'custom', avatar_url: base64 });
+                        }
+
+                        if (typeof window.__updateNavbarUser === 'function') {
+                            window.__updateNavbarUser();
+                        }
+                        window.dispatchEvent(new CustomEvent('pfp-updated', { detail: { pfpType: 'custom', customPfp: base64 } }));
+                        cropperModal.style.display = 'none';
+                        showMessage(pfpMessage, 'Profile picture updated successfully!', 'success');
+                    } catch(err) {
+                        console.error('PFP save error:', err);
+                        showMessage(pfpMessage, 'Failed to save cropped image.', 'error');
+                    } finally {
+                        submitCropBtn.disabled = false;
+                        submitCropBtn.innerHTML = '<i class="fa-solid fa-check mr-2"></i> Submit';
+                    }
+                };
+            }
+
+            if (removeAvatarBtn) {
+                removeAvatarBtn.onclick = () => {
+                    try {
+                        localStorage.removeItem('12am_profile_picture');
+                        if (devUser) {
+                            delete devUser.customPfp;
+                            delete devUser.avatar_url;
+                            delete devUser.avatar;
+                            delete devUser.pfp;
+                            devUser.avatar_type = 'letter';
+                            devUser.pfpType = 'letter';
+                            localStorage.setItem('12am_user', JSON.stringify(devUser));
+                        }
+                        const bound = JSON.parse(localStorage.getItem('12am_device_account') || 'null');
+                        if (bound) {
+                            delete bound.customPfp;
                             delete bound.avatar_url;
                             delete bound.avatar;
                             delete bound.pfp;
+                            bound.avatar_type = 'letter';
+                            bound.pfpType = 'letter';
                             localStorage.setItem('12am_device_account', JSON.stringify(bound));
                         }
+                        if (customPreviewImg) customPreviewImg.style.display = 'none';
+                        if (customPreviewPlaceholder) customPreviewPlaceholder.style.display = 'flex';
+                        if (typeof window.__updateNavbarUser === 'function') {
+                            window.__updateNavbarUser();
+                        }
+                        showMessage(pfpMessage, 'Removed custom profile picture.', 'success');
                     } catch(err) {}
-                    if (typeof window.__updateNavbarUser === 'function') {
-                        window.__updateNavbarUser();
-                    }
-                    showMessage(avatarMsg, 'Switched back to placeholder letter avatar.', 'success');
-                });
+                };
             }
 
             // 2. Username Save
@@ -3833,7 +4327,7 @@
                 }
 
                 // --- NEW: Sorting Logic ---
-                const orderedThemeNames = ['Dark', 'Light', 'Christmas', 'The New Year', 'Tokyo Night'];
+                const orderedThemeNames = ['Dark', 'AMOLED Midnight', 'Light', 'Christmas', 'The New Year', 'Tokyo Night'];
                 const sortedThemes = [];
                 let remainingThemes = [];
 
