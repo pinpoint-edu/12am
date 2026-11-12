@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>12AM - DASHBOARD</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="navigation.css">
+    <script src="theme.js"></script>
+    <script src="navigation.js" defer></script>
+    <script src="injector.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        :root {
+            --bg-page: var(--bg-primary, #000000);
+            --bg-card: var(--bg-secondary, #0d0d0d);
+            --text-main: var(--text-primary, #ffffff);
+            --text-muted: var(--text-secondary, #c0c0c0);
+            --accent-color: var(--accent-primary, #4f46e5);
+            --accent-glow: var(--accent-secondary, rgba(79, 70, 229, 0.4));
+            --border-main: var(--border-primary, #1a1a1a);
+            --border-faint: var(--border-secondary, rgba(255,255,255,0.05));
+            --btn-bg: var(--button-bg, rgba(79, 70, 229, 0.1));
+            --btn-text: var(--button-text, #4f46e5);
+        }
+
+        * { box-sizing: border-box; }
+
+        body { 
+            font-family: 'Geist', sans-serif; 
+            color: var(--text-main);
+            background-color: var(--bg-page);
+            font-weight: 300;
+            overflow: hidden;
+            min-height: 100vh;
+        }
+
+        /* Subtle dot grid */
+        .grid-bg {
+            background-image: radial-gradient(var(--border-faint) 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+
+        #dynamic-background {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 50% 20%, var(--accent-glow), transparent 65%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* CARDS & COMPONENTS                                                 */
+        /* ------------------------------------------------------------------ */
+        .feature-card {
+            border-radius: 2rem;
+            border: 1px solid var(--border-main);
+            background: var(--bg-card);
+            box-shadow: 0 50px 100px -20px rgba(0,0,0,0.5);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .feature-card:hover:not(.no-hover) {
+            border-color: var(--accent-color);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.6);
+        }
+
+        .stat-pill {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-main);
+            border-radius: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .btn-toolbar-style {
+            background: var(--bg-card);
+            border: 1px solid var(--border-main);
+            border-radius: 16px;
+            color: var(--text-muted);
+            padding: 0.6rem 1.25rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            outline: 1px solid transparent;
+        }
+        .btn-primary-override {
+            background-color: var(--btn-bg) !important;
+            border: 1px solid var(--accent-color) !important;
+            color: var(--accent-color) !important;
+            outline: 1px solid var(--accent-glow);
+        }
+        .btn-primary-override:hover {
+            background-color: var(--accent-color) !important;
+            color: #fff !important;
+            transform: scale(1.02);
+            outline: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* LEADERBOARD WIDGET SPECIFICS                                        */
+        /* ------------------------------------------------------------------ */
+        #leaderboard-widget.greyed-out {
+            filter: grayscale(1) brightness(0.4);
+        }
+        #leaderboard-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            pointer-events: auto;
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* RECENT PAGES                                                        */
+        /* ------------------------------------------------------------------ */
+        .page-btn {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-main);
+            border-radius: 24px;
+            transition: all 0.2s;
+            cursor: pointer;
+            position: relative;
+            z-index: 1;
+        }
+        .page-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-color);
+            transform: scale(1.02) translateX(4px);
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+        .icon-box {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-color);
+            font-size: 1.25rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .custom-scroll::-webkit-scrollbar { width: 0; }
+    </style>
+</head>
+
+<body class="grid-bg relative">
+    <div id="dynamic-background"></div>
+    <div id="navbar-container"></div>
+
+    <main class="flex min-h-screen h-screen">
+        <section class="flex-1 min-w-0 p-8 md:p-16 pt-12 overflow-y-auto custom-scroll">
+            <div class="max-w-[1200px] mx-auto pb-20">
+                
+                <div class="mb-10 flex flex-col xl:flex-row justify-between items-start xl:items-end gap-8 border-b border-white/5 pb-8">
+                    <div>
+                        <p id="clock-date" class="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-4 opacity-80">--------</p>
+                        <h2 id="clock-time" class="text-6xl md:text-8xl font-light tracking-tight mb-2" style="color: var(--text-main);">00:00<span class="text-2xl md:text-4xl ml-3 opacity-30 uppercase font-light">--</span></h2>
+                        <p class="text-xl md:text-2xl mt-4" style="color: var(--text-muted); opacity: 0.7;">Good day, <span id="user-name-display" class="font-medium text-white opacity-100">User</span>.</p>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-4 w-full xl:w-auto shrink-0 mb-2">
+                        <div class="stat-pill flex-1 xl:w-56 px-6 py-5">
+                            <div>
+                                <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-2">Highest Streak</p>
+                                <div id="stat-highest-streak" class="text-3xl font-light text-orange-400">0 🔥</div>
+                            </div>
+                            <p class="text-[10px] mt-4 opacity-40 uppercase tracking-widest" style="color: var(--text-muted);">Active DailyPhoto</p>
+                        </div>
+
+                        <div class="stat-pill flex-1 xl:w-56 px-6 py-5">
+                            <div>
+                                <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-2">Experience Time</p>
+                                <div id="stat-total-time" class="text-3xl font-light" style="color: var(--text-main);">0h 0m</div>
+                            </div>
+                            <p class="text-[10px] mt-4 opacity-40 uppercase tracking-widest" style="color: var(--text-muted);">Session Duration</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-8">
+                    
+                    <div class="relative w-full">
+                        <div id="leaderboard-widget" class="feature-card px-10 py-6 flex flex-col md:flex-row items-center justify-between gap-6 greyed-out">
+                            
+                            <div class="flex flex-col justify-center border-b md:border-b-0 md:border-r border-white/10 pb-4 md:pb-0 md:pr-8 text-center md:text-left shrink-0">
+                                <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-1">Your Rank</p>
+                                <div id="leaderboard-rank" class="text-5xl font-light tracking-tight" style="color: var(--accent-primary);">#--</div>
+                                <div class="text-[10px] opacity-40 mt-2 uppercase tracking-widest font-bold">Global Standing</div>
+                            </div>
+
+                            <div class="flex-grow flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-5 w-full">
+                                <div id="user-avatar-widget" class="w-20 h-20 rounded-[24px] flex items-center justify-center overflow-hidden shrink-0 border-2 border-white/5 bg-black/40 shadow-2xl">
+                                    <i class="fas fa-user text-2xl" style="color: var(--accent-primary);"></i>
+                                </div>
+                                <div class="min-w-0 mt-1">
+                                    <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-1">Your Statistics</p>
+                                    <div id="user-stats-name" class="text-2xl font-medium truncate" style="color: var(--text-main);">Loading...</div>
+                                    <div id="user-stats-time" class="text-xs font-mono mt-1 opacity-50" style="color: var(--text-muted);">0h 0m total</div>
+                                </div>
+                            </div>
+                            
+                            <div class="shrink-0 mt-2 md:mt-0">
+                                <a href="logged-in/leaderboard.html" class="btn-toolbar-style border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10 py-3 px-6 rounded-[16px] shadow-lg">
+                                    Rankings <i class="fas fa-trophy ml-2"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div id="leaderboard-overlay" style="display: flex;">
+                            <div id="leaderboard-prompt-content" class="w-full max-w-3xl flex flex-col sm:flex-row items-center gap-8 p-6 md:p-8">
+                                <div class="w-16 h-16 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl flex items-center justify-center text-indigo-400 text-3xl shrink-0 shadow-inner">
+                                    <i class="fas fa-chart-simple"></i>
+                                </div>
+                                
+                                <div class="flex-grow text-center sm:text-left">
+                                    <p id="leaderboard-prompt-text" class="text-sm md:text-base leading-relaxed" style="color: var(--text-muted);">Join the leaderboard to see your rank and network standing.</p>
+                                </div>
+                                
+                                <div class="flex-col gap-3 shrink-0 w-full sm:w-auto" style="display: flex;">
+                                    <button id="accept-leaderboard-btn" class="btn-toolbar-style btn-primary-override w-full px-8 py-4 text-[10px] font-black uppercase tracking-widest shadow-2xl">
+                                        Accept Terms
+                                    </button>
+                                    <div class="text-center mt-1">
+                                        <a href="legal.html#leaderboard-terms" target="_blank" class="text-[10px] opacity-40 hover:opacity-100 transition-opacity uppercase tracking-widest font-bold">View Terms</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="feature-card p-10 no-hover">
+                        <div class="flex justify-between items-end mb-8 border-b border-white/5 pb-6">
+                            <div>
+                                <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-30 mb-2">Recently Accessed</p>
+                                <h3 class="text-3xl font-light tracking-tight" style="color: var(--text-main);">Most Opened Pages</h3>
+                            </div>
+                            <div id="stat-pageviews" class="text-5xl font-light opacity-20" style="color: var(--text-muted);">0</div>
+                        </div>
+                        
+                        <div id="recent-pages-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="col-span-full py-16 flex flex-col items-center justify-center opacity-20">
+                                <i class="fas fa-spinner fa-spin text-3xl mb-4"></i>
+                                <p class="text-[10px] font-black uppercase tracking-[0.2em]">Synchronizing Analytics</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script type="module">
+        import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+        import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, getDoc, collection, query, where, getDocs, updateDoc, increment, limit, orderBy, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { firebaseConfig } from '/firebase-config.js';
+        import { firebaseConfig2 } from '/firebase-config-2.js';
+        import { supabaseConfig } from '/supabase-config.js';
+        import { getAvatarHTML, syncGooglePhoto } from "/utils.js";
+
+        // Initialize primary app
+        if (!getApps().length) initializeApp(firebaseConfig);
+        const app = getApp();
+        
+        // Initialize secondary app for offloading data
+        let app2;
+        try {
+            app2 = getApp("secondary");
+        } catch (e) {
+            app2 = initializeApp(firebaseConfig2, "secondary");
+        }
+
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const db2 = getFirestore(app2); // Secondary DB for logs/pageviews
+
+        // Initialize Supabase (Reuse global instance if available)
+        let supabase = window.supabase;
+        if (!supabase) {
+            supabase = createClient(supabaseConfig.url, supabaseConfig.anonKey);
+            window.supabase = supabase;
+        }
+
+        const V6_PAGES = {
+            'dashboard.html': 'Dashboard',
+            'soundboard.html': 'Soundboard',
+            'notes.html': 'Notes',
+            'dailyphoto.html': 'Dailyphoto',
+            'dictionary.html': 'Dictionary',
+            'schedule.html': 'Schedule',
+            'messenger-tutorial.html': 'Messenger',
+            'games.html': 'Games',
+            'vana.html': 'Vana',
+            'vora.html': 'Vora',
+            'vern.html': 'Vern',
+            'velium.html': 'Velium',
+            'securly-tester.html': 'Securly Tester',
+            'settings.html': 'Settings',
+            'profile.html': 'Profile'
+        };
+
+        const parseUA = (ua) => {
+            if (!ua) return { browser: 'Browser', os: 'Operating System' };
+            let browser = 'Other', os = 'Other';
+            if (ua.includes('Chrome')) browser = 'Chrome';
+            else if (ua.includes('Firefox')) browser = 'Firefox';
+            else if (ua.includes('Safari')) browser = 'Safari';
+            if (ua.includes('Windows')) os = 'Windows';
+            else if (ua.includes('Mac OS')) os = 'macOS';
+            else if (ua.includes('CrOS')) os = 'ChromeOS';
+            else if (ua.includes('Linux')) os = 'Linux';
+            return { browser, os };
+        };
+
+        async function initDashboard() {
+            // Load page identification config
+            let pageConfig = {};
+            try {
+                const response = await fetch('/page-identification.json');
+                pageConfig = await response.json();
+            } catch (e) {
+                console.error("Failed to load page identification config", e);
+            }
+
+            // Primary Auth Listener
+            const handleUser = async (user, source = 'firebase') => {
+                if (user) {
+                    console.log(`Dashboard: User authenticated via ${source}`, user.email);
+                    if (source === 'firebase') syncGooglePhoto(user);
+                    
+                    const uid = user.id || user.uid; 
+                    let data = null;
+
+                    if (source === 'supabase') {
+                        // Fetch from Supabase profiles table
+                        const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', uid).single();
+                        if (profile) {
+                            data = {
+                                ...profile,
+                                displayName: profile.display_name,
+                                username: profile.username || user.user_metadata?.custom_claims?.global_name || user.email.split('@')[0],
+                                leaderboardAccepted: profile.leaderboard_accepted,
+                                leaderboardOptOut: profile.leaderboard_opt_out
+                            };
+                        }
+                    } else {
+                        // Legacy Firebase path
+                        const userDocRef = doc(db, 'users', uid);
+                        try {
+                            const userSnap = await getDoc(userDocRef);
+                            if (userSnap.exists()) data = userSnap.data();
+                        } catch (e) {
+                            console.warn("Dashboard: Firestore Primary access denied. Switching to Supabase profile.");
+                            const { data: profile } = await supabase.from('profiles').select('*').eq('id', uid).single();
+                            if (profile) {
+                                data = {
+                                    ...profile,
+                                    displayName: profile.display_name,
+                                    username: profile.username
+                                };
+                            }
+                        }
+                    }
+                    
+                    if (data) {
+                        document.getElementById('user-name-display').textContent = data.displayName || data.username || "User";
+                        
+                        // Leaderboard handling
+                        const widget = document.getElementById('leaderboard-widget');
+                        const overlay = document.getElementById('leaderboard-overlay');
+                        const promptText = document.getElementById('leaderboard-prompt-text');
+                        const acceptBtn = document.getElementById('accept-leaderboard-btn');
+
+                        if (data.leaderboardAccepted && !data.leaderboardOptOut) {
+                            widget.classList.remove('greyed-out');
+                            overlay.style.display = 'none';
+                            fetchUserStats(uid);
+                        } else {
+                            widget.classList.add('greyed-out');
+                            overlay.style.display = 'flex';
+                            
+                            if (data.leaderboardOptOut) {
+                                promptText.textContent = "Leaderboard participation is disabled in settings";
+                                acceptBtn.textContent = "Enable Participation";
+                                acceptBtn.onclick = async () => {
+                                    if (source === 'supabase') {
+                                        await supabase.from('profiles').update({ leaderboard_opt_out: false }).eq('id', uid);
+                                    } else {
+                                        await updateDoc(doc(db, 'users', uid), { leaderboardOptOut: false });
+                                    }
+                                    location.reload();
+                                };
+                            } else {
+                                promptText.textContent = "Join the leaderboard to see your rank and network standing.";
+                                acceptBtn.textContent = "Accept Terms";
+                                acceptBtn.onclick = async () => {
+                                    if (source === 'supabase') {
+                                        await supabase.from('profiles').update({ leaderboard_accepted: true, leaderboard_opt_out: false }).eq('id', uid);
+                                    } else {
+                                        await updateDoc(doc(db, 'users', uid), { leaderboardAccepted: true, leaderboardOptOut: false });
+                                    }
+                                    location.reload();
+                                };
+                            }
+                        }
+                        loadAnalytics(uid, pageConfig, data);
+                    } else {
+                        // Create basic doc if it doesn't exist
+                        console.log("Dashboard: Creating missing user profile for", uid);
+                        const username = user.user_metadata?.custom_claims?.global_name || user.email.split('@')[0];
+                        if (source === 'supabase') {
+                            await supabase.from('profiles').upsert({
+                                id: uid,
+                                username: username,
+                                display_name: username,
+                                leaderboard_accepted: false,
+                                leaderboard_opt_out: false
+                            });
+                        } else {
+                            await setDoc(doc(db, 'users', uid), {
+                                email: user.email,
+                                username: username,
+                                createdAt: serverTimestamp(),
+                                leaderboardAccepted: false,
+                                leaderboardOptOut: false
+                            });
+                        }
+                        location.reload();
+                    }
+                } else if (!window._LOCAL_MODE && source === 'firebase') {
+                    // Only redirect if both fail. We check Supabase first.
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (!session) {
+                        window.location.replace('authentication.html');
+                    }
+                }
+            };
+
+            // Supabase session check
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                handleUser(session.user, 'supabase');
+            }
+
+            // Firebase fallback/sync
+            onAuthStateChanged(auth, async (user) => {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) {
+                    handleUser(user, 'firebase');
+                }
+            });
+
+            startClock();
+        }
+
+        async function fetchUserStats(uid) {
+            const CACHE_KEY = `leaderboard_rank_${uid}`;
+            const CACHE_TIME_KEY = `leaderboard_rank_time_${uid}`;
+            const ONE_HOUR = 3600000;
+
+            const now = Date.now();
+            const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+            const cachedData = localStorage.getItem(CACHE_KEY);
+
+            if (cachedTime && cachedData && (now - parseInt(cachedTime) < ONE_HOUR)) {
+                renderRankData(JSON.parse(cachedData));
+                return;
+            }
+
+            try {
+                // Fetch rank from Supabase profiles table
+                const { data: rankedUsers, error } = await supabase
+                    .from('profiles')
+                    .select('id, username, display_name, total_v6_time, avatar_url, pfp_type')
+                    .order('total_v6_time', { ascending: false })
+                    .limit(100);
+
+                if (error) throw error;
+
+                let rank = '--';
+                let userDataRankInfo = null;
+
+                if (rankedUsers && rankedUsers.length > 0) {
+                    const index = rankedUsers.findIndex(u => u.id === uid);
+                    if (index !== -1) {
+                        rank = `#${index + 1}`;
+                        userDataRankInfo = {
+                            ...rankedUsers[index],
+                            totalV6Time: rankedUsers[index].total_v6_time,
+                            displayName: rankedUsers[index].display_name,
+                            pfpType: rankedUsers[index].pfp_type,
+                            customPfp: rankedUsers[index].avatar_url
+                        };
+                    }
+                }
+
+                const dataToCache = { rank, userData: userDataRankInfo };
+                localStorage.setItem(CACHE_KEY, JSON.stringify(dataToCache));
+                localStorage.setItem(CACHE_TIME_KEY, now.toString());
+
+                renderRankData(dataToCache);
+            } catch (e) {
+                console.error("Dashboard: Failed to fetch Supabase stats", e);
+            }
+        }
+
+        function renderRankData({ rank, userData: rankData }) {
+            document.getElementById('leaderboard-rank').textContent = rank;
+            if (rankData) {
+                document.getElementById('user-stats-name').textContent = rankData.displayName || rankData.username || "Anonymous";
+                const hours = Math.floor((rankData.totalV6Time || 0) / 3600);
+                const minutes = Math.floor(((rankData.totalV6Time || 0) % 3600) / 60);
+                document.getElementById('user-stats-time').textContent = `${hours}h ${minutes}m total`;
+                
+                const avatarWidget = document.getElementById('user-avatar-widget');
+                avatarWidget.innerHTML = getAvatarHTML(rankData, "w-full h-full", false, null, "rounded-[24px]");
+            }
+        }
+
+        async function loadAnalytics(uid, pageConfig = {}, userDataPrimary = {}) {
+            let recentPages = [];
+            try {
+                recentPages = JSON.parse(localStorage.getItem('v6_recent_pages') || '[]');
+            } catch (e) {}
+
+            const displayTime = (timeInSecs) => {
+                const hours = Math.floor(timeInSecs / 3600);
+                const minutes = Math.floor((timeInSecs % 3600) / 60);
+                document.getElementById('stat-total-time').textContent = `${hours}h ${minutes}m`;
+            };
+
+            // Real-time time update via Supabase
+            const { data: profile } = await supabase.from('profiles').select('total_v6_time').eq('id', uid).single();
+            displayTime(profile?.total_v6_time || 0);
+
+            // Fetch streaks
+            const { data: streaks } = await supabase.rpc('get_my_friend_streaks');
+            if (streaks && streaks.length > 0) {
+                const highest = Math.max(...streaks.map(s => s.streak_count));
+                document.getElementById('stat-highest-streak').textContent = `${highest} 🔥`;
+            }
+
+            // Subscribe to real-time changes
+            supabase
+                .channel('profile-updates')
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${uid}` }, payload => {
+                    if (payload.new) displayTime(payload.new.total_v6_time || 0);
+                })
+                .subscribe();
+
+            // Minimal system stats
+            document.getElementById('stat-pageviews').textContent = recentPages.length;
+
+            const listEl = document.getElementById('recent-pages-list');
+            listEl.innerHTML = '';
+            
+            if (recentPages.length === 0) {
+                listEl.innerHTML = '<div class="col-span-full py-16 text-center italic text-sm opacity-40">No recent activity found.</div>';
+                return;
+            }
+
+            recentPages.slice(0, 6).forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'page-btn';
+                
+                // Find icon from mapping or default
+                let icon = 'fa-solid fa-file-alt';
+                for (const key in pageConfig) {
+                    if (pageConfig[key].url && p.path.includes(pageConfig[key].url.split('/').pop())) {
+                        icon = pageConfig[key].icon || icon;
+                        break;
+                    }
+                }
+                
+                item.innerHTML = `
+                    <div class="icon-box shadow-inner"><i class="${icon}"></i></div>
+                    <div class="flex-1 min-w-0 ml-2">
+                        <p class="text-sm font-medium text-white truncate">${p.title}</p>
+                        <p class="text-[10px] text-[var(--text-muted)] opacity-60 uppercase tracking-widest font-bold mt-1">${new Date(p.ts).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-xs opacity-20 ml-2 group-hover:opacity-100 transition-opacity"></i>
+                `;
+
+                item.onclick = () => {
+                    if (window.parent && window.parent.loadPage) {
+                        window.parent.loadPage(p.path);
+                    } else {
+                        window.location.href = p.path;
+                    }
+                };
+
+                listEl.appendChild(item);
+            });
+        }
+
+        function startClock() {
+            const update = () => {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+                const [time, ampm] = timeStr.split(' ');
+                document.getElementById('clock-time').innerHTML = `${time}<span class="text-2xl md:text-4xl ml-3 opacity-30 uppercase font-light">${ampm}</span>`;
+                document.getElementById('clock-date').textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+            };
+            update();
+            setInterval(update, 1000);
+        }
+
+        initDashboard();
+    </script>
+    <script>
+        // Instant clock & fallback widgets for file:/// and offline mode
+        (function() {
+            function updateClock() {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+                const [time, ampm] = timeStr.split(' ');
+                const timeEl = document.getElementById('clock-time');
+                const dateEl = document.getElementById('clock-date');
+                if (timeEl) timeEl.innerHTML = `${time}<span class="text-2xl md:text-4xl ml-3 opacity-30 uppercase font-light">${ampm}</span>`;
+                if (dateEl) dateEl.textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+            }
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            // Sync with local test authentication
+            function syncLocalTestUser() {
+                try {
+                    const u = JSON.parse(localStorage.getItem('12am_user') || 'null');
+                    if (u && (u.nickname || u.firstName)) {
+                        const name = u.nickname || u.firstName;
+                        const greetEl = document.getElementById('user-name-display');
+                        if (greetEl) greetEl.textContent = name;
+                        const statNameEl = document.getElementById('user-stats-name');
+                        if (statNameEl) statNameEl.textContent = name;
+                    } else {
+                        const greetEl = document.getElementById('user-name-display');
+                        if (greetEl) greetEl.textContent = 'Guest';
+                        const statNameEl = document.getElementById('user-stats-name');
+                        if (statNameEl) statNameEl.textContent = 'Guest';
+                    }
+                } catch(e) {}
+            }
+            syncLocalTestUser();
+
+            function initOfflineDashboard() {
+                const listEl = document.getElementById('recent-pages-list');
+                if (listEl && listEl.querySelector('.fa-spinner')) {
+                    const pages = [
+                        { title: 'Games', icon: 'fa-gamepad', url: 'games.html', desc: '100+ unblocked games' },
+                        { title: 'Movies', icon: 'fa-film', url: 'movies.html', desc: 'Stream movies & TV' },
+                        { title: 'Music', icon: 'fa-music', url: 'music.html', desc: 'Minimalist study music' },
+                        { title: 'Messenger', icon: 'fa-comments', url: 'messenger.html', desc: 'Encrypted peer chat' },
+                        { title: 'Notes', icon: 'fa-note-sticky', url: 'notes.html', desc: 'Private study notebook' },
+                        { title: 'Dictionary', icon: 'fa-book-bookmark', url: 'dictionary.html', desc: 'Definitions & lexicon' },
+                        { title: 'AI', icon: 'fa-robot', url: 'ai.html', desc: 'Instant AI assistant' },
+                        { title: 'Proxy', icon: 'fa-globe', url: 'proxy.html', desc: 'Unblocked web browser' },
+                        { title: 'Settings', icon: 'fa-gear', url: 'settings.html', desc: 'Themes & configuration' }
+                    ];
+                    listEl.innerHTML = pages.map(p => `
+                        <div class="page-btn cursor-pointer" onclick="window.location.href='${p.url}'">
+                            <div class="icon-box shadow-inner"><i class="fa-solid ${p.icon}"></i></div>
+                            <div class="flex-1 min-w-0 ml-2">
+                                <p class="text-sm font-medium text-white truncate">${p.title}</p>
+                                <p class="text-[10px] text-[var(--text-muted)] opacity-60 uppercase tracking-widest font-bold mt-1">${p.desc}</p>
+                            </div>
+                            <i class="fas fa-chevron-right text-xs opacity-20 ml-2"></i>
+                        </div>
+                    `).join('');
+                }
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => setTimeout(initOfflineDashboard, 400));
+            } else {
+                setTimeout(initOfflineDashboard, 400);
+            }
+        })();
+    </script>
+
+    <!-- Unified 12AM Footer -->
+    <footer class="mt-20 border-t border-white/5 py-10 text-center text-xs text-gray-500 relative z-10">
+        <div class="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <img src="images/logo-white.png" class="h-6 w-auto opacity-70" alt="12AM Logo">
+                <span class="text-sm font-semibold tracking-wider text-white">12AM</span>
+            </div>
+            <p>&copy; 2026 12AM. All rights reserved.</p>
+            <div class="flex items-center gap-4 text-xs">
+                <a href="legal.html" class="hover:text-white transition-colors">Terms & Privacy</a>
+                <a href="settings.html" class="hover:text-white transition-colors">Settings</a>
+                <a href="dashboard.html" class="hover:text-white transition-colors">Dashboard</a>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

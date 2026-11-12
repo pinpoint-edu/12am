@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>12AM — Messenger</title>
+    <meta name="description" content="Encrypted real-time messenger powered by Supabase Realtime and 12AM single-device auth.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Supabase Core & 12AM Auth -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="device-auth.js"></script>
+
+    <!-- 12AM Core Theme & Navigation -->
+    <link rel="stylesheet" href="navigation.css">
+    <script src="theme.js"></script>
+    <script src="navigation.js" defer></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brandPurple: '#8b5cf6',
+                        brandPurpleDark: '#7c3aed'
+                    },
+                    fontFamily: {
+                        sans: ['Geist', 'sans-serif'],
+                        display: ['Geist', 'sans-serif'],
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-page: var(--bg-primary, #040404);
+            --bg-card: var(--bg-secondary, #0c0c0e);
+            --text-main: var(--text-primary, #ffffff);
+            --text-muted: var(--text-secondary, #a1a1aa);
+            --accent-color: var(--accent-primary, #8b5cf6);
+            --accent-glow: var(--accent-secondary, rgba(139, 92, 246, 0.4));
+            --border-main: var(--border-primary, #1c1c20);
+            --border-faint: var(--border-secondary, rgba(255, 255, 255, 0.06));
+            --btn-bg: var(--button-bg, rgba(139, 92, 246, 0.12));
+            --btn-text: var(--button-text, #8b5cf6);
+        }
+
+        body { 
+            font-family: 'Geist', sans-serif; 
+            background-color: var(--bg-page); 
+            color: var(--text-muted); 
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3, .font-bold, .font-semibold, strong {
+            font-weight: 500 !important;
+        }
+
+        .hidden { display: none !important; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-main); border-radius: 14px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        .view-transition {
+            transition: opacity 0.25s ease-in-out, transform 0.25s ease-in-out;
+        }
+        .view-hidden {
+            opacity: 0;
+            transform: scale(0.98);
+            pointer-events: none;
+            display: none !important;
+        }
+
+        .btn-toolbar-style {
+            background: var(--bg-card);
+            border: 1px solid var(--border-main);
+            border-radius: 12px;
+            color: var(--text-muted);
+            padding: 0.45rem 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+        .btn-toolbar-style:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: var(--text-main);
+            color: var(--text-main);
+        }
+
+        .btn-primary-override {
+            background-color: var(--btn-bg);
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+        }
+        .btn-primary-override:hover {
+            background-color: var(--accent-color);
+            color: #ffffff;
+            box-shadow: 0 0 14px var(--accent-glow);
+        }
+        .btn-primary-override:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.25rem;
+            height: 2.25rem;
+            border-radius: 12px;
+            background-color: transparent;
+            border: 1px solid var(--border-main);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-icon:hover {
+            background-color: var(--bg-card);
+            color: var(--text-main);
+            border-color: var(--accent-color);
+        }
+        .btn-icon.active {
+            background-color: var(--btn-bg);
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        .settings-input {
+            width: 100%;
+            background-color: var(--bg-page);
+            border: 1px solid var(--border-main);
+            color: var(--text-main);
+            border-radius: 12px;
+            padding: 0.65rem 0.9rem;
+            font-size: 0.9rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .settings-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+
+        .message-input-style {
+            width: 100%;
+            background-color: var(--bg-page);
+            border: 1px solid var(--border-main);
+            color: var(--text-main);
+            border-radius: 14px;
+            padding: 0.55rem 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            font-size: 0.92rem;
+        }
+        .message-input-style:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+
+        .chat-footer-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            flex-shrink: 0;
+        }
+
+        .sent-bubble {
+            background-color: var(--btn-bg);
+            border: 1px solid var(--accent-color);
+            color: var(--text-main);
+            border-radius: 1.15rem;
+        }
+
+        .received-bubble {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-main);
+            color: var(--text-main);
+            border-radius: 1.15rem;
+        }
+
+        .date-separator {
+            text-align: center;
+            margin: 1.25rem 0;
+            color: var(--text-muted);
+            opacity: 0.5;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        /* App Layout Container below Navbar */
+        .messenger-frame {
+            height: calc(100vh - var(--navbar-height, 64px));
+            width: 100vw;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+            background-color: var(--bg-page);
+        }
+    </style>
+</head>
+<body>
+    <div id="dynamic-background"></div>
+
+    <div class="messenger-frame" id="app-container">
+        <!-- 1. CONTACTS VIEW -->
+        <div id="contacts-view" class="w-full md:w-96 md:border-r md:border-[var(--border-main)] h-full flex flex-col view-transition flex-shrink-0 bg-[var(--bg-card)]">
+            <!-- Header with Battery & Time (Exact V6 Style) -->
+            <header class="p-4 border-b border-[var(--border-main)] flex-shrink-0">
+                <div class="flex justify-between items-center">
+                    <span class="text-xl font-medium text-[var(--text-main)] tracking-tight">Messenger</span>
+                    <div class="flex items-center gap-3">
+                        <div id="status-icons" class="text-xs font-mono flex items-center gap-2 text-[var(--text-muted)] opacity-70">
+                            <span id="battery-status">--%</span>
+                            <span>|</span>
+                            <span id="local-time">--:--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Your ID Card -->
+                <div class="mt-4 p-3 rounded-[12px] border border-[var(--border-main)] flex items-center justify-between" style="background: var(--bg-page);">
+                    <div class="flex items-center gap-2 overflow-hidden">
+                        <span class="text-xs font-medium text-[var(--text-muted)] opacity-70 flex-shrink-0">Your ID:</span>
+                        <span id="my-id" class="font-mono text-sm truncate text-[var(--accent-color)] font-semibold">Loading...</span>
+                    </div>
+                    <button id="copy-id-btn" class="btn-toolbar-style text-xs">Copy</button>
+                </div>
+            </header>
+
+            <!-- Add Contact Input Bar -->
+            <div class="p-4 border-b border-[var(--border-main)] flex-shrink-0">
+                <div class="flex gap-2">
+                    <input type="text" id="add-contact-id" placeholder="Enter 8-character ID..." class="settings-input font-mono uppercase" maxlength="12">
+                    <button id="add-contact-btn" class="btn-toolbar-style btn-primary-override px-4">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>Add</span>
+                    </button>
+                </div>
+                <p id="add-contact-message" class="text-xs text-[var(--text-muted)] opacity-70 mt-2 h-4"></p>
+            </div>
+
+            <!-- Contacts List -->
+            <div class="flex-grow overflow-y-auto">
+                <ul id="contacts-list" class="divide-y divide-[var(--border-main)]"></ul>
+            </div>
+        </div>
+
+        <!-- 2. CHAT VIEW -->
+        <div id="chat-view" class="w-full h-full flex flex-col view-transition view-hidden md:flex flex-grow relative bg-[var(--bg-page)]">
+            <!-- Empty Placeholder on Desktop when no chat open -->
+            <div id="empty-chat-placeholder" class="hidden md:flex flex-col items-center justify-center h-full text-center p-6 text-[var(--text-muted)]">
+                <i class="fa-solid fa-comments text-5xl mb-4 text-[var(--accent-color)] opacity-40"></i>
+                <h3 class="text-lg font-medium text-[var(--text-main)] mb-1">Select or Add a Contact</h3>
+                <p class="text-sm max-w-sm opacity-70">Exchange direct messages, images, and live typing indicators with peers across 12AM.</p>
+            </div>
+
+            <!-- Active Chat Interface -->
+            <div id="active-chat-container" class="flex flex-col h-full w-full">
+                <!-- Chat Header -->
+                <header class="p-4 border-b border-[var(--border-main)] flex items-center justify-between flex-shrink-0 bg-[var(--bg-card)]">
+                    <div class="flex items-center gap-3">
+                        <button id="back-to-contacts-btn" class="btn-icon md:hidden">
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h2 id="chat-header" class="text-base font-semibold text-[var(--text-main)]">Chat</h2>
+                                <button id="edit-chat-name-btn" class="btn-icon" style="width: 1.75rem; height: 1.75rem; border: none;" title="Edit nickname">
+                                    <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                </button>
+                            </div>
+                            <span id="chat-partner-id" class="text-[11px] font-mono text-[var(--text-muted)] opacity-60">ID: ----</span>
+                        </div>
+                    </div>
+                    <button id="clear-local-history-btn" class="btn-icon" title="Clear local chat messages">
+                        <i class="fa-solid fa-broom"></i>
+                    </button>
+                </header>
+
+                <!-- Messages Container -->
+                <div class="chat-messages flex-grow overflow-y-auto p-4 space-y-4" id="messages-container"></div>
+
+                <!-- Chat Footer & Input Bar -->
+                <footer class="p-4 border-t border-[var(--border-main)] flex-shrink-0 bg-[var(--bg-card)]">
+                    <!-- Typing Indicator -->
+                    <div id="typing-indicator" class="h-5 text-xs text-[var(--accent-color)] italic mb-1" style="display: none;">
+                        Typing...
+                    </div>
+                    <!-- Image Preview Container -->
+                    <div id="image-preview-container" class="flex gap-2 mb-2 overflow-x-auto"></div>
+                    <!-- Message Form -->
+                    <form id="message-form" class="flex gap-2 items-center">
+                        <button type="button" id="attach-image-btn" class="btn-icon chat-footer-btn" title="Attach Image">
+                            <i class="fa-solid fa-paperclip"></i>
+                        </button>
+                        <input type="file" id="image-input" accept="image/*" multiple class="hidden">
+                        <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off" class="message-input-style h-10 flex-grow">
+                        <button type="submit" id="send-btn" class="btn-icon active chat-footer-btn" disabled>
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen Image Viewer Modal (Exact V6 Style) -->
+    <div id="image-viewer" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4">
+        <button id="close-viewer-btn" class="btn-icon absolute top-4 right-4 z-10">
+            <i class="fa-solid fa-times text-lg"></i>
+        </button>
+        <button id="prev-image-btn" class="btn-icon absolute left-4 top-1/2 -translate-y-1/2 z-10">
+            <i class="fa-solid fa-arrow-left text-lg"></i>
+        </button>
+        <img id="viewer-image" src="" class="max-w-full max-h-full object-contain rounded-lg">
+        <button id="next-image-btn" class="btn-icon absolute right-4 top-1/2 -translate-y-1/2 z-10">
+            <i class="fa-solid fa-arrow-right text-lg"></i>
+        </button>
+    </div>
+
+    <script>
+        // Global State & Storage Keys
+        const STORAGE_KEY_CONTACTS = '12am_messenger_contacts_v2';
+        const STORAGE_KEY_MESSAGES = '12am_messenger_messages_v2';
+        const STORAGE_KEY_MY_ID = '12am_device_public_id';
+
+        let currentUser = null;
+        let myPublicId = '';
+        let currentChatPartner = null;
+        let localContacts = [];
+        let localMessagesCache = {};
+        let selectedImages = [];
+        let currentImageView = { messageId: null, images: [], currentIndex: 0 };
+        let typingTimeout = null;
+        let realtimeChannel = null;
+
+        // DOM elements map
+        const dom = {
+            appContainer: document.getElementById('app-container'),
+            contactsView: document.getElementById('contacts-view'),
+            chatView: document.getElementById('chat-view'),
+            emptyPlaceholder: document.getElementById('empty-chat-placeholder'),
+            activeChatContainer: document.getElementById('active-chat-container'),
+            myIdEl: document.getElementById('my-id'),
+            copyIdBtn: document.getElementById('copy-id-btn'),
+            batteryStatus: document.getElementById('battery-status'),
+            localTime: document.getElementById('local-time'),
+            addContactId: document.getElementById('add-contact-id'),
+            addContactBtn: document.getElementById('add-contact-btn'),
+            addContactMsg: document.getElementById('add-contact-message'),
+            contactsListEl: document.getElementById('contacts-list'),
+            backToContactsBtn: document.getElementById('back-to-contacts-btn'),
+            chatHeaderEl: document.getElementById('chat-header'),
+            chatPartnerIdEl: document.getElementById('chat-partner-id'),
+            editChatNameBtn: document.getElementById('edit-chat-name-btn'),
+            clearHistoryBtn: document.getElementById('clear-local-history-btn'),
+            messagesContainerEl: document.getElementById('messages-container'),
+            typingIndicatorEl: document.getElementById('typing-indicator'),
+            imagePreviewContainer: document.getElementById('image-preview-container'),
+            messageForm: document.getElementById('message-form'),
+            messageInput: document.getElementById('message-input'),
+            attachImageBtn: document.getElementById('attach-image-btn'),
+            imageInput: document.getElementById('image-input'),
+            sendBtn: document.getElementById('send-btn'),
+            imageViewer: document.getElementById('image-viewer'),
+            viewerImage: document.getElementById('viewer-image'),
+            closeViewerBtn: document.getElementById('close-viewer-btn'),
+            prevImageBtn: document.getElementById('prev-image-btn'),
+            nextImageBtn: document.getElementById('next-image-btn')
+        };
+
+        // --- 1. USER & DEVICE INITIALIZATION ---
+        async function initMessenger() {
+            // Check 12AM Auth
+            let authUser = null;
+            if (window.TwelveAMAuth) {
+                authUser = window.TwelveAMAuth.getCurrentUser();
+            }
+
+            if (authUser) {
+                currentUser = {
+                    id: authUser.id,
+                    username: authUser.nickname || `${authUser.firstName} ${authUser.lastName}`,
+                    publicId: (authUser.id.replace(/-/g, '').substring(0, 8)).toUpperCase()
+                };
+            } else {
+                // Persistent Guest Single Device Session
+                let savedId = localStorage.getItem(STORAGE_KEY_MY_ID);
+                if (!savedId) {
+                    savedId = '12AM-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+                    localStorage.setItem(STORAGE_KEY_MY_ID, savedId);
+                }
+                currentUser = {
+                    id: 'guest-' + savedId,
+                    username: 'User ' + savedId,
+                    publicId: savedId
+                };
+            }
+
+            myPublicId = currentUser.publicId;
+            dom.myIdEl.textContent = myPublicId;
+
+            // Load stored contacts & message history
+            try {
+                localContacts = JSON.parse(localStorage.getItem(STORAGE_KEY_CONTACTS) || '[]');
+                localMessagesCache = JSON.parse(localStorage.getItem(STORAGE_KEY_MESSAGES) || '{}');
+            } catch (e) {
+                localContacts = [];
+                localMessagesCache = {};
+            }
+
+            // Start Battery & Time monitors
+            startStatusUpdates();
+
+            // Connect to Supabase Realtime
+            setupSupabaseRealtime();
+
+            // Render Contacts List
+            renderContactsList();
+
+            // Setup Event Handlers
+            setupEventListeners();
+        }
+
+        // --- 2. SUPABASE REALTIME CONNECTION ---
+        function setupSupabaseRealtime() {
+            if (!window.TwelveAMSupabase || !window.TwelveAMSupabase.client) {
+                console.warn('TwelveAMSupabase client not initialized yet, waiting...');
+                setTimeout(setupSupabaseRealtime, 500);
+                return;
+            }
+
+            const supabase = window.TwelveAMSupabase.client;
+
+            // Channel: 12am-messenger-global
+            realtimeChannel = supabase.channel('12am-messenger-global', {
+                config: {
+                    broadcast: { self: false }
+                }
+            });
+
+            // 1. Incoming Message
+            realtimeChannel.on('broadcast', { event: 'message' }, ({ payload }) => {
+                if (payload.recipientId === myPublicId || payload.recipientId === '*') {
+                    handleIncomingMessage(payload);
+                }
+            });
+
+            // 2. Incoming Typing Status
+            realtimeChannel.on('broadcast', { event: 'typing' }, ({ payload }) => {
+                if (payload.recipientId === myPublicId && currentChatPartner && currentChatPartner.publicId === payload.senderId) {
+                    if (payload.isTyping) {
+                        dom.typingIndicatorEl.textContent = `${currentChatPartner.name} is typing...`;
+                        dom.typingIndicatorEl.style.display = 'block';
+                    } else {
+                        dom.typingIndicatorEl.style.display = 'none';
+                    }
+                }
+            });
+
+            // 3. Incoming Friend / Contact Request
+            realtimeChannel.on('broadcast', { event: 'contact_ping' }, ({ payload }) => {
+                if (payload.recipientId === myPublicId) {
+                    let existing = localContacts.find(c => c.publicId === payload.senderId);
+                    if (!existing) {
+                        localContacts.push({
+                            publicId: payload.senderId,
+                            name: payload.senderName || `User ${payload.senderId}`,
+                            lastMessage: 'Added you as contact',
+                            timestamp: new Date().toISOString(),
+                            unread: true
+                        });
+                        saveContacts();
+                        renderContactsList();
+                    }
+                }
+            });
+
+            realtimeChannel.subscribe((status) => {
+                console.log('Supabase Realtime Channel Status:', status);
+            });
+        }
+
+        // Save Helpers
+        function saveContacts() {
+            try {
+                localStorage.setItem(STORAGE_KEY_CONTACTS, JSON.stringify(localContacts));
+            } catch (e) {}
+        }
+
+        function saveMessages() {
+            try {
+                localStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify(localMessagesCache));
+            } catch (e) {}
+        }
+
+        // --- 3. CONTACTS MANAGEMENT ---
+        function renderContactsList() {
+            dom.contactsListEl.innerHTML = '';
+            if (localContacts.length === 0) {
+                dom.contactsListEl.innerHTML = `
+                    <li class="p-6 text-center text-xs text-[var(--text-muted)] opacity-60">
+                        No contacts yet. Enter an 8-character ID above to start chatting.
+                    </li>
+                `;
+                return;
+            }
+
+            localContacts.forEach(contact => {
+                const li = document.createElement('li');
+                li.className = 'px-4 py-3 flex items-center gap-3 hover:bg-[var(--bg-page)] transition-colors cursor-pointer group';
+                if (currentChatPartner && currentChatPartner.publicId === contact.publicId) {
+                    li.className += ' bg-[var(--bg-page)] border-l-2 border-[var(--accent-color)]';
+                }
+
+                const initials = (contact.name || 'User').substring(0, 2).toUpperCase();
+
+                li.innerHTML = `
+                    <div class="w-10 h-10 rounded-full bg-[var(--bg-page)] border border-[var(--border-main)] flex-shrink-0 flex items-center justify-center font-bold text-xs text-[var(--text-main)]">
+                        ${initials}
+                    </div>
+                    <div class="flex-grow overflow-hidden min-w-0" onclick="openChat('${contact.publicId}', '${encodeURIComponent(contact.name)}')">
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium text-sm text-[var(--text-main)] truncate">${contact.name}</span>
+                            <span class="text-[10px] text-[var(--text-muted)] opacity-60">${formatTime(contact.timestamp)}</span>
+                        </div>
+                        <div class="flex items-center justify-between mt-0.5">
+                            <p class="text-xs text-[var(--text-muted)] truncate max-w-[170px] ${contact.unread ? 'text-[var(--text-main)] font-semibold' : ''}">${contact.lastMessage || 'No messages'}</p>
+                            ${contact.unread ? `<span class="w-2 h-2 rounded-full bg-[var(--accent-color)] flex-shrink-0"></span>` : ''}
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="deleteContact('${contact.publicId}')" class="btn-icon" style="width: 1.75rem; height: 1.75rem;" title="Delete Contact">
+                            <i class="fa-solid fa-trash-can text-xs text-red-400"></i>
+                        </button>
+                    </div>
+                `;
+
+                dom.contactsListEl.appendChild(li);
+            });
+        }
+
+        function handleAddContact() {
+            const raw = dom.addContactId.value.trim().toUpperCase();
+            if (!raw) return;
+
+            if (raw === myPublicId) {
+                dom.addContactMsg.textContent = 'You cannot add your own ID.';
+                dom.addContactMsg.className = 'text-xs text-amber-400 mt-2 h-4';
+                return;
+            }
+
+            const existing = localContacts.find(c => c.publicId === raw);
+            if (existing) {
+                dom.addContactMsg.textContent = 'Contact is already in your list.';
+                dom.addContactMsg.className = 'text-xs text-amber-400 mt-2 h-4';
+                return;
+            }
+
+            const newContact = {
+                publicId: raw,
+                name: `User ${raw}`,
+                lastMessage: 'Contact added',
+                timestamp: new Date().toISOString(),
+                unread: false
+            };
+
+            localContacts.unshift(newContact);
+            saveContacts();
+            renderContactsList();
+
+            // Ping contact over Supabase channel
+            if (realtimeChannel) {
+                realtimeChannel.send({
+                    type: 'broadcast',
+                    event: 'contact_ping',
+                    payload: {
+                        senderId: myPublicId,
+                        senderName: currentUser.username,
+                        recipientId: raw
+                    }
+                }).catch(() => {});
+            }
+
+            dom.addContactId.value = '';
+            dom.addContactMsg.textContent = `Contact ${raw} added!`;
+            dom.addContactMsg.className = 'text-xs text-emerald-400 mt-2 h-4';
+            setTimeout(() => { dom.addContactMsg.textContent = ''; }, 3000);
+
+            // Open chat immediately
+            openChat(raw, encodeURIComponent(newContact.name));
+        }
+
+        function deleteContact(publicId) {
+            localContacts = localContacts.filter(c => c.publicId !== publicId);
+            saveContacts();
+            if (currentChatPartner && currentChatPartner.publicId === publicId) {
+                closeChat();
+            }
+            renderContactsList();
+        }
+
+        // --- 4. CHAT ACTIONS & MESSAGES ---
+        function openChat(publicId, encName) {
+            const name = decodeURIComponent(encName);
+            currentChatPartner = { publicId, name };
+
+            dom.chatHeaderEl.textContent = name;
+            dom.chatPartnerIdEl.textContent = `ID: ${publicId}`;
+
+            // Mark unread false
+            const c = localContacts.find(x => x.publicId === publicId);
+            if (c) {
+                c.unread = false;
+                saveContacts();
+            }
+
+            // Desktop layout toggle
+            dom.emptyPlaceholder.classList.add('hidden');
+            dom.activeChatContainer.classList.remove('hidden');
+
+            // Mobile view toggle
+            dom.contactsView.classList.add('view-hidden');
+            dom.chatView.classList.remove('view-hidden');
+
+            renderMessagesForPartner(publicId);
+            renderContactsList();
+
+            dom.messageInput.focus();
+        }
+
+        function closeChat() {
+            currentChatPartner = null;
+            dom.chatView.classList.add('view-hidden');
+            dom.contactsView.classList.remove('view-hidden');
+            dom.emptyPlaceholder.classList.remove('hidden');
+            dom.activeChatContainer.classList.add('hidden');
+            renderContactsList();
+        }
+
+        function renderMessagesForPartner(partnerId) {
+            dom.messagesContainerEl.innerHTML = '';
+            const messages = localMessagesCache[partnerId] || [];
+
+            if (messages.length === 0) {
+                dom.messagesContainerEl.innerHTML = `
+                    <div class="text-center py-12 text-xs text-[var(--text-muted)] opacity-60">
+                        <i class="fa-solid fa-lock text-xl mb-2 opacity-40"></i>
+                        <p>Messages are synchronized in real-time using Supabase.</p>
+                        <p class="mt-1">Say hello to start the conversation!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            messages.forEach(msg => {
+                renderSingleMessage(msg);
+            });
+
+            scrollToBottom();
+        }
+
+        function renderSingleMessage(data) {
+            const isSent = data.senderId === myPublicId;
+            const messageWrapper = document.createElement('div');
+            messageWrapper.className = `flex ${isSent ? 'justify-end' : 'justify-start'} w-full`;
+
+            const timeStr = data.timestamp ? new Date(data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+            let imagesHTML = '';
+            if (data.images && data.images.length > 0) {
+                imagesHTML = '<div class="flex flex-wrap gap-2 mt-2">';
+                data.images.forEach((imgData, index) => {
+                    imagesHTML += `
+                        <div class="chat-image-wrap relative w-28 h-28 rounded-[12px] overflow-hidden cursor-pointer border border-[var(--border-main)]" onclick="openImageViewerDirect('${data.id}', ${index})">
+                            <img src="${imgData}" class="w-full h-full object-cover">
+                        </div>`;
+                });
+                imagesHTML += '</div>';
+            }
+
+            messageWrapper.innerHTML = `
+                <div class="flex flex-col ${isSent ? 'items-end' : 'items-start'} max-w-[85%] md:max-w-[70%]">
+                    <div class="p-3 ${isSent ? 'sent-bubble' : 'received-bubble'} shadow-sm">
+                        ${data.text ? `<p class="break-words text-sm leading-relaxed">${escapeHtml(data.text)}</p>` : ''}
+                        ${imagesHTML}
+                    </div>
+                    <div class="flex items-center gap-1.5 mt-1 px-1">
+                        <span class="text-[10px] text-[var(--text-muted)] opacity-60">${timeStr}</span>
+                        ${isSent ? `<span class="text-[10px] text-[var(--text-muted)] opacity-60">• Sent</span>` : ''}
+                    </div>
+                </div>
+            `;
+
+            dom.messagesContainerEl.appendChild(messageWrapper);
+        }
+
+        function scrollToBottom() {
+            dom.messagesContainerEl.scrollTop = dom.messagesContainerEl.scrollHeight;
+        }
+
+        // --- 5. SEND MESSAGE ---
+        async function handleSendMessage(e) {
+            e.preventDefault();
+            const text = dom.messageInput.value.trim();
+            if (!text && selectedImages.length === 0) return;
+            if (!currentChatPartner) return;
+
+            dom.sendBtn.disabled = true;
+
+            // Process image attachments
+            const images = await processImages();
+
+            const messageData = {
+                id: 'msg-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
+                text: text,
+                images: images,
+                senderId: myPublicId,
+                senderName: currentUser.username,
+                recipientId: currentChatPartner.publicId,
+                timestamp: new Date().toISOString()
+            };
+
+            // Save locally
+            if (!localMessagesCache[currentChatPartner.publicId]) {
+                localMessagesCache[currentChatPartner.publicId] = [];
+            }
+            localMessagesCache[currentChatPartner.publicId].push(messageData);
+            saveMessages();
+
+            // Update contact last message
+            const c = localContacts.find(x => x.publicId === currentChatPartner.publicId);
+            if (c) {
+                c.lastMessage = text || (images.length ? `[${images.length} Image]` : '');
+                c.timestamp = messageData.timestamp;
+                saveContacts();
+            }
+
+            // Render immediately
+            renderSingleMessage(messageData);
+            scrollToBottom();
+            renderContactsList();
+
+            // Broadcast via Supabase Realtime
+            if (realtimeChannel) {
+                realtimeChannel.send({
+                    type: 'broadcast',
+                    event: 'message',
+                    payload: messageData
+                }).catch(err => console.warn('Realtime message broadcast failed:', err));
+            }
+
+            // Clear inputs
+            dom.messageInput.value = '';
+            selectedImages = [];
+            renderImagePreviews();
+            updateSendButtonState();
+            handleTypingStop();
+        }
+
+        // Handle Incoming Broadcast Message
+        function handleIncomingMessage(msg) {
+            const senderId = msg.senderId;
+
+            // Store message in cache
+            if (!localMessagesCache[senderId]) {
+                localMessagesCache[senderId] = [];
+            }
+            localMessagesCache[senderId].push(msg);
+            saveMessages();
+
+            // Update contact
+            let contact = localContacts.find(x => x.publicId === senderId);
+            if (!contact) {
+                contact = {
+                    publicId: senderId,
+                    name: msg.senderName || `User ${senderId}`,
+                    lastMessage: msg.text || '[Image]',
+                    timestamp: msg.timestamp,
+                    unread: true
+                };
+                localContacts.unshift(contact);
+            } else {
+                contact.lastMessage = msg.text || '[Image]';
+                contact.timestamp = msg.timestamp;
+                if (!currentChatPartner || currentChatPartner.publicId !== senderId) {
+                    contact.unread = true;
+                }
+            }
+            saveContacts();
+            renderContactsList();
+
+            // If chat with sender is currently open, render immediately
+            if (currentChatPartner && currentChatPartner.publicId === senderId) {
+                renderSingleMessage(msg);
+                scrollToBottom();
+            }
+        }
+
+        // --- 6. TYPING INDICATOR ---
+        function handleTyping() {
+            if (!currentChatPartner || !realtimeChannel) return;
+
+            realtimeChannel.send({
+                type: 'broadcast',
+                event: 'typing',
+                payload: {
+                    senderId: myPublicId,
+                    recipientId: currentChatPartner.publicId,
+                    isTyping: true
+                }
+            }).catch(() => {});
+
+            if (typingTimeout) clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(handleTypingStop, 2500);
+        }
+
+        function handleTypingStop() {
+            if (typingTimeout) {
+                clearTimeout(typingTimeout);
+                typingTimeout = null;
+            }
+            if (currentChatPartner && realtimeChannel) {
+                realtimeChannel.send({
+                    type: 'broadcast',
+                    event: 'typing',
+                    payload: {
+                        senderId: myPublicId,
+                        recipientId: currentChatPartner.publicId,
+                        isTyping: false
+                    }
+                }).catch(() => {});
+            }
+        }
+
+        // --- 7. IMAGE PROCESSING & VIEWER ---
+        function handleImageSelection(e) {
+            const files = Array.from(e.target.files);
+            selectedImages.push(...files);
+            renderImagePreviews();
+            updateSendButtonState();
+        }
+
+        function renderImagePreviews() {
+            dom.imagePreviewContainer.innerHTML = '';
+            selectedImages.forEach((file, index) => {
+                const div = document.createElement('div');
+                div.className = 'relative w-16 h-16 rounded-[10px] overflow-hidden border border-[var(--border-main)] flex-shrink-0';
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.className = 'w-full h-full object-cover';
+
+                const closeBtn = document.createElement('button');
+                closeBtn.innerHTML = '&times;';
+                closeBtn.className = 'absolute top-0 right-0 bg-black/70 text-white w-5 h-5 flex items-center justify-center text-xs font-bold';
+                closeBtn.onclick = () => {
+                    selectedImages.splice(index, 1);
+                    renderImagePreviews();
+                    updateSendButtonState();
+                };
+
+                div.appendChild(img);
+                div.appendChild(closeBtn);
+                dom.imagePreviewContainer.appendChild(div);
+            });
+        }
+
+        async function processImages() {
+            if (selectedImages.length === 0) return [];
+            const promises = selectedImages.map(file => {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            let width = img.width;
+                            let height = img.height;
+                            const maxDim = 1000;
+                            if (width > height && width > maxDim) {
+                                height = Math.round((height * maxDim) / width);
+                                width = maxDim;
+                            } else if (height > maxDim) {
+                                width = Math.round((width * maxDim) / height);
+                                height = maxDim;
+                            }
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            resolve(canvas.toDataURL('image/jpeg', 0.75));
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            });
+            return Promise.all(promises);
+        }
+
+        function openImageViewerDirect(msgId, imgIndex) {
+            if (!currentChatPartner) return;
+            const messages = localMessagesCache[currentChatPartner.publicId] || [];
+            const msg = messages.find(m => m.id === msgId);
+            if (!msg || !msg.images) return;
+
+            currentImageView = {
+                messageId: msgId,
+                images: msg.images,
+                currentIndex: imgIndex
+            };
+            updateImageViewer();
+            dom.imageViewer.classList.remove('hidden');
+        }
+
+        function updateImageViewer() {
+            dom.viewerImage.src = currentImageView.images[currentImageView.currentIndex];
+            dom.prevImageBtn.classList.toggle('hidden', currentImageView.currentIndex === 0);
+            dom.nextImageBtn.classList.toggle('hidden', currentImageView.currentIndex === currentImageView.images.length - 1);
+        }
+
+        function closeImageViewer() {
+            dom.imageViewer.classList.add('hidden');
+        }
+
+        // --- 8. UTILS & HELPERS ---
+        function updateSendButtonState() {
+            const hasText = dom.messageInput.value.trim().length > 0;
+            const hasImages = selectedImages.length > 0;
+            dom.sendBtn.disabled = !(hasText || hasImages);
+        }
+
+        function startStatusUpdates() {
+            function updateTime() {
+                dom.localTime.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+            function updateBattery() {
+                if (navigator.getBattery) {
+                    navigator.getBattery().then(b => {
+                        dom.batteryStatus.textContent = `${Math.round(b.level * 100)}%`;
+                    }).catch(() => {
+                        dom.batteryStatus.textContent = '100%';
+                    });
+                } else {
+                    dom.batteryStatus.textContent = '100%';
+                }
+            }
+            updateTime();
+            updateBattery();
+            setInterval(() => {
+                updateTime();
+                updateBattery();
+            }, 10000);
+        }
+
+        function formatTime(isoStr) {
+            if (!isoStr) return '';
+            try {
+                const d = new Date(isoStr);
+                const now = new Date();
+                if (d.toDateString() === now.toDateString()) {
+                    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                }
+                return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+            } catch (e) {
+                return '';
+            }
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function setupEventListeners() {
+            dom.addContactBtn.addEventListener('click', handleAddContact);
+            dom.addContactId.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') handleAddContact();
+            });
+
+            dom.backToContactsBtn.addEventListener('click', closeChat);
+            dom.messageForm.addEventListener('submit', handleSendMessage);
+            dom.messageInput.addEventListener('input', () => {
+                updateSendButtonState();
+                handleTyping();
+            });
+            dom.messageInput.addEventListener('blur', handleTypingStop);
+
+            dom.attachImageBtn.addEventListener('click', () => dom.imageInput.click());
+            dom.imageInput.addEventListener('change', handleImageSelection);
+
+            dom.copyIdBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(myPublicId).then(() => {
+                    dom.copyIdBtn.textContent = 'Copied!';
+                    setTimeout(() => { dom.copyIdBtn.textContent = 'Copy'; }, 2000);
+                });
+            });
+
+            dom.editChatNameBtn.addEventListener('click', () => {
+                if (!currentChatPartner) return;
+                const newName = prompt('Enter a custom name for this contact:', currentChatPartner.name);
+                if (newName && newName.trim()) {
+                    currentChatPartner.name = newName.trim();
+                    dom.chatHeaderEl.textContent = newName.trim();
+                    const c = localContacts.find(x => x.publicId === currentChatPartner.publicId);
+                    if (c) {
+                        c.name = newName.trim();
+                        saveContacts();
+                        renderContactsList();
+                    }
+                }
+            });
+
+            dom.clearHistoryBtn.addEventListener('click', () => {
+                if (!currentChatPartner) return;
+                if (confirm(`Clear all local messages with ${currentChatPartner.name}?`)) {
+                    delete localMessagesCache[currentChatPartner.publicId];
+                    saveMessages();
+                    renderMessagesForPartner(currentChatPartner.publicId);
+                }
+            });
+
+            dom.closeViewerBtn.addEventListener('click', closeImageViewer);
+            dom.prevImageBtn.addEventListener('click', () => {
+                if (currentImageView.currentIndex > 0) {
+                    currentImageView.currentIndex--;
+                    updateImageViewer();
+                }
+            });
+            dom.nextImageBtn.addEventListener('click', () => {
+                if (currentImageView.currentIndex < currentImageView.images.length - 1) {
+                    currentImageView.currentIndex++;
+                    updateImageViewer();
+                }
+            });
+            dom.imageViewer.addEventListener('click', (e) => {
+                if (e.target.id === 'image-viewer') closeImageViewer();
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', initMessenger);
+    </script>
+</body>
+</html>

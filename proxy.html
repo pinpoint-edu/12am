@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>12AM — Web Proxy</title>
+  <meta name="description" content="Fast, private web browsing and proxy on 12AM.">
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <!-- 12AM Core Theme & Navigation -->
+  <link rel="stylesheet" href="navigation.css">
+  <script src="theme.js"></script>
+  <script src="navigation.js" defer></script>
+
+  <style>
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      padding-top: var(--navbar-height);
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-page);
+    }
+
+    .proxy-layout {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - var(--navbar-height));
+      overflow: hidden;
+    }
+
+    /* Proxy Omnibox Toolbar */
+    .proxy-toolbar {
+      height: 48px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 1rem;
+      flex-shrink: 0;
+    }
+
+    .proxy-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--border-faint);
+      border: 1px solid var(--border-main);
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.15s ease;
+    }
+
+    .proxy-btn:hover {
+      border-color: var(--accent-color);
+      color: var(--text-main);
+    }
+
+    .proxy-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      border-color: var(--border-main);
+    }
+
+    .omnibox-form {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: var(--bg-page);
+      border: 1px solid var(--border-main);
+      border-radius: 12px;
+      padding: 4px 12px;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .omnibox-form:focus-within {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+
+    .omnibox-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-main);
+      font-size: 0.88rem;
+      font-family: inherit;
+    }
+
+    .omnibox-go-btn {
+      background: var(--accent-color);
+      border: none;
+      color: #ffffff;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Viewport & Start Screen */
+    .proxy-workspace {
+      flex: 1;
+      position: relative;
+      background: #000000;
+      overflow: hidden;
+    }
+
+    .proxy-start-screen {
+      position: absolute;
+      inset: 0;
+      background: var(--bg-page);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      z-index: 5;
+    }
+
+    .proxy-start-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 2rem;
+    }
+
+    .proxy-start-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: var(--btn-bg);
+      border: 1px solid var(--accent-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-color);
+      font-size: 22px;
+    }
+
+    .proxy-start-title {
+      font-size: 2rem;
+      font-weight: 800;
+      margin: 0;
+      color: var(--text-main);
+    }
+
+    /* Quick Launch Grid */
+    .quick-tiles-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      max-width: 540px;
+      width: 100%;
+      margin-top: 2rem;
+    }
+
+    .quick-tile {
+      background: var(--bg-card);
+      border: 1px solid var(--border-main);
+      border-radius: 14px;
+      padding: 14px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .quick-tile:hover {
+      border-color: var(--accent-color);
+      color: var(--text-main);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .quick-tile i {
+      font-size: 20px;
+      color: var(--accent-color);
+    }
+
+    #proxyViewport {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+  </style>
+</head>
+<body class="grid-bg">
+  <div id="dynamic-background"></div>
+
+  <div class="proxy-layout">
+    <!-- Browser Toolbar -->
+    <div class="proxy-toolbar">
+      <button class="proxy-btn" id="btnBack" onclick="goBack()" title="Back" disabled>
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <button class="proxy-btn" id="btnForward" onclick="goForward()" title="Forward" disabled>
+        <i class="fa-solid fa-arrow-right"></i>
+      </button>
+      <button class="proxy-btn" id="btnReload" onclick="reloadPage()" title="Reload">
+        <i class="fa-solid fa-arrow-rotate-right"></i>
+      </button>
+      <button class="proxy-btn" onclick="showStartScreen()" title="Home">
+        <i class="fa-solid fa-house"></i>
+      </button>
+
+      <form class="omnibox-form" id="omniboxForm" onsubmit="handleNavigate(event)">
+        <i class="fa-solid fa-globe" style="color: var(--text-muted); font-size: 13px;"></i>
+        <input type="text" id="omniboxInput" class="omnibox-input" placeholder="Search the web or type a URL..." autocomplete="off">
+        <button type="submit" class="omnibox-go-btn">Go</button>
+      </form>
+
+      <button class="proxy-btn" onclick="popOutCurrent()" title="Open in New Window">
+        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+      </button>
+    </div>
+
+    <!-- Workspace -->
+    <div class="proxy-workspace">
+      <!-- Start screen -->
+      <div class="proxy-start-screen" id="startScreen">
+
+        <div class="quick-tiles-grid">
+          <div class="quick-tile" onclick="navigate('https://google.com')">
+            <i class="fa-brands fa-google"></i>
+            <span>Google</span>
+          </div>
+          <div class="quick-tile" onclick="navigate('https://youtube.com')">
+            <i class="fa-brands fa-youtube"></i>
+            <span>YouTube</span>
+          </div>
+          <div class="quick-tile" onclick="navigate('https://discord.com')">
+            <i class="fa-brands fa-discord"></i>
+            <span>Discord</span>
+          </div>
+          <div class="quick-tile" onclick="navigate('https://reddit.com')">
+            <i class="fa-brands fa-reddit-alien"></i>
+            <span>Reddit</span>
+          </div>
+          <div class="quick-tile" onclick="navigate('https://tiktok.com')">
+            <i class="fa-brands fa-tiktok"></i>
+            <span>TikTok</span>
+          </div>
+          <div class="quick-tile" onclick="navigate('https://github.com')">
+            <i class="fa-brands fa-github"></i>
+            <span>GitHub</span>
+          </div>
+          <div class="quick-tile" onclick="navigate('https://wikipedia.org')">
+            <i class="fa-brands fa-wikipedia-w"></i>
+            <span>Wikipedia</span>
+          </div>
+          <div class="quick-tile" onclick="navigate('https://now.gg')">
+            <i class="fa-solid fa-gamepad"></i>
+            <span>Now.gg</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Iframe viewport -->
+      <iframe id="proxyViewport" allow="fullscreen; autoplay; clipboard-read; clipboard-write"></iframe>
+    </div>
+  </div>
+
+  <script>
+    const PROXY_DOMAIN = "https://ohio-notes.broshan.com.np";
+    const viewport = document.getElementById('proxyViewport');
+    const startScreen = document.getElementById('startScreen');
+    const omnibox = document.getElementById('omniboxInput');
+
+    let historyStack = [];
+    let historyIdx = -1;
+
+    function handleNavigate(e) {
+      if (e) e.preventDefault();
+      const input = omnibox.value.trim();
+      if (!input) return;
+      navigate(input);
+    }
+
+    function navigate(query) {
+      let url = query;
+      if (!/^https?:\/\//i.test(url)) {
+        if (url.includes('.') && !url.includes(' ')) {
+          url = 'https://' + url;
+        } else {
+          url = 'https://www.google.com/search?q=' + encodeURIComponent(url);
+        }
+      }
+
+      omnibox.value = url;
+      startScreen.style.display = 'none';
+
+      // Route via proxy backend
+      const proxyUrl = PROXY_DOMAIN + '/uv/service/' + encodeURIComponent(url);
+      viewport.src = proxyUrl;
+
+      historyStack.push(url);
+      historyIdx = historyStack.length - 1;
+      updateNavButtons();
+    }
+
+    function showStartScreen() {
+      startScreen.style.display = 'flex';
+      viewport.src = 'about:blank';
+      omnibox.value = '';
+    }
+
+    function reloadPage() {
+      if (viewport.src && viewport.src !== 'about:blank') {
+        viewport.src = viewport.src;
+      }
+    }
+
+    function goBack() {
+      if (historyIdx > 0) {
+        historyIdx--;
+        const url = historyStack[historyIdx];
+        omnibox.value = url;
+        viewport.src = PROXY_DOMAIN + '/uv/service/' + encodeURIComponent(url);
+        updateNavButtons();
+      }
+    }
+
+    function goForward() {
+      if (historyIdx < historyStack.length - 1) {
+        historyIdx++;
+        const url = historyStack[historyIdx];
+        omnibox.value = url;
+        viewport.src = PROXY_DOMAIN + '/uv/service/' + encodeURIComponent(url);
+        updateNavButtons();
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById('btnBack').disabled = historyIdx <= 0;
+      document.getElementById('btnForward').disabled = historyIdx >= historyStack.length - 1;
+    }
+
+    function popOutCurrent() {
+      if (viewport.src && viewport.src !== 'about:blank') {
+        window.open(viewport.src, '_blank');
+      }
+    }
+
+    // Check if URL passed in search params
+    const initialUrl = new URLSearchParams(window.location.search).get('url');
+    if (initialUrl) {
+      navigate(initialUrl);
+    }
+  </script>
+</body>
+</html>

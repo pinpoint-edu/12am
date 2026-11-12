@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Soundboard</title>
+
+    <!-- Google Fonts & Material Symbols Sharp matching pinpoint-mini -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500&family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* ─── Pinpoint-Mini Design System ─────────────────────────────── */
+      :root {
+        --bg-base: #09090b;
+        --bg-surface: #121215;
+        --bg-card: #18181b;
+        --bg-card-hover: #222226;
+        --border: #27272a;
+        --border-hover: #3f3f46;
+        --border-focus: #00ff88;
+        --text-main: #fafafa;
+        --text-muted: #a1a1aa;
+        --text-dim: #71717a;
+        --accent: #00ff88;
+        --accent-light: #a7f3d0;
+        --accent-subtle: rgba(0, 255, 136, 0.12);
+        --accent-badge-bg: rgba(0, 255, 136, 0.22);
+        --accent-border: rgba(0, 255, 136, 0.35);
+        --accent-glow: rgba(0, 255, 136, 0.45);
+        --parabola-ease: cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      html, body {
+        width: 100%;
+        min-height: 100vh;
+        background-color: var(--bg-base);
+        color: var(--text-main);
+        font-family: 'Geist', system-ui, -apple-system, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+        overflow-x: hidden;
+      }
+
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--bg-base);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #27272a;
+        border-radius: 9999px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #3f3f46;
+      }
+
+      .material-symbols-sharp {
+        font-family: 'Material Symbols Sharp' !important;
+        font-weight: normal;
+        font-style: normal;
+        font-size: 18px;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        display: inline-block;
+        white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+        vertical-align: middle;
+      }
+
+      /* ─── Controls Header Bar ───────────────────────────────────────── */
+      #controls {
+        position: fixed;
+        top: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: calc(100% - 32px);
+        max-width: 1200px;
+        z-index: 1000;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 8px 14px;
+        background: rgba(18, 18, 21, 0.85);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+        transition: border-color 0.2s var(--parabola-ease);
+      }
+
+      #controls:hover {
+        border-color: var(--border-hover);
+      }
+
+      .nav-return-home-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 32px;
+        padding: 0 12px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--border);
+        border-radius: 9999px;
+        color: var(--text-main);
+        font-family: 'Geist', system-ui, sans-serif;
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+
+      .nav-return-home-btn:hover {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: var(--border-hover);
+        transform: scale(1.02);
+      }
+
+      .controls-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        letter-spacing: -0.01em;
+        color: var(--text-main);
+        user-select: none;
+      }
+
+      .controls-brand .material-symbols-sharp {
+        color: var(--accent);
+        font-size: 20px;
+      }
+
+      .shortcut-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        border-radius: 9999px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        font-size: 11px;
+        color: var(--text-muted);
+        font-family: 'Geist Mono', monospace;
+      }
+
+      .controls-buttons {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .control-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        height: 36px;
+        padding: 0 14px;
+        border-radius: 9999px;
+        font-family: 'Geist', sans-serif;
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: -0.01em;
+        cursor: pointer;
+        border: 1px solid var(--border);
+        background: var(--bg-card);
+        color: var(--text-muted);
+        transition: all 0.18s var(--parabola-ease);
+        user-select: none;
+        white-space: nowrap;
+      }
+
+      .control-button:hover {
+        background: var(--bg-card-hover);
+        color: var(--text-main);
+        border-color: var(--border-hover);
+        transform: translateY(-1px);
+      }
+
+      .control-button:active {
+        transform: translateY(0) scale(0.98);
+      }
+
+      .control-button.active {
+        background: var(--accent-subtle);
+        color: var(--accent-light);
+        border-color: var(--accent-border);
+      }
+
+      .favorites-toggle.active {
+        background: rgba(234, 179, 8, 0.15);
+        color: #fde047;
+        border-color: rgba(234, 179, 8, 0.4);
+      }
+
+      .stop-button {
+        background: rgba(239, 68, 68, 0.12);
+        color: #fca5a5;
+        border-color: rgba(239, 68, 68, 0.28);
+      }
+      .stop-button:hover {
+        background: rgba(239, 68, 68, 0.22);
+        color: #fee2e2;
+        border-color: rgba(239, 68, 68, 0.5);
+      }
+
+      /* Search Box */
+      .search-box-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        flex: 1 1 200px;
+        max-width: 320px;
+      }
+
+      .search-box-wrap .search-icon {
+        position: absolute;
+        left: 12px;
+        color: var(--text-dim);
+        font-size: 16px;
+        pointer-events: none;
+      }
+
+      #searchInput {
+        width: 100%;
+        height: 36px;
+        padding: 0 12px 0 34px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 9999px;
+        font-family: 'Geist', sans-serif;
+        font-size: 13px;
+        color: var(--text-main);
+        outline: none;
+        transition: all 0.2s var(--parabola-ease);
+      }
+
+      #searchInput::placeholder {
+        color: var(--text-dim);
+      }
+
+      #searchInput:focus {
+        border-color: var(--border-focus);
+        background: var(--bg-surface);
+        box-shadow: 0 0 0 3px var(--accent-subtle);
+      }
+
+      /* ─── Soundboard Grid: ONLY Labels, No Weird Colors ─────────────── */
+      #soundboard {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 12px;
+        width: calc(100% - 32px);
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 90px 0 60px;
+      }
+
+      .sound-card {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 12px 14px;
+        min-height: 52px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        cursor: pointer;
+        user-select: none;
+        outline: none;
+        text-align: left;
+        transition: transform 0.16s var(--parabola-ease),
+                    background-color 0.16s var(--parabola-ease),
+                    border-color 0.16s var(--parabola-ease),
+                    box-shadow 0.16s var(--parabola-ease);
+      }
+
+      .sound-card:hover {
+        background: var(--bg-card-hover);
+        border-color: var(--border-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      }
+
+      .sound-card:active {
+        transform: translateY(0) scale(0.98);
+      }
+
+      .sound-card.playing {
+        border-color: var(--accent);
+        box-shadow: 0 0 16px var(--accent-glow), 0 0 0 1px var(--accent) inset;
+        background: var(--bg-card-hover);
+      }
+
+      .sound-card.pinned {
+        border-color: rgba(234, 179, 8, 0.35);
+        background: rgba(234, 179, 8, 0.04);
+      }
+
+      .sound-title {
+        flex: 1 1 auto;
+        font-family: 'Geist', sans-serif;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-main);
+        letter-spacing: -0.01em;
+        line-height: 1.35;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        word-break: break-word;
+      }
+
+      .sound-card.playing .sound-title {
+        color: var(--accent-light);
+        font-weight: 600;
+      }
+
+      /* Left-Click Pin Icon Button */
+      .pin-btn {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        background: transparent;
+        border: 1px solid transparent;
+        cursor: pointer;
+        color: var(--text-dim);
+        opacity: 0.45;
+        transition: all 0.15s ease;
+      }
+
+      .pin-btn:hover {
+        opacity: 1;
+        background: rgba(255, 255, 255, 0.08);
+        color: #fde047;
+      }
+
+      .sound-card.pinned .pin-btn {
+        opacity: 1;
+        color: #facc15;
+      }
+
+      .pin-btn .material-symbols-sharp {
+        font-size: 17px;
+      }
+
+      .empty-state {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-dim);
+        font-size: 14px;
+      }
+
+      @media (max-width: 768px) {
+        #controls {
+          top: 10px;
+          padding: 8px 10px;
+          gap: 8px;
+        }
+        .search-box-wrap {
+          order: 3;
+          flex: 1 1 100%;
+          max-width: 100%;
+        }
+        #soundboard {
+          grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+          gap: 10px;
+          padding-top: 130px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Top Glassmorphism Navigation & Controls Bar -->
+    <div id="controls">
+      <button class="nav-return-home-btn" onclick="returnToMainHome()" title="Return to Home Screen">
+        <span class="material-symbols-sharp" style="font-size: 16px;">arrow_back</span>
+        <span>Home</span>
+      </button>
+
+      <div class="controls-brand">
+        <span class="material-symbols-sharp">volume_up</span>
+        <span>Soundboard</span>
+        <span class="shortcut-pill" title="Keyboard Shortcuts">Space: Stop • X: Overlap</span>
+      </div>
+
+      <div class="controls-buttons">
+        <button id="toggleFavorites" class="control-button favorites-toggle" title="Filter Pinned Favorites">
+          <span class="material-symbols-sharp" style="font-size: 16px; color: #facc15;">push_pin</span>
+          <span id="favText">Pinned: OFF</span>
+        </button>
+
+        <button id="toggleButton" class="control-button overlap-toggle" title="Toggle audio overlapping (Shortcut: X)">
+          <span class="material-symbols-sharp" style="font-size: 16px;">layers</span>
+          <span id="overlapText">Overlap: OFF</span>
+        </button>
+
+        <button id="stopButton" class="control-button stop-button" title="Stop all playing audio (Shortcut: Space)">
+          <span class="material-symbols-sharp" style="font-size: 16px;">stop_circle</span>
+          <span>Stop (Space)</span>
+        </button>
+      </div>
+
+      <div class="search-box-wrap">
+        <span class="material-symbols-sharp search-icon">search</span>
+        <input id="searchInput" type="text" placeholder="Search sounds..." />
+      </div>
+    </div>
+
+    <!-- Sounds Grid (Only Labels, Clean Monochrome UI) -->
+    <div id="soundboard"></div>
+
+    <!-- Theme synchronization script -->
+    <script>
+      function returnToMainHome() {
+        if (window.parent && window.parent !== window && typeof window.parent.closePlayer === 'function') {
+          window.parent.closePlayer();
+        } else {
+          window.location.href = '../index.html';
+        }
+      }
+
+      (function() {
+        const TINTS = {
+          green: { color: "#00ff88", light: "#a7f3d0", subtle: "rgba(0, 255, 136, 0.12)", badgeBg: "rgba(0, 255, 136, 0.22)", border: "rgba(0, 255, 136, 0.35)", glow: "rgba(0, 255, 136, 0.45)" },
+          cyan: { color: "#00f0ff", light: "#a5f3fc", subtle: "rgba(0, 240, 255, 0.12)", badgeBg: "rgba(0, 240, 255, 0.22)", border: "rgba(0, 240, 255, 0.35)", glow: "rgba(0, 240, 255, 0.45)" },
+          violet: { color: "#bf5af2", light: "#e9d5ff", subtle: "rgba(191, 90, 242, 0.12)", badgeBg: "rgba(191, 90, 242, 0.22)", border: "rgba(191, 90, 242, 0.35)", glow: "rgba(191, 90, 242, 0.45)" },
+          rose: { color: "#ff375f", light: "#fecdd3", subtle: "rgba(255, 55, 95, 0.12)", badgeBg: "rgba(255, 55, 95, 0.22)", border: "rgba(255, 55, 95, 0.35)", glow: "rgba(255, 55, 95, 0.45)" },
+          amber: { color: "#ff9f0a", light: "#fde68a", subtle: "rgba(255, 159, 10, 0.12)", badgeBg: "rgba(255, 159, 10, 0.22)", border: "rgba(255, 159, 10, 0.35)", glow: "rgba(255, 159, 10, 0.45)" },
+          blue: { color: "#0a84ff", light: "#bfdbfe", subtle: "rgba(10, 132, 255, 0.12)", badgeBg: "rgba(10, 132, 255, 0.22)", border: "rgba(10, 132, 255, 0.35)", glow: "rgba(10, 132, 255, 0.45)" },
+          white: { color: "#ffffff", light: "#ffffff", subtle: "rgba(255, 255, 255, 0.12)", badgeBg: "rgba(255, 255, 255, 0.22)", border: "rgba(255, 255, 255, 0.35)", glow: "rgba(255, 255, 255, 0.35)" }
+        };
+
+        function syncTint() {
+          try {
+            const tintId = localStorage.getItem("trashbin_theme_tint") || "green";
+            const tint = TINTS[tintId] || TINTS.green;
+            const r = document.documentElement.style;
+            r.setProperty("--accent", tint.color);
+            r.setProperty("--accent-light", tint.light);
+            r.setProperty("--accent-subtle", tint.subtle);
+            r.setProperty("--accent-badge-bg", tint.badgeBg);
+            r.setProperty("--accent-border", tint.border);
+            r.setProperty("--border-focus", tint.color);
+            r.setProperty("--accent-glow", tint.glow);
+          } catch(e) {}
+        }
+        syncTint();
+        window.addEventListener("storage", syncTint);
+      })();
+    </script>
+
+    <!-- Custom Soundboard Engine (Only Labels, Shortcuts, Left-Click Pin, No TTS) -->
+    <script type="module">
+      import { sounds } from 'https://cdn.jsdelivr.net/gh/genizymath/soundboard@main/sounds.js';
+
+      let allowOverlap = false;
+      let showFavorites = false;
+      let currentAudios = [];
+
+      const soundBoard = document.getElementById('soundboard');
+      const searchInput = document.getElementById('searchInput');
+      const toggleButton = document.getElementById('toggleButton');
+      const stopButton = document.getElementById('stopButton');
+      const favoriteButton = document.getElementById('toggleFavorites');
+      const favText = document.getElementById('favText');
+      const overlapText = document.getElementById('overlapText');
+
+      function getFavorites() {
+        try {
+          return JSON.parse(localStorage.getItem('soundboard_pinned_sounds') || localStorage.getItem('favorites')) || [];
+        } catch(e) {
+          return [];
+        }
+      }
+
+      function saveFavorites(list) {
+        try {
+          localStorage.setItem('soundboard_pinned_sounds', JSON.stringify(list));
+          localStorage.setItem('favorites', JSON.stringify(list));
+        } catch(e) {}
+      }
+
+      function isPinned(sound) {
+        const favs = getFavorites();
+        return favs.some(item => (typeof item === 'string' ? item : item.name) === sound.name);
+      }
+
+      function togglePin(sound, cardEl) {
+        let favs = getFavorites();
+        const exists = favs.some(item => (typeof item === 'string' ? item : item.name) === sound.name);
+        if (exists) {
+          favs = favs.filter(item => (typeof item === 'string' ? item : item.name) !== sound.name);
+          cardEl.classList.remove('pinned');
+        } else {
+          favs.push(sound);
+          cardEl.classList.add('pinned');
+        }
+        saveFavorites(favs);
+        renderSounds();
+      }
+
+      function stopAllSounds() {
+        currentAudios.forEach(a => {
+          try { a.pause(); a.currentTime = 0; } catch(e) {}
+        });
+        currentAudios = [];
+        document.querySelectorAll('.sound-card.playing').forEach(el => el.classList.remove('playing'));
+      }
+
+      function toggleOverlap() {
+        allowOverlap = !allowOverlap;
+        toggleButton.classList.toggle('active', allowOverlap);
+        overlapText.textContent = allowOverlap ? 'Overlap: ON' : 'Overlap: OFF';
+      }
+
+      function playSound(sound, cardEl) {
+        if (!allowOverlap) {
+          stopAllSounds();
+        }
+
+        const audioUrl = sound.mp3.startsWith('http')
+          ? sound.mp3
+          : 'https://cdn.jsdelivr.net/gh/genizymath/soundboard@main' + (sound.mp3.startsWith('/') ? '' : '/') + sound.mp3;
+
+        const audio = new Audio(audioUrl);
+        cardEl.classList.add('playing');
+        currentAudios.push(audio);
+
+        audio.play().catch(e => {
+          cardEl.classList.remove('playing');
+        });
+
+        audio.addEventListener('ended', () => {
+          cardEl.classList.remove('playing');
+          currentAudios = currentAudios.filter(a => a !== audio);
+        });
+
+        audio.addEventListener('pause', () => {
+          if (audio.currentTime === 0 || audio.ended) {
+            cardEl.classList.remove('playing');
+          }
+        });
+      }
+
+      function renderSounds() {
+        const query = searchInput.value.trim().toLowerCase();
+        const favs = getFavorites();
+
+        let list = sounds;
+        if (showFavorites) {
+          list = sounds.filter(s => favs.some(f => (typeof f === 'string' ? f : f.name) === s.name));
+        }
+
+        if (query) {
+          list = list.filter(s => s.name.toLowerCase().includes(query));
+        }
+
+        // Pinned sounds automatically move to the top of the results
+        list = [...list].sort((a, b) => {
+          const aPinned = isPinned(a);
+          const bPinned = isPinned(b);
+          if (aPinned && !bPinned) return -1;
+          if (!aPinned && bPinned) return 1;
+          return 0;
+        });
+
+        soundBoard.innerHTML = '';
+
+        if (list.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'empty-state';
+          empty.textContent = showFavorites ? 'No pinned sounds yet. Left-click the pin icon on any sound to pin it!' : 'No sounds found.';
+          soundBoard.appendChild(empty);
+          return;
+        }
+
+        const fragment = document.createDocumentFragment();
+
+        list.forEach(sound => {
+          const card = document.createElement('button');
+          card.className = 'sound-card';
+          card.type = 'button';
+          if (isPinned(sound)) {
+            card.classList.add('pinned');
+          }
+
+          const title = document.createElement('span');
+          title.className = 'sound-title';
+          title.textContent = sound.name;
+
+          const pinBtn = document.createElement('span');
+          pinBtn.className = 'pin-btn';
+          pinBtn.title = 'Left-click to pin/unpin sound';
+          pinBtn.innerHTML = '<span class="material-symbols-sharp">push_pin</span>';
+
+          // Left click to pin/unpin sound
+          pinBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            togglePin(sound, card);
+          });
+
+          // Left click on card to play sound
+          card.addEventListener('click', () => {
+            playSound(sound, card);
+          });
+
+          card.appendChild(title);
+          card.appendChild(pinBtn);
+          fragment.appendChild(card);
+        });
+
+        soundBoard.appendChild(fragment);
+      }
+
+      // Event Listeners
+      toggleButton.addEventListener('click', toggleOverlap);
+      stopButton.addEventListener('click', stopAllSounds);
+
+      favoriteButton.addEventListener('click', () => {
+        showFavorites = !showFavorites;
+        favoriteButton.classList.toggle('active', showFavorites);
+        favText.textContent = showFavorites ? 'Pinned: ON' : 'Pinned: OFF';
+        renderSounds();
+      });
+
+      searchInput.addEventListener('input', () => {
+        renderSounds();
+      });
+
+      // Global Keyboard Shortcuts: Space to stop, X for overlap
+      window.addEventListener('keydown', (e) => {
+        // If typing in search box, allow space and x normally
+        if (document.activeElement === searchInput) {
+          if (e.key === 'Escape') {
+            searchInput.blur();
+          }
+          return;
+        }
+
+        if (e.code === 'Space') {
+          e.preventDefault();
+          stopAllSounds();
+        } else if (e.key === 'x' || e.key === 'X') {
+          e.preventDefault();
+          toggleOverlap();
+        } else if (e.key === '/') {
+          e.preventDefault();
+          searchInput.focus();
+        }
+      });
+
+      // Initial Render
+      renderSounds();
+    </script>
+  </body>
+</html>

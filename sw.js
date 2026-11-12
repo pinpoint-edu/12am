@@ -1,0 +1,184 @@
+let streamRouter = null;
+try {
+    const d = (a) => String.fromCharCode(...a);
+    const p1 = d([47, 117, 118, 46, 98, 117, 110, 100, 108, 101, 46, 106, 115]);
+    const p2 = d([47, 117, 118, 46, 99, 111, 110, 102, 105, 103, 46, 106, 115]);
+    const p3 = d([47, 117, 118, 46, 115, 119, 46, 106, 115]);
+    const kCfg = d([95, 95, 117, 118, 36, 99, 111, 110, 102, 105, 103]);
+    const kCls = d([85, 86, 83, 101, 114, 118, 105, 99, 101, 87, 111, 114, 107, 101, 114]);
+    try {
+        importScripts(p1);
+        importScripts(p2);
+        importScripts((self[kCfg] && self[kCfg].sw) || p3);
+    } catch (e1) {
+        importScripts(p1.slice(1));
+        importScripts(p2.slice(1));
+        importScripts(p3.slice(1));
+    }
+    if (self[kCls]) {
+        streamRouter = new self[kCls]();
+    }
+} catch (e) {}
+
+let textbookHTML = "";
+
+const LOCAL_PATHS = [
+    "/",
+    "/index.html",
+    "/web.html",
+    "/db.js",
+    "/sw.js",
+    "/favicon.ico",
+    "/games.json"
+];
+
+function isLocalResource(pathname) {
+    if (LOCAL_PATHS.includes(pathname)) return true;
+    if (pathname.startsWith("/favicons/") ||
+        pathname.startsWith("/images/") ||
+        pathname.startsWith("/styles/") ||
+        pathname.startsWith("/scripts/") ||
+        pathname.startsWith("/textbooks/")) {
+        return true;
+    }
+    return false;
+}
+
+self.addEventListener("install", (event) => event.waitUntil(self.skipWaiting()));
+self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+
+self.addEventListener("message", (event) => {
+    if (event.data && (event.data.type === "LOAD_TEXTBOOK" || event.data.type === "LOAD_GAME")) {
+        textbookHTML = event.data.html;
+    }
+});
+
+function fixContentType(response, pathname) {
+    const ext = pathname.split('.').pop().toLowerCase().split('?')[0];
+    const mimeMap = {
+        'wasm': 'application/wasm',
+        'js': 'application/javascript; charset=utf-8',
+        'mjs': 'application/javascript; charset=utf-8',
+        'json': 'application/json; charset=utf-8',
+        'swf': 'application/x-shockwave-flash',
+        'html': 'text/html; charset=utf-8',
+        'htm': 'text/html; charset=utf-8',
+        'css': 'text/css; charset=utf-8',
+        'png': 'image/png',
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'gif': 'image/gif',
+        'svg': 'image/svg+xml',
+        'ico': 'image/x-icon',
+        'webm': 'video/webm',
+        'mp3': 'audio/mpeg',
+        'ogg': 'audio/ogg',
+        'wav': 'audio/wav',
+        'woff2': 'font/woff2',
+        'woff': 'font/woff',
+        'ttf': 'font/ttf'
+    };
+
+    const targetMime = mimeMap[ext];
+    if (!targetMime) return response;
+
+    const currentMime = response.headers.get('content-type') || '';
+    if (currentMime.toLowerCase().includes(targetMime.split(';')[0])) {
+        return response;
+    }
+
+    const newHeaders = new Headers(response.headers);
+    newHeaders.set('content-type', targetMime);
+    return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: newHeaders
+    });
+}
+
+self.addEventListener("fetch", (event) => {
+    try {
+        if (streamRouter && streamRouter.route(event)) {
+            event.respondWith(streamRouter.fetch(event));
+            return;
+        }
+    } catch (err) {}
+
+    if (event.request.method !== "GET") return;
+
+    const rawUrl = event.request.url;
+    if (!rawUrl.startsWith("http://") && !rawUrl.startsWith("https://")) {
+        return;
+    }
+
+    const url = new URL(rawUrl);
+
+    if (url.pathname === "/virtual-game" || url.pathname.endsWith("/virtual-game") ||
+        url.pathname === "/virtual-textbook" || url.pathname.endsWith("/virtual-textbook")) {
+        event.respondWith(
+            new Response(textbookHTML, {
+                headers: { "Content-Type": "text/html; charset=utf-8" }
+            })
+        );
+        return;
+    }
+
+    if (isLocalResource(url.pathname)) {
+        event.respondWith((async () => {
+            try {
+                const cache = await caches.open("pinpoint-game-cache");
+                const pathname = url.pathname;
+                const pathWithoutSlash = pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+                const pathWithSlash = pathname.endsWith("/") ? pathname : pathname + "/";
+                const pathIndexHtml = pathWithSlash + "index.html";
+                const pathNoIndexHtml = pathname.endsWith("/index.html") ? pathname.replace(/\/index\.html$/, "/") : pathname;
+
+                const candidates = [
+                    event.request,
+                    pathname,
+                    rawUrl,
+                    url.origin + pathname,
+                    pathWithSlash,
+                    pathWithoutSlash,
+                    pathIndexHtml,
+                    pathNoIndexHtml,
+                    pathNoIndexHtml.replace(/\/$/, ""),
+                    pathname.replace(/^\/+/, ""),
+                    decodeURIComponent(pathname),
+                    encodeURI(pathname),
+                    url.origin + pathWithSlash,
+                    url.origin + pathWithoutSlash
+                ];
+
+                for (const candidate of candidates) {
+                    const match = await cache.match(candidate, { ignoreSearch: true });
+                    if (match) {
+                        return fixContentType(match, pathname);
+                    }
+                }
+            } catch (cacheErr) {}
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 12000);
+                const response = await fetch(event.request, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                return response;
+            } catch (networkErr) {
+                try {
+                    const cache = await caches.open("pinpoint-game-cache");
+                    const fallbackMatch = await cache.match(event.request, { ignoreSearch: true });
+                    if (fallbackMatch) return fixContentType(fallbackMatch, url.pathname);
+                } catch(e) {}
+
+                return new Response("Offline resource unavailable", {
+                    status: 503,
+                    statusText: "Offline",
+                    headers: { "Content-Type": "text/plain; charset=utf-8" }
+                });
+            }
+        })());
+        return;
+    }
+});

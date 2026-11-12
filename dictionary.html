@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>12AM — Dictionary & Lexicon</title>
+    <meta name="description" content="Instant dictionary, definitions, phonetics, and synonyms on 12AM.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- 12AM Core Theme & Navigation -->
+    <link rel="stylesheet" href="navigation.css">
+    <script src="theme.js"></script>
+    <script src="navigation.js" defer></script>
+
+    <style>
+        :root {
+            --bg-page: var(--bg-primary, #040404);
+            --bg-card: var(--bg-secondary, #09090b);
+            --text-main: var(--text-primary, #ffffff);
+            --text-muted: var(--text-secondary, #a1a1aa);
+            --accent-color: var(--accent-primary, #8b5cf6);
+            --accent-glow: var(--accent-secondary, rgba(139, 92, 246, 0.4));
+            --border-main: var(--border-primary, #18181b);
+            --border-faint: var(--border-secondary, rgba(255,255,255,0.05));
+            --btn-bg: var(--button-bg, rgba(139, 92, 246, 0.12));
+            --btn-text: var(--button-text, #8b5cf6);
+        }
+
+        body { 
+            font-family: 'Geist', sans-serif; 
+            background-color: var(--bg-page); 
+            color: var(--text-muted); 
+            transition: all 0.3s ease;
+            font-size: 16px;
+            overflow-x: hidden;
+            font-weight: 300;
+            padding-top: var(--navbar-height, 64px);
+        }
+
+        h1, h2, h3, .font-bold, .font-semibold, strong, .tracking-widest {
+            font-weight: 400 !important;
+        }
+
+        .dict-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem;
+        }
+
+        .search-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-main);
+            border-radius: 1.25rem;
+            padding: 0.5rem 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transition: all 0.25s ease;
+        }
+
+        .search-box:focus-within {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .highlighted-word {
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: underline;
+            text-decoration-color: rgba(139, 92, 246, 0.3);
+            text-underline-offset: 3px;
+        }
+        .highlighted-word:hover {
+            color: var(--accent-color);
+            text-decoration-color: var(--accent-color);
+        }
+
+        .audio-btn {
+            cursor: pointer;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            margin-left: 12px;
+            vertical-align: middle;
+        }
+        .audio-btn:hover {
+            background: var(--accent-color);
+            color: #ffffff;
+            transform: scale(1.08);
+            box-shadow: 0 0 16px var(--accent-glow);
+        }
+
+        .part-of-speech-label {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 1.25rem;
+            color: var(--accent-color);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .definition-item {
+            position: relative;
+            padding-left: 1.75rem;
+            margin-bottom: 0.85rem;
+            line-height: 1.7;
+            color: var(--text-main);
+        }
+        .definition-item::before {
+            content: "•";
+            position: absolute;
+            left: 0.5rem;
+            color: var(--accent-color);
+            font-size: 1.25rem;
+        }
+
+        .synonym-tag {
+            display: inline-block;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.25);
+            color: var(--text-main);
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.82rem;
+            margin: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .synonym-tag:hover {
+            background: var(--accent-color);
+            color: #ffffff;
+            border-color: var(--accent-color);
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+    <div id="dynamic-background"></div>
+
+    <main class="dict-container flex-grow w-full pt-4">
+
+        <!-- Search Bar -->
+        <div class="search-box flex items-center gap-3 mb-10">
+            <i class="fa-solid fa-magnifying-glass text-zinc-500 ml-2"></i>
+            <input type="text" id="searchInput" placeholder="Search any English word (e.g. serendipity, epiphany, quantum)..." class="bg-transparent border-none outline-none text-white text-base w-full placeholder-zinc-500 font-normal">
+            <button id="searchBtn" class="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-medium text-sm transition-all shadow-md">
+                Search
+            </button>
+        </div>
+
+        <!-- Output -->
+        <div id="definitionOutput" class="bg-[#09090b]/80 border border-zinc-800/80 rounded-2xl p-6 sm:p-10 shadow-xl backdrop-blur-md min-h-[280px]">
+            <div class="h-full flex flex-col items-center justify-center py-16 text-center opacity-50">
+                <i class="fa-solid fa-book-open-reader text-4xl text-purple-400 mb-4"></i>
+                <p class="text-lg text-white font-light">Type a word above or click a suggestion.</p>
+                <div class="mt-4 flex flex-wrap justify-center gap-2">
+                    <span class="synonym-tag" onclick="fetchWord('serendipity')">serendipity</span>
+                    <span class="synonym-tag" onclick="fetchWord('ephemeral')">ephemeral</span>
+                    <span class="synonym-tag" onclick="fetchWord('luminescence')">luminescence</span>
+                    <span class="synonym-tag" onclick="fetchWord('solitude')">solitude</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Unified 12AM Footer -->
+    <footer class="mt-20 border-t border-white/5 py-10 text-center text-xs text-gray-500 relative z-10">
+        <div class="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <img src="images/logo-white.png" class="h-6 w-auto opacity-70" alt="12AM Logo">
+                <span class="text-sm font-semibold tracking-wider text-white">12AM</span>
+            </div>
+            <p>&copy; 2026 12AM. All rights reserved.</p>
+            <div class="flex items-center gap-4 text-xs">
+                <a href="legal.html" class="hover:text-white transition-colors">Terms & Privacy</a>
+                <a href="settings.html" class="hover:text-white transition-colors">Settings</a>
+                <a href="dashboard.html" class="hover:text-white transition-colors">Dashboard</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const input = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const output = document.getElementById('definitionOutput');
+
+        async function fetchWord(word) {
+            const query = (word || input.value || '').trim().toLowerCase();
+            if (!query) return;
+
+            input.value = query;
+            window.location.hash = '#word=' + encodeURIComponent(query);
+
+            output.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-16 text-center">
+                    <i class="fa-solid fa-spinner fa-spin text-3xl text-purple-400 mb-3"></i>
+                    <p class="text-sm text-zinc-400">Consulting 12AM lexicon...</p>
+                </div>
+            `;
+
+            try {
+                const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(query)}`);
+                if (!res.ok) {
+                    displayNotFound(query);
+                    return;
+                }
+                const data = await res.json();
+                if (!data || !data.length) {
+                    displayNotFound(query);
+                    return;
+                }
+                renderDefinition(data[0]);
+            } catch (err) {
+                output.innerHTML = `
+                    <div class="text-center py-12 text-red-400">
+                        <i class="fa-solid fa-triangle-exclamation text-3xl mb-2"></i>
+                        <p class="text-sm">Network error looking up "${query}". Please verify connection.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function displayNotFound(query) {
+            output.innerHTML = `
+                <div class="text-center py-16 opacity-60">
+                    <i class="fa-solid fa-circle-question text-4xl text-purple-400 mb-3"></i>
+                    <p class="text-xl text-white font-medium mb-1">No definition found for "${query}"</p>
+                    <p class="text-xs text-zinc-400">Check spelling or search another word.</p>
+                </div>
+            `;
+        }
+
+        function renderDefinition(entry) {
+            const word = entry.word || '';
+            const phonetic = entry.phonetic || (entry.phonetics && entry.phonetics.find(p => p.text)?.text) || '';
+            const audioObj = entry.phonetics && entry.phonetics.find(p => p.audio && p.audio.length > 0);
+            const audioUrl = audioObj ? audioObj.audio : '';
+
+            let html = `
+                <div class="border-b border-zinc-800/80 pb-6 mb-6 flex items-center justify-between flex-wrap gap-4">
+                    <div>
+                        <h2 class="text-3xl sm:text-4xl text-white font-semibold tracking-tight capitalize">
+                            ${word}
+                            ${audioUrl ? `<button onclick="playAudio('${audioUrl}')" class="audio-btn" title="Listen to pronunciation"><i class="fa-solid fa-volume-high text-sm"></i></button>` : ''}
+                        </h2>
+                        ${phonetic ? `<p class="text-sm font-mono text-purple-400 mt-1">${phonetic}</p>` : ''}
+                    </div>
+                </div>
+            `;
+
+            if (entry.meanings && entry.meanings.length) {
+                entry.meanings.forEach(m => {
+                    html += `<div class="part-of-speech-label">${m.partOfSpeech || 'definition'}</div>`;
+                    if (m.definitions && m.definitions.length) {
+                        html += `<div class="space-y-2 mb-6">`;
+                        m.definitions.slice(0, 5).forEach((d, idx) => {
+                            html += `
+                                <div class="definition-item">
+                                    <span>${d.definition}</span>
+                                    ${d.example ? `<p class="text-xs italic text-zinc-400 mt-1">"${d.example}"</p>` : ''}
+                                </div>
+                            `;
+                        });
+                        html += `</div>`;
+                    }
+                    if (m.synonyms && m.synonyms.length) {
+                        html += `
+                            <div class="mb-6">
+                                <span class="text-xs font-semibold uppercase tracking-wider text-zinc-500 mr-2">Synonyms:</span>
+                                ${m.synonyms.slice(0, 8).map(s => `<span class="synonym-tag" onclick="fetchWord('${s}')">${s}</span>`).join('')}
+                            </div>
+                        `;
+                    }
+                });
+            }
+
+            output.innerHTML = html;
+        }
+
+        function playAudio(url) {
+            try {
+                new Audio(url).play();
+            } catch(e) {}
+        }
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') fetchWord();
+        });
+        searchBtn.addEventListener('click', () => fetchWord());
+
+        // Check URL hash on initial load
+        if (window.location.hash.startsWith('#word=')) {
+            const w = decodeURIComponent(window.location.hash.substring(6));
+            fetchWord(w);
+        }
+    </script>
+</body>
+</html>

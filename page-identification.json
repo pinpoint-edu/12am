@@ -1,0 +1,44 @@
+{
+    "dashboard": {
+        "name": "Dashboard",
+        "icon": "fa-solid fa-house-user", 
+        "url": "/index.html",
+        "aliases": ["/", "/index.html", "/logged-in/dashboard.html", "/logged-in/dashboard"]
+    },
+    "games-4sp": {
+        "name": "Games",
+        "icon": "fa-solid fa-gamepad",
+        "url": "/games.html",
+        "aliases": ["/games.html", "/games", "/logged-in/games.html", "/logged-in/games"]
+    },
+    "movies": {
+        "name": "Movies",
+        "icon": "fa-solid fa-film",
+        "url": "/movies.html",
+        "aliases": ["/movies.html", "/movies"]
+    },
+    "music": {
+        "name": "Music",
+        "icon": "fa-solid fa-music",
+        "url": "/music.html",
+        "aliases": ["/music.html", "/music", "/yolk"]
+    },
+    "ai": {
+        "name": "AI",
+        "icon": "fa-solid fa-robot",
+        "url": "/ai.html",
+        "aliases": ["/ai.html", "/ai"]
+    },
+    "proxy": {
+        "name": "Proxy",
+        "icon": "fa-solid fa-globe",
+        "url": "/proxy.html",
+        "aliases": ["/proxy.html", "/proxy", "/web.html"]
+    },
+    "settings": {
+        "name": "Settings",
+        "icon": "fa-solid fa-gear",
+        "url": "/settings.html",
+        "aliases": ["/settings.html", "/settings", "/logged-in/settings.html", "/logged-in/settings"]
+    }
+}

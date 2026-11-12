@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>12AM — Device Authentication</title>
+    <meta name="description" content="Local device-bound authentication for 12AM.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Supabase & 12AM Device Auth Core -->
+    <script src="supabase-config.js"></script>
+    <script src="device-auth.js"></script>
+
+    <!-- 12AM Core Theme & Navigation -->
+    <link rel="stylesheet" href="navigation.css">
+    <script src="theme.js"></script>
+    <script src="navigation.js" defer></script>
+
+    <style>
+        :root {
+            --bg-page: var(--bg-primary, #040404);
+            --bg-card: var(--bg-secondary, #09090b);
+            --text-main: var(--text-primary, #ffffff);
+            --text-muted: var(--text-secondary, #a1a1aa);
+            --accent-color: var(--accent-primary, #8b5cf6);
+            --accent-glow: var(--accent-secondary, rgba(139, 92, 246, 0.4));
+            --border-main: var(--border-primary, #18181b);
+            --border-hover: #27272a;
+        }
+
+        body { 
+            font-family: 'Geist', sans-serif; 
+            background-color: var(--bg-page); 
+            color: var(--text-muted); 
+            font-weight: 300;
+            overflow-x: hidden;
+            min-height: 100vh;
+            padding-top: var(--navbar-height, 64px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .auth-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-main);
+            border-radius: 1.75rem;
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8), 0 0 40px -10px var(--accent-glow);
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: all 0.3s ease;
+        }
+
+        .input-style {
+            width: 100%; 
+            padding: 0.85rem 1rem; 
+            border: 1px solid var(--border-main); 
+            background-color: #050507; 
+            border-radius: 14px; 
+            color: var(--text-main); 
+            font-size: 0.9375rem;
+            transition: all 0.25s ease;
+            outline: none;
+        }
+        .input-style:focus {
+            border-color: var(--accent-color); 
+            box-shadow: 0 0 0 3px var(--accent-glow);
+            background-color: #08080c;
+        }
+
+        .btn-primary-purple {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.25) 0%, rgba(124, 58, 237, 0.35) 100%);
+            border: 1px solid var(--accent-color);
+            color: #ffffff;
+            font-weight: 600;
+            padding: 0.85rem 1.25rem;
+            border-radius: 14px;
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.2);
+        }
+        .btn-primary-purple:hover {
+            background: var(--accent-color);
+            box-shadow: 0 0 24px var(--accent-glow);
+            transform: translateY(-1px);
+        }
+
+        .error-message { 
+            color: #f87171; 
+            background: rgba(248, 113, 113, 0.1); 
+            border: 1px solid rgba(248, 113, 113, 0.25); 
+            padding: 0.75rem; 
+            border-radius: 12px; 
+            font-size: 0.85rem;
+        }
+        .success-message { 
+            color: #a78bfa; 
+            background: rgba(139, 92, 246, 0.1); 
+            border: 1px solid rgba(139, 92, 246, 0.25); 
+            padding: 0.75rem; 
+            border-radius: 12px; 
+            font-size: 0.85rem;
+        }
+
+        .brand-bg-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 50% 30%, var(--accent-glow) 0%, transparent 60%);
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+    <div class="brand-bg-glow"></div>
+    <div id="dynamic-background"></div>
+
+    <div class="w-full max-w-md auth-card p-8 sm:p-10 my-auto">
+        <!-- Logo and Brand Header -->
+        <div class="text-center mb-6">
+            <img src="images/logo-white.png" alt="12AM Logo" class="h-10 mx-auto mb-3 object-contain">
+            <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                <i class="fa-solid fa-shield-halved text-[10px]"></i> 1 Account Per Device
+            </span>
+        </div>
+
+        <!-- VIEW A: Device Login View (When account already bound to this device) -->
+        <div id="deviceLoginView" style="display: none;">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 rounded-full mx-auto mb-3 bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-white text-2xl font-bold" id="deviceUserAvatar">
+                    U
+                </div>
+                <h2 class="text-2xl font-bold text-white tracking-tight mb-1" id="deviceUserName">Welcome Back</h2>
+                <p class="text-xs text-purple-400 font-mono" id="deviceUserNick">@user</p>
+                <p class="text-xs text-zinc-400 mt-2">Enter your device PIN to unlock 12AM.</p>
+            </div>
+
+            <form id="loginForm" onsubmit="handleDeviceLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block mb-1.5 text-zinc-400 text-xs font-semibold uppercase tracking-wider">4-6 Digit PIN</label>
+                    <input type="password" id="loginPin" placeholder="••••" maxlength="6" pattern="[0-9]{4,6}" inputmode="numeric" required class="input-style text-center tracking-[0.3em] font-mono text-lg" autofocus autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn-primary-purple mt-2">
+                    <span>Unlock Account</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </button>
+            </form>
+
+            <div id="loginMessage" class="mt-4 text-center"></div>
+
+            <div class="mt-8 pt-4 border-t border-zinc-800/80 flex items-center justify-between text-xs">
+                <button type="button" onclick="confirmResetDevice()" class="text-zinc-500 hover:text-red-400 transition-colors">
+                    <i class="fa-solid fa-trash-can mr-1"></i> Reset Device
+                </button>
+                <span class="text-zinc-500 text-[11px]">1 Account Per Device</span>
+            </div>
+        </div>
+
+        <!-- VIEW B: Device Register View (Only when NO account is bound to this device) -->
+        <div id="deviceRegisterView" style="display: none;">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-white tracking-tight mb-1">Create Account</h2>
+                <p class="text-xs text-zinc-400">Set up your single permanent profile on this device.</p>
+            </div>
+
+            <form id="signupForm" onsubmit="handleDeviceRegister(event)" class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block mb-1 text-zinc-400 text-xs font-semibold uppercase tracking-wider">First Name</label>
+                        <input type="text" id="regFirstName" placeholder="John" required class="input-style">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-zinc-400 text-xs font-semibold uppercase tracking-wider">Last Name</label>
+                        <input type="text" id="regLastName" placeholder="Doe" required class="input-style">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block mb-1 text-zinc-400 text-xs font-semibold uppercase tracking-wider">Nickname</label>
+                    <input type="text" id="regNickname" placeholder="Choose unique handle" required class="input-style" autocomplete="username">
+                </div>
+
+                <div>
+                    <label class="block mb-1 text-zinc-400 text-xs font-semibold uppercase tracking-wider">4-6 Digit Security PIN</label>
+                    <input type="password" id="regPin" placeholder="••••" maxlength="6" pattern="[0-9]{4,6}" inputmode="numeric" required class="input-style tracking-widest font-mono">
+                    <p class="text-[11px] text-zinc-500 mt-1">Numbers only. Used to unlock your device profile.</p>
+                </div>
+
+                <button type="submit" class="btn-primary-purple mt-2">
+                    <span>Create & Bind Device Profile</span>
+                    <i class="fa-solid fa-lock text-xs"></i>
+                </button>
+            </form>
+
+            <div id="registerMessage" class="mt-4 text-center"></div>
+
+            <div class="mt-6 pt-4 border-t border-zinc-800/80 text-center text-xs text-zinc-500">
+                <span>Account required to access all 12AM features</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Centered 12AM Footer -->
+    <footer class="mt-12 text-center text-xs text-zinc-600">
+        <p>&copy; 2026 12AM. Single-device security enabled.</p>
+    </footer>
+
+    <script>
+        let currentBoundAccount = null;
+
+        // Initialize and enforce single account per device
+        async function initAuthView() {
+            currentBoundAccount = await window.TwelveAMAuth.getBoundDeviceAccount();
+
+            const loginView = document.getElementById('deviceLoginView');
+            const regView = document.getElementById('deviceRegisterView');
+
+            if (currentBoundAccount) {
+                // Device already has an account: show Login View
+                document.getElementById('deviceUserName').textContent = `Welcome, ${currentBoundAccount.firstName || currentBoundAccount.nickname}`;
+                document.getElementById('deviceUserNick').textContent = `@${currentBoundAccount.nickname}`;
+                document.getElementById('deviceUserAvatar').textContent = (currentBoundAccount.nickname || 'U').charAt(0).toUpperCase();
+
+                loginView.style.display = 'block';
+                regView.style.display = 'none';
+
+                // If already logged in, redirect to dashboard or show session
+                const active = window.TwelveAMAuth.getCurrentUser();
+                if (active) {
+                    document.getElementById('loginMessage').innerHTML = `<div class="success-message">Device is already unlocked as @${active.nickname}. <a href="dashboard.html" class="underline font-bold">Go to Dashboard &rarr;</a></div>`;
+                }
+            } else {
+                // Device has NO account: show Register View
+                loginView.style.display = 'none';
+                regView.style.display = 'block';
+            }
+        }
+
+        function getRedirectTarget() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const r = params.get('redirect');
+                if (r && !r.includes('authentication.html') && !r.includes('//')) {
+                    return r;
+                }
+            } catch(e) {}
+            return 'dashboard.html';
+        }
+
+        async function handleDeviceRegister(e) {
+            e.preventDefault();
+            const msgEl = document.getElementById('registerMessage');
+            msgEl.innerHTML = '';
+
+            const firstName = document.getElementById('regFirstName').value.trim();
+            const lastName = document.getElementById('regLastName').value.trim();
+            const nickname = document.getElementById('regNickname').value.trim();
+            const pin = document.getElementById('regPin').value.trim();
+
+            if (!firstName || !lastName || !nickname || !pin) {
+                msgEl.innerHTML = '<div class="error-message">All fields are required.</div>';
+                return;
+            }
+
+            if (!/^\d{4,6}$/.test(pin)) {
+                msgEl.innerHTML = '<div class="error-message">PIN must be 4 to 6 numbers (e.g. 1234).</div>';
+                return;
+            }
+
+            const res = await window.TwelveAMAuth.registerAccount({
+                firstName,
+                lastName,
+                nickname,
+                pin
+            });
+
+            if (!res.success) {
+                msgEl.innerHTML = `<div class="error-message">${res.error}</div>`;
+                return;
+            }
+
+            msgEl.innerHTML = `<div class="success-message">Device bound successfully to @${nickname}! Redirecting...</div>`;
+            setTimeout(() => {
+                window.location.href = getRedirectTarget();
+            }, 600);
+        }
+
+        async function handleDeviceLogin(e) {
+            e.preventDefault();
+            const msgEl = document.getElementById('loginMessage');
+            msgEl.innerHTML = '';
+
+            const pin = document.getElementById('loginPin').value.trim();
+            if (!pin) {
+                msgEl.innerHTML = '<div class="error-message">Please enter your PIN.</div>';
+                return;
+            }
+
+            const res = await window.TwelveAMAuth.loginAccount(pin);
+            if (!res.success) {
+                msgEl.innerHTML = `<div class="error-message">${res.error}</div>`;
+                return;
+            }
+
+            msgEl.innerHTML = `<div class="success-message">Unlocked! Welcome back, ${res.account.nickname}. Redirecting...</div>`;
+            setTimeout(() => {
+                window.location.href = getRedirectTarget();
+            }, 500);
+        }
+
+        async function confirmResetDevice() {
+            const confirmed = confirm(
+                "Are you sure you want to reset this device?\n\nThis will permanently delete the single account registered to this browser so a new profile can be created. This prevents glitching and spam."
+            );
+            if (!confirmed) return;
+
+            await window.TwelveAMAuth.resetDevice();
+            alert("Device profile wiped. You may now create a fresh account.");
+            window.location.reload();
+        }
+
+        window.addEventListener('DOMContentLoaded', initAuthView);
+    </script>
+</body>
+</html>

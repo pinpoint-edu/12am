@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>12AM — Music &amp; Sound</title>
+    <meta name="description" content="Stream high-fidelity music, curated playlists, and live audio on 12AM.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- YouTube IFrame API for Universal Audio Stream -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+
+    <!-- Supabase & 12AM Device Auth Core -->
+    <script src="supabase-config.js"></script>
+    <script src="device-auth.js"></script>
+
+    <!-- 12AM Core Theme & Navigation -->
+    <link rel="stylesheet" href="navigation.css">
+    <script src="theme.js"></script>
+    <script src="navigation.js" defer></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brandPurple: '#8b5cf6',
+                        brandPurpleDark: '#7c3aed'
+                    },
+                    fontFamily: {
+                        sans: ['Geist', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-page: #040404;
+            --bg-card: #0c0c0e;
+            --text-main: #ffffff;
+            --text-muted: #a1a1aa;
+            --accent-color: #8b5cf6;
+            --accent-glow: rgba(139, 92, 246, 0.4);
+            --border-main: #1c1c20;
+            --border-faint: rgba(255, 255, 255, 0.06);
+            --btn-bg: rgba(139, 92, 246, 0.12);
+        }
+
+        body {
+            font-family: 'Geist', sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+            padding-top: calc(var(--navbar-height, 64px) + 1.25rem);
+            padding-bottom: 120px; /* Space for sticky player */
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .music-wrapper {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0 1.5rem 3rem;
+        }
+
+        /* Top Search & Filter Bar */
+        .top-music-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .search-music-box {
+            position: relative;
+            flex: 1;
+            max-width: 520px;
+        }
+
+        .search-music-input {
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-main);
+            border-radius: 9999px;
+            padding: 9px 18px 9px 42px;
+            color: var(--text-main);
+            font-size: 0.92rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .search-music-input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .search-music-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        /* Genre Pill Navigation */
+        .genre-chips-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 6px;
+            margin-bottom: 2.5rem;
+            scrollbar-width: none;
+        }
+        .genre-chips-row::-webkit-scrollbar { display: none; }
+
+        .genre-chip {
+            background: var(--bg-card);
+            border: 1px solid var(--border-main);
+            color: var(--text-muted);
+            padding: 6px 16px;
+            border-radius: 9999px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .genre-chip:hover {
+            color: #ffffff;
+            border-color: var(--accent-color);
+        }
+
+        .genre-chip.active {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        /* Music Cards Grid */
+        .music-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .track-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-main);
+            border-radius: 18px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            group: true;
+        }
+
+        .track-card:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-4px);
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7), 0 0 20px var(--accent-glow);
+        }
+
+        .track-cover-wrap {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #121216;
+            margin-bottom: 0.85rem;
+            position: relative;
+        }
+
+        .track-cover {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.35s ease;
+        }
+
+        .track-card:hover .track-cover {
+            transform: scale(1.06);
+        }
+
+        .track-play-hover-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transform: translateY(8px);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .track-card:hover .track-play-hover-btn {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .track-title {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 3px;
+        }
+
+        .track-artist {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Persistent Bottom Player Bar */
+        .bottom-player-dock {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 88px;
+            background: rgba(10, 10, 12, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border-main);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            gap: 1.5rem;
+        }
+
+        .player-track-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 200px;
+            max-width: 300px;
+        }
+
+        .player-thumb {
+            width: 52px;
+            height: 52px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: #141418;
+            border: 1px solid var(--border-faint);
+            flex-shrink: 0;
+        }
+
+        .player-titles-wrap {
+            min-width: 0;
+        }
+
+        .player-cur-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .player-cur-artist {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .player-center-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+            max-width: 560px;
+        }
+
+        .player-buttons-row {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .btn-play-ctrl {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-play-ctrl:hover {
+            color: #ffffff;
+        }
+
+        .btn-main-play {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #ffffff;
+            color: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-main-play:hover {
+            transform: scale(1.08);
+            background: var(--accent-color);
+            color: #ffffff;
+            box-shadow: 0 0 16px var(--accent-glow);
+        }
+
+        .progress-bar-wrap {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .time-label {
+            font-size: 0.72rem;
+            font-family: monospace;
+            color: var(--text-muted);
+            min-width: 35px;
+        }
+
+        .progress-track {
+            flex: 1;
+            height: 4px;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.15);
+            cursor: pointer;
+            position: relative;
+            transition: height 0.15s ease;
+        }
+
+        .progress-track:hover {
+            height: 6px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 9999px;
+            background: var(--accent-color);
+            width: 0%;
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .player-right-dock {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 160px;
+            justify-content: flex-end;
+        }
+
+        .volume-slider {
+            width: 80px;
+            accent-color: var(--accent-color);
+            cursor: pointer;
+        }
+
+        /* Purple Visualizer Wave Animation */
+        .visualizer-wave {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 18px;
+        }
+
+        .vis-bar {
+            width: 3px;
+            background: var(--accent-color);
+            border-radius: 2px;
+            animation: bounceWave 1.2s ease-in-out infinite alternate;
+        }
+
+        .vis-bar:nth-child(1) { height: 6px; animation-delay: 0.1s; }
+        .vis-bar:nth-child(2) { height: 14px; animation-delay: 0.3s; }
+        .vis-bar:nth-child(3) { height: 18px; animation-delay: 0.2s; }
+        .vis-bar:nth-child(4) { height: 10px; animation-delay: 0.4s; }
+
+        @keyframes bounceWave {
+            0% { transform: scaleY(0.3); }
+            100% { transform: scaleY(1); }
+        }
+
+        .vis-paused .vis-bar {
+            animation-play-state: paused;
+            transform: scaleY(0.2);
+        }
+
+        /* Hidden YouTube Audio IFrame */
+        #youtubeAudioPlayer {
+            position: fixed;
+            top: -9999px;
+            left: -9999px;
+            width: 1px;
+            height: 1px;
+            pointer-events: none;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="music-wrapper">
+        <!-- Top Search and Genre Bar -->
+        <div class="top-music-bar">
+            <div>
+                <h2 class="text-xl font-bold tracking-tight text-white mb-0.5">12AM Sound</h2>
+                <p class="text-xs text-zinc-500">Universal streaming audio catalog</p>
+            </div>
+
+            <div class="search-music-box">
+                <i class="fa-solid fa-magnifying-glass search-music-icon"></i>
+                <input type="text" id="musicSearchInput" class="search-music-input" placeholder="Search tracks, artists, albums, or paste YouTube link..." autocomplete="off">
+            </div>
+        </div>
+
+        <!-- Genre Filter Chips -->
+        <div class="genre-chips-row">
+            <button class="genre-chip active" data-genre="all" onclick="filterGenre('all')">
+                <i class="fa-solid fa-fire"></i> Top Hits
+            </button>
+            <button class="genre-chip" data-genre="lofi" onclick="filterGenre('lofi')">
+                <i class="fa-solid fa-mug-hot"></i> Lo-Fi Study
+            </button>
+            <button class="genre-chip" data-genre="hiphop" onclick="filterGenre('hiphop')">
+                <i class="fa-solid fa-microphone"></i> Hip-Hop &amp; Rap
+            </button>
+            <button class="genre-chip" data-genre="synthwave" onclick="filterGenre('synthwave')">
+                <i class="fa-solid fa-gamepad"></i> Gaming &amp; Synth
+            </button>
+            <button class="genre-chip" data-genre="rock" onclick="filterGenre('rock')">
+                <i class="fa-solid fa-guitar"></i> Rock &amp; Alt
+            </button>
+            <button class="genre-chip" data-genre="ambient" onclick="filterGenre('ambient')">
+                <i class="fa-solid fa-cloud-moon"></i> Deep Focus
+            </button>
+        </div>
+
+        <!-- Music Track Grid -->
+        <div class="music-grid" id="musicGrid"></div>
+    </div>
+
+    <!-- Hidden YouTube Audio Node -->
+    <div id="youtubeAudioPlayer"></div>
+
+    <!-- Persistent Bottom Player Dock -->
+    <div class="bottom-player-dock">
+        <!-- Track Details -->
+        <div class="player-track-info">
+            <img id="curTrackCover" src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=150" class="player-thumb" alt="Track Cover">
+            <div class="player-titles-wrap">
+                <div id="curTrackTitle" class="player-cur-title">Select a track to start</div>
+                <div id="curTrackArtist" class="player-cur-artist">12AM High-Fidelity Audio</div>
+            </div>
+        </div>
+
+        <!-- Center Controls & Progress -->
+        <div class="player-center-controls">
+            <div class="player-buttons-row">
+                <button class="btn-play-ctrl" onclick="toggleShuffle()" title="Shuffle" id="shuffleBtn">
+                    <i class="fa-solid fa-shuffle"></i>
+                </button>
+                <button class="btn-play-ctrl" onclick="playPreviousTrack()" title="Previous Track">
+                    <i class="fa-solid fa-backward-step"></i>
+                </button>
+                <button class="btn-main-play" onclick="togglePlayPause()" title="Play / Pause" id="mainPlayBtn">
+                    <i class="fa-solid fa-play"></i>
+                </button>
+                <button class="btn-play-ctrl" onclick="playNextTrack()" title="Next Track">
+                    <i class="fa-solid fa-forward-step"></i>
+                </button>
+                <button class="btn-play-ctrl" onclick="toggleRepeat()" title="Repeat" id="repeatBtn">
+                    <i class="fa-solid fa-repeat"></i>
+                </button>
+            </div>
+
+            <div class="progress-bar-wrap">
+                <span class="time-label" id="currentTimeLabel">0:00</span>
+                <div class="progress-track" id="progressTrack" onclick="seekAudio(event)">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <span class="time-label" id="totalDurationLabel">3:30</span>
+            </div>
+        </div>
+
+        <!-- Right Side: Volume & Wave -->
+        <div class="player-right-dock">
+            <div class="visualizer-wave vis-paused" id="audioVisualizer">
+                <div class="vis-bar"></div>
+                <div class="vis-bar"></div>
+                <div class="vis-bar"></div>
+                <div class="vis-bar"></div>
+            </div>
+            <i class="fa-solid fa-volume-high text-xs text-zinc-400"></i>
+            <input type="range" class="volume-slider" min="0" max="100" value="85" oninput="changeVolume(this.value)">
+        </div>
+    </div>
+
+    <script>
+        // Curated Library of Top Popular Tracks across Genres
+        const TRACK_LIBRARY = [
+            // Top Hits
+            { id: 'track-1', title: 'Starboy', artist: 'The Weeknd ft. Daft Punk', genre: 'all', ytId: '34Na4j8AVgA', cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300' },
+            { id: 'track-2', title: 'Blinding Lights', artist: 'The Weeknd', genre: 'all', ytId: '4NRXx6U8ABQ', cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300' },
+            { id: 'track-3', title: 'Cruel Summer', artist: 'Taylor Swift', genre: 'all', ytId: 'ic8j13U_FS8', cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300' },
+            { id: 'track-4', title: 'As It Was', artist: 'Harry Styles', genre: 'all', ytId: 'H5v3kku4y6Q', cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300' },
+            { id: 'track-5', title: 'Heat Waves', artist: 'Glass Animals', genre: 'all', ytId: 'mRD0-GxqHVo', cover: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=300' },
+
+            // Lo-Fi & Study
+            { id: 'track-6', title: 'Coffee & Books (Chill Beats)', artist: 'Lofi Girl / ChilledCow', genre: 'lofi', ytId: 'jfKfPfyJRdk', cover: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=300' },
+            { id: 'track-7', title: 'Nighttime Rain & Keys', artist: 'Kudasai', genre: 'lofi', ytId: '5yx6BWlEVcY', cover: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=300' },
+            { id: 'track-8', title: 'Midnight City Lights', artist: 'Idealism', genre: 'lofi', ytId: 'n61ULEU7CO0', cover: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=300' },
+
+            // Hip Hop
+            { id: 'track-9', title: 'FE!N', artist: 'Travis Scott ft. Playboi Carti', genre: 'hiphop', ytId: 'B9synWjqBn8', cover: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=300' },
+            { id: 'track-10', title: 'Not Like Us', artist: 'Kendrick Lamar', genre: 'hiphop', ytId: 'H58vbez_m4E', cover: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=300' },
+            { id: 'track-11', title: 'HUMBLE.', artist: 'Kendrick Lamar', genre: 'hiphop', ytId: 'tvTRZJ-4EyI', cover: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=300' },
+            { id: 'track-12', title: 'God\'s Plan', artist: 'Drake', genre: 'hiphop', ytId: 'xpVfcZ0ZcFM', cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300' },
+
+            // Gaming & Synthwave
+            { id: 'track-13', title: 'Resonance', artist: 'HOME', genre: 'synthwave', ytId: '8GW6sLrK40k', cover: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300' },
+            { id: 'track-14', title: 'Subwoofer Lullaby', artist: 'C418 (Minecraft)', genre: 'synthwave', ytId: 'sFk_966YvA8', cover: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=300' },
+            { id: 'track-15', title: 'Wet Hands', artist: 'C418 (Minecraft OST)', genre: 'synthwave', ytId: 'mukiMa8xda0', cover: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300' },
+            { id: 'track-16', title: 'Megalovania', artist: 'Toby Fox (Undertale)', genre: 'synthwave', ytId: 'wDgQdr8ZkTw', cover: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=300' },
+
+            // Rock & Alt
+            { id: 'track-17', title: 'Chamber of Reflection', artist: 'Mac DeMarco', genre: 'rock', ytId: 'pKb0vR4GkFw', cover: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=300' },
+            { id: 'track-18', title: 'Sweater Weather', artist: 'The Neighbourhood', genre: 'rock', ytId: 'GCdwKhTtNNw', cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300' },
+            { id: 'track-19', title: 'Be Quiet and Drive', artist: 'Deftones', genre: 'rock', ytId: 'KvknOXGPzCQ', cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300' },
+
+            // Deep Focus & Ambient
+            { id: 'track-20', title: 'Gymnopédie No. 1', artist: 'Erik Satie', genre: 'ambient', ytId: 'S-Xm7s9eGxU', cover: 'https://images.unsplash.com/photo-1520523839898-507127027c8d?w=300' },
+            { id: 'track-21', title: 'Clair de Lune', artist: 'Claude Debussy', genre: 'ambient', ytId: 'WNcsUNKlAKw', cover: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=300' }
+        ];
+
+        let currentTrackIndex = 0;
+        let isPlaying = false;
+        let isShuffle = false;
+        let isRepeat = false;
+        let ytPlayer = null;
+        let progressInterval = null;
+        let filteredTracks = [...TRACK_LIBRARY];
+
+        // YouTube IFrame API Callback
+        function onYouTubeIframeAPIReady() {
+            ytPlayer = new YT.Player('youtubeAudioPlayer', {
+                height: '1',
+                width: '1',
+                playerVars: {
+                    autoplay: 0,
+                    controls: 0,
+                    disablekb: 1,
+                    fs: 0,
+                    modestbranding: 1,
+                    playsinline: 1
+                },
+                events: {
+                    onReady: onPlayerReady,
+                    onStateChange: onPlayerStateChange
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            console.log('12AM YouTube Audio Engine Ready');
+        }
+
+        function onPlayerStateChange(event) {
+            const vis = document.getElementById('audioVisualizer');
+            const playBtn = document.getElementById('mainPlayBtn');
+
+            if (event.data === YT.PlayerState.PLAYING) {
+                isPlaying = true;
+                playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+                vis.classList.remove('vis-paused');
+                startProgressTracker();
+            } else if (event.data === YT.PlayerState.PAUSED) {
+                isPlaying = false;
+                playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+                vis.classList.add('vis-paused');
+            } else if (event.data === YT.PlayerState.ENDED) {
+                if (isRepeat) {
+                    ytPlayer.seekTo(0);
+                    ytPlayer.playVideo();
+                } else {
+                    playNextTrack();
+                }
+            }
+        }
+
+        // Render Music Grid
+        function renderMusicGrid(tracks) {
+            const grid = document.getElementById('musicGrid');
+            if (!grid) return;
+
+            grid.innerHTML = tracks.map((t, idx) => `
+                <div class="track-card" onclick="playTrackByIndex(${idx})">
+                    <div class="track-cover-wrap">
+                        <img src="${t.cover}" alt="${t.title}" class="track-cover" loading="lazy">
+                        <div class="track-play-hover-btn">
+                            <i class="fa-solid fa-play"></i>
+                        </div>
+                    </div>
+                    <div class="track-title" title="${t.title}">${t.title}</div>
+                    <div class="track-artist">${t.artist}</div>
+                </div>
+            `).join('');
+        }
+
+        // Play Track
+        function playTrackByIndex(idx) {
+            if (idx < 0 || idx >= filteredTracks.length) return;
+            currentTrackIndex = idx;
+            const track = filteredTracks[idx];
+
+            document.getElementById('curTrackCover').src = track.cover;
+            document.getElementById('curTrackTitle').textContent = track.title;
+            document.getElementById('curTrackArtist').textContent = track.artist;
+
+            if (ytPlayer && ytPlayer.loadVideoById) {
+                ytPlayer.loadVideoById(track.ytId);
+                ytPlayer.playVideo();
+            }
+        }
+
+        function togglePlayPause() {
+            if (!ytPlayer || !ytPlayer.getPlayerState) return;
+            const state = ytPlayer.getPlayerState();
+            if (state === YT.PlayerState.PLAYING) {
+                ytPlayer.pauseVideo();
+            } else {
+                ytPlayer.playVideo();
+            }
+        }
+
+        function playNextTrack() {
+            if (isShuffle) {
+                currentTrackIndex = Math.floor(Math.random() * filteredTracks.length);
+            } else {
+                currentTrackIndex = (currentTrackIndex + 1) % filteredTracks.length;
+            }
+            playTrackByIndex(currentTrackIndex);
+        }
+
+        function playPreviousTrack() {
+            currentTrackIndex = (currentTrackIndex - 1 + filteredTracks.length) % filteredTracks.length;
+            playTrackByIndex(currentTrackIndex);
+        }
+
+        function toggleShuffle() {
+            isShuffle = !isShuffle;
+            document.getElementById('shuffleBtn').style.color = isShuffle ? 'var(--accent-color)' : 'var(--text-muted)';
+        }
+
+        function toggleRepeat() {
+            isRepeat = !isRepeat;
+            document.getElementById('repeatBtn').style.color = isRepeat ? 'var(--accent-color)' : 'var(--text-muted)';
+        }
+
+        function startProgressTracker() {
+            if (progressInterval) clearInterval(progressInterval);
+            progressInterval = setInterval(() => {
+                if (!ytPlayer || !ytPlayer.getCurrentTime) return;
+                const cur = ytPlayer.getCurrentTime() || 0;
+                const dur = ytPlayer.getDuration() || 1;
+                const pct = (cur / dur) * 100;
+
+                document.getElementById('progressFill').style.width = `${pct}%`;
+                document.getElementById('currentTimeLabel').textContent = formatSeconds(cur);
+                document.getElementById('totalDurationLabel').textContent = formatSeconds(dur);
+            }, 500);
+        }
+
+        function seekAudio(e) {
+            if (!ytPlayer || !ytPlayer.getDuration) return;
+            const track = document.getElementById('progressTrack');
+            const rect = track.getBoundingClientRect();
+            const clickPos = (e.clientX - rect.left) / rect.width;
+            const targetSec = clickPos * ytPlayer.getDuration();
+            ytPlayer.seekTo(targetSec, true);
+        }
+
+        function changeVolume(val) {
+            if (ytPlayer && ytPlayer.setVolume) {
+                ytPlayer.setVolume(val);
+            }
+        }
+
+        function formatSeconds(sec) {
+            const s = Math.floor(sec || 0);
+            const mins = Math.floor(s / 60);
+            const remaining = s % 60;
+            return `${mins}:${remaining < 10 ? '0' : ''}${remaining}`;
+        }
+
+        // Filter Genre
+        function filterGenre(genre) {
+            document.querySelectorAll('.genre-chip').forEach(c => {
+                c.classList.toggle('active', c.dataset.genre === genre);
+            });
+
+            if (genre === 'all') {
+                filteredTracks = [...TRACK_LIBRARY];
+            } else {
+                filteredTracks = TRACK_LIBRARY.filter(t => t.genre === genre || t.genre === 'all');
+            }
+            renderMusicGrid(filteredTracks);
+        }
+
+        // Search Setup
+        function setupSearch() {
+            const input = document.getElementById('musicSearchInput');
+
+            window.addEventListener('keydown', (e) => {
+                if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
+                    e.preventDefault();
+                    input.focus();
+                }
+            });
+
+            input.addEventListener('input', () => {
+                const q = input.value.toLowerCase().trim();
+                if (!q) {
+                    filteredTracks = [...TRACK_LIBRARY];
+                    renderMusicGrid(filteredTracks);
+                    return;
+                }
+
+                // If YouTube link is pasted directly:
+                if (q.includes('youtube.com/watch?v=') || q.includes('youtu.be/')) {
+                    let ytId = '';
+                    if (q.includes('youtu.be/')) {
+                        ytId = q.split('youtu.be/')[1].split('?')[0];
+                    } else {
+                        ytId = new URL(q).searchParams.get('v');
+                    }
+                    if (ytId) {
+                        const customTrack = {
+                            id: 'custom-' + Date.now(),
+                            title: 'Streaming Link',
+                            artist: 'YouTube Audio',
+                            cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300',
+                            ytId: ytId
+                        };
+                        filteredTracks = [customTrack, ...TRACK_LIBRARY];
+                        renderMusicGrid(filteredTracks);
+                        playTrackByIndex(0);
+                        return;
+                    }
+                }
+
+                filteredTracks = TRACK_LIBRARY.filter(t => 
+                    t.title.toLowerCase().includes(q) || 
+                    t.artist.toLowerCase().includes(q)
+                );
+                renderMusicGrid(filteredTracks);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderMusicGrid(TRACK_LIBRARY);
+            setupSearch();
+        });
+    </script>
+</body>
+</html>
