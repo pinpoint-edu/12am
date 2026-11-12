@@ -23,19 +23,54 @@
     const lightThemeNames = ['Light', 'Lavender', 'Rose Gold', 'Mint', 'Pink', 'Birthday'];
 
     function getActivePageId() {
+        const path = (window.location.pathname || '').toLowerCase();
         const href = (window.location.href || '').toLowerCase();
-        if (href.includes('dashboard.html')) return 'dashboard';
-        if (href.includes('games.html')) return 'games';
-        if (href.includes('movies.html') || href.includes('/movies/')) return 'movies';
-        if (href.includes('music.html') || href.includes('/yolk/')) return 'music';
-        if (href.includes('messenger.html')) return 'messenger';
-        if (href.includes('notes.html')) return 'notes';
-        if (href.includes('dictionary.html')) return 'dictionary';
-        if (href.includes('ai.html')) return 'ai';
-        if (href.includes('proxy.html') || href.includes('web.html')) return 'proxy';
-        if (href.includes('settings.html')) return 'settings';
+
+        // Extract base page filename without directory and extension
+        const cleanName = path.split('/').filter(Boolean).pop() || '';
+        const base = cleanName.replace(/\.html$/, '');
+
+        // Direct matching against NAV_PAGES
+        for (const p of NAV_PAGES) {
+            if (base === p.id) return p.id;
+        }
+
+        // Substring and alternate matching (works on Vercel clean URLs e.g. /games, /movies)
+        if (base === 'games' || base.includes('game') || href.includes('games')) return 'games';
+        if (base === 'movies' || base.includes('movie') || href.includes('movies')) return 'movies';
+        if (base === 'music' || base.includes('music') || href.includes('music') || href.includes('yolk')) return 'music';
+        if (base === 'messenger' || base.includes('messenger') || href.includes('messenger')) return 'messenger';
+        if (base === 'notes' || base.includes('note') || href.includes('notes')) return 'notes';
+        if (base === 'dictionary' || base.includes('dict') || href.includes('dictionary')) return 'dictionary';
+        if (base === 'ai' || base.includes('ai') || href.includes('/ai')) return 'ai';
+        if (base === 'proxy' || base.includes('proxy') || base.includes('web') || href.includes('proxy')) return 'proxy';
+        if (base === 'settings' || base.includes('setting') || href.includes('settings')) return 'settings';
+        if (base === 'dashboard' || base.includes('dash') || href.includes('dashboard') || base === '' || base === 'index') return 'dashboard';
+
         return 'dashboard';
     }
+
+    // Local Page Visit & Duration Tracker
+    try {
+        const active = getActivePageId();
+        if (active) {
+            const visits = JSON.parse(localStorage.getItem('12am_page_visits') || '{}');
+            visits[active] = (visits[active] || 0) + 1;
+            localStorage.setItem('12am_page_visits', JSON.stringify(visits));
+        }
+
+        if (!window.__12am_timer_started) {
+            window.__12am_timer_started = true;
+            setInterval(() => {
+                try {
+                    let totalSec = parseInt(localStorage.getItem('12am_total_time_seconds') || '0', 10);
+                    if (isNaN(totalSec) || totalSec < 0) totalSec = 0;
+                    totalSec += 2;
+                    localStorage.setItem('12am_total_time_seconds', String(totalSec));
+                } catch(e) {}
+            }, 2000);
+        }
+    } catch(e) {}
 
     function getLogoSrc(theme) {
         const t = theme || (typeof window.getCurrentTheme === 'function' ? window.getCurrentTheme() : null);
@@ -49,10 +84,132 @@
     }
 
     window.logOut12AM = function() {
+        if (window.TwelveAMAuth && typeof window.TwelveAMAuth.logout === 'function') {
+            window.TwelveAMAuth.logout();
+        } else {
+            try {
+                localStorage.removeItem('12am_user');
+                localStorage.setItem('12am_logged_out', 'true');
+            } catch(e) {}
+            window.location.reload();
+        }
+    };
+
+    function getRightControlsHtml() {
+        let currentUser = null;
         try {
-            localStorage.removeItem('12am_user');
-        } catch(e) {}
-        window.location.reload();
+            if (window.TwelveAMAuth && typeof window.TwelveAMAuth.getCurrentUser === 'function') {
+                currentUser = window.TwelveAMAuth.getCurrentUser();
+            } else {
+                currentUser = JSON.parse(localStorage.getItem('12am_user') || 'null');
+            }
+        } catch(e) {
+            currentUser = null;
+        }
+
+        if (currentUser && (currentUser.nickname || currentUser.firstName)) {
+            const displayName = currentUser.firstName ? `${currentUser.firstName} ${currentUser.lastName || ''}`.trim() : currentUser.nickname;
+            const handle = currentUser.nickname || 'user';
+
+            return `
+                <div class="nav-right-controls" id="navRightControls">
+                    <div id="auth-button-container" class="auth-btn-container">
+                        <button id="auth-toggle" class="auth-toggle-btn" title="@${escapeHtml(handle)}">
+                            <i class="fa-solid fa-user-check"></i>
+                        </button>
+                        <div id="auth-menu-container" class="auth-menu-container closed">
+                            <div class="auth-menu-header">
+                                <p class="auth-menu-displayname">${escapeHtml(displayName)}</p>
+                                <p class="auth-menu-handle">@${escapeHtml(handle)}</p>
+                            </div>
+                            <div class="auth-menu-divider"></div>
+                            <a href="settings.html" class="auth-menu-link">
+                                <i class="fa-solid fa-gear"></i>
+                                <span>Settings</span>
+                            </a>
+                            <a href="legal.html" class="auth-menu-link">
+                                <i class="fa-solid fa-shield-halved"></i>
+                                <span>Terms &amp; Policies</span>
+                            </a>
+                            <button type="button" onclick="window.logOut12AM()" class="auth-menu-button auth-menu-logout">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                                <span>Log Out</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            return `
+                <div class="nav-right-controls" id="navRightControls">
+                    <div id="auth-button-container" class="auth-btn-container">
+                        <button id="auth-toggle" class="auth-toggle-btn" title="Account">
+                            <i class="fa-solid fa-user"></i>
+                        </button>
+                        <div id="auth-menu-container" class="auth-menu-container closed">
+                            <div class="auth-menu-header">
+                                <p class="auth-menu-displayname">Guest</p>
+                                <p class="auth-menu-handle">Not signed in</p>
+                            </div>
+                            <div class="auth-menu-divider"></div>
+                            <button type="button" onclick="if(window.TwelveAMAuth) window.TwelveAMAuth.showAuthModal();" class="auth-menu-button auth-menu-primary">
+                                <i class="fa-solid fa-lock"></i>
+                                <span>Authenticate</span>
+                            </button>
+                            <a href="settings.html" class="auth-menu-link">
+                                <i class="fa-solid fa-gear"></i>
+                                <span>Settings</span>
+                            </a>
+                            <a href="legal.html" class="auth-menu-link">
+                                <i class="fa-solid fa-shield-halved"></i>
+                                <span>Terms &amp; Policies</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    function setupAuthMenuListeners() {
+        const toggleBtn = document.getElementById('auth-toggle');
+        const menu = document.getElementById('auth-menu-container');
+        if (!toggleBtn || !menu) return;
+
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = menu.classList.contains('open');
+            if (isOpen) {
+                menu.classList.remove('open');
+                menu.classList.add('closed');
+            } else {
+                menu.classList.remove('closed');
+                menu.classList.add('open');
+            }
+        });
+
+        // Close on click outside
+        document.addEventListener('click', (e) => {
+            if (!menu.contains(e.target) && e.target !== toggleBtn && !toggleBtn.contains(e.target)) {
+                if (menu.classList.contains('open')) {
+                    menu.classList.remove('open');
+                    menu.classList.add('closed');
+                }
+            }
+        });
+    }
+
+    window.__updateNavbarUser = function() {
+        const ctrl = document.getElementById('navRightControls');
+        if (ctrl && ctrl.parentElement) {
+            const temp = document.createElement('div');
+            temp.innerHTML = getRightControlsHtml();
+            const newChild = temp.firstElementChild;
+            if (newChild) {
+                ctrl.replaceWith(newChild);
+                setupAuthMenuListeners();
+            }
+        }
     };
 
     function createNavbar() {
@@ -66,7 +223,7 @@
         const activeId = getActivePageId();
         const logoSrc = getLogoSrc();
 
-        // 1. Brand Logo (Pure Logo, No Clock, No Text)
+        // 1. Brand Logo
         const brandHtml = `
             <a href="dashboard.html" class="nav-brand-group" title="12AM">
                 <img src="${logoSrc}" alt="12AM Logo" class="navbar-logo" id="navbar-logo">
@@ -84,55 +241,7 @@
             `;
         }).join('');
 
-        // 3. Right Controls: Log In Button / User Pill (Clean, No avatar circle, No buzzwords)
-        function getRightControlsHtml() {
-            let currentUser = null;
-            try {
-                if (window.TwelveAMAuth && typeof window.TwelveAMAuth.getCurrentUser === 'function') {
-                    currentUser = window.TwelveAMAuth.getCurrentUser();
-                } else {
-                    currentUser = JSON.parse(localStorage.getItem('12am_user') || 'null');
-                }
-            } catch(e) {
-                currentUser = null;
-            }
-
-            if (currentUser && (currentUser.nickname || currentUser.firstName)) {
-                const displayName = currentUser.nickname || currentUser.firstName;
-                return `
-                    <div class="nav-right-controls" id="navRightControls">
-                        <div class="nav-user-pill" title="@${escapeHtml(displayName)}">
-                            <span class="user-nickname-text">@${escapeHtml(displayName)}</span>
-                            <button onclick="window.logOut12AM()" class="nav-logout-btn" title="Log Out">
-                                <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            } else {
-                return `
-                    <div class="nav-right-controls" id="navRightControls">
-                        <button type="button" onclick="if(window.TwelveAMAuth) window.TwelveAMAuth.showAuthModal();" class="nav-btn-pill nav-login-btn" id="navLoginBtn" title="Log In">
-                            <i class="fa-solid fa-arrow-right-to-bracket"></i>
-                            <span>Log In</span>
-                        </button>
-                    </div>
-                `;
-            }
-        }
-
-        window.__updateNavbarUser = function() {
-            const ctrl = document.getElementById('navRightControls');
-            if (ctrl && ctrl.parentElement) {
-                const temp = document.createElement('div');
-                temp.innerHTML = getRightControlsHtml();
-                const newChild = temp.firstElementChild;
-                if (newChild) {
-                    ctrl.replaceWith(newChild);
-                }
-            }
-        };
-
+        // 3. Right Controls: v6 Auth Dropdown
         const rightControlsHtml = getRightControlsHtml();
 
         container.innerHTML = `
@@ -153,6 +262,7 @@
 
         setupScrollGliders();
         setupPanicKey();
+        setupAuthMenuListeners();
     }
 
     function setupScrollGliders() {
@@ -163,117 +273,45 @@
         if (!scrollContainer || !leftBtn || !rightBtn) return;
 
         function updateGliders() {
-            const hasOverflow = scrollContainer.scrollWidth > scrollContainer.offsetWidth + 2;
-            if (!hasOverflow) {
-                leftBtn.classList.add('hidden');
-                rightBtn.classList.add('hidden');
-                return;
-            }
-            const isLeft = scrollContainer.scrollLeft <= 4;
-            const isRight = scrollContainer.scrollLeft + scrollContainer.offsetWidth >= scrollContainer.scrollWidth - 4;
-            leftBtn.classList.toggle('hidden', isLeft);
-            rightBtn.classList.toggle('hidden', isRight);
+            const atStart = scrollContainer.scrollLeft <= 5;
+            const atEnd = scrollContainer.scrollLeft + scrollContainer.clientWidth >= scrollContainer.scrollWidth - 5;
+
+            leftBtn.classList.toggle('hidden', atStart);
+            rightBtn.classList.toggle('hidden', atEnd);
         }
 
         leftBtn.addEventListener('click', () => {
-            scrollContainer.scrollBy({ left: -180, behavior: 'smooth' });
+            scrollContainer.scrollBy({ left: -220, behavior: 'smooth' });
         });
+
         rightBtn.addEventListener('click', () => {
-            scrollContainer.scrollBy({ left: 180, behavior: 'smooth' });
+            scrollContainer.scrollBy({ left: 220, behavior: 'smooth' });
         });
 
         scrollContainer.addEventListener('scroll', updateGliders, { passive: true });
         window.addEventListener('resize', updateGliders);
-        setTimeout(updateGliders, 100);
+        setTimeout(updateGliders, 150);
     }
 
-
-    function setupThemeDropdown() {
-        const btn = document.getElementById('themeMenuBtn');
-        const menu = document.getElementById('themeMenuDropdown');
-        const itemsContainer = document.getElementById('themeMenuItems');
-
-        if (!btn || !menu) return;
-
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            menu.classList.toggle('open');
-            if (menu.classList.contains('open')) {
-                renderThemeMenuItems();
-            }
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!menu.contains(e.target) && !btn.contains(e.target)) {
-                menu.classList.remove('open');
-            }
-        });
-
-        function renderThemeMenuItems() {
-            if (!itemsContainer) return;
-            const themes = (typeof window.getThemes === 'function') ? window.getThemes() : [];
-            const currentTheme = (typeof window.getCurrentTheme === 'function') ? window.getCurrentTheme() : null;
-
-            const displayThemes = themes.length > 0 ? themes : [
-                { name: 'Dark', 'accent-primary': '#4f46e5' },
-                { name: 'Light', 'accent-primary': '#4f46e5' },
-                { name: 'Matrix', 'accent-primary': '#22c55e' },
-                { name: 'Ocean', 'accent-primary': '#0ea5e9' },
-                { name: 'Crimson', 'accent-primary': '#ef4444' },
-                { name: 'Sunset', 'accent-primary': '#f97316' },
-                { name: 'Lavender', 'accent-primary': '#a855f7' },
-                { name: 'Christmas', 'accent-primary': '#22c55e' }
-            ];
-
-            itemsContainer.innerHTML = displayThemes.slice(0, 14).map(t => {
-                const isActive = currentTheme && currentTheme.name.toLowerCase() === t.name.toLowerCase();
-                const accent = t['accent-primary'] || '#4f46e5';
-                return `
-                    <button class="theme-menu-item ${isActive ? 'active' : ''}" onclick="window.selectNavTheme('${t.name}')">
-                        <span>${t.name}</span>
-                        <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:${accent};"></span>
-                    </button>
-                `;
-            }).join('');
-        }
-    }
-
-    window.selectNavTheme = function(name) {
-        if (typeof window.setThemeByName === 'function') {
-            window.setThemeByName(name);
-        }
-        const menu = document.getElementById('themeMenuDropdown');
-        if (menu) menu.classList.remove('open');
-    };
-
-    window.addEventListener('12am:theme-changed', (e) => {
-        const theme = e.detail;
-        const dot = document.getElementById('navThemeDot');
-        const label = document.getElementById('navThemeName');
-        const logo = document.getElementById('navbar-logo');
-
-        if (dot && theme['accent-primary']) dot.style.background = theme['accent-primary'];
-        if (label && theme.name) label.textContent = theme.name;
-        if (logo) logo.src = getLogoSrc(theme);
-    });
-
-    // Panic Key & Cloaking
     function setupPanicKey() {
-        window.addEventListener('keydown', (e) => {
-            const savedPanicKey = localStorage.getItem('12am_panic_key') || ']';
-            if (e.key === savedPanicKey && !['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
-                e.preventDefault();
-                window.triggerPanicCloak();
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+            const panicKey = localStorage.getItem('12am_panic_key') || ']';
+            if (e.key === panicKey) {
+                const destination = localStorage.getItem('12am_panic_url') || 'https://classroom.google.com';
+                window.location.replace(destination);
             }
         });
     }
 
-    window.triggerPanicCloak = function() {
-        const destination = localStorage.getItem('12am_panic_url') || 'https://classroom.google.com';
-        window.location.replace(destination);
+    // Expose theme logo update callback
+    window.__updateNavbarLogo = function(theme) {
+        const logo = document.getElementById('navbar-logo');
+        if (logo) {
+            logo.src = getLogoSrc(theme);
+        }
     };
 
-    // Initialize Navigation on ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', createNavbar);
     } else {

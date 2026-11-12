@@ -136,70 +136,93 @@
       z-index: 5;
     }
 
-    .proxy-start-brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+    .proxy-hero {
+      text-align: center;
       margin-bottom: 2rem;
     }
 
-    .proxy-start-icon {
-      width: 48px;
+    .proxy-logo {
       height: 48px;
-      border-radius: 14px;
-      background: var(--btn-bg);
-      border: 1px solid var(--accent-glow);
+      width: auto;
+      object-fit: contain;
+      margin: 0 auto 1.25rem;
+      display: block;
+      opacity: 0.95;
+    }
+
+    .proxy-title {
+      font-size: 2.25rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin: 0 0 0.5rem;
+      color: var(--text-main);
+    }
+
+    .proxy-subtitle {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin: 0;
+      font-weight: 300;
+    }
+
+    /* Minimalist Center Search */
+    .proxy-center-search {
+      width: 100%;
+      max-width: 580px;
+      display: flex;
+      align-items: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border-main);
+      border-radius: 9999px;
+      padding: 0.6rem 0.8rem 0.6rem 1.25rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      transition: all 0.25s ease;
+      gap: 10px;
+    }
+
+    .proxy-center-search:focus-within {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .proxy-center-search i {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    .proxy-center-search input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-main);
+      font-size: 1rem;
+      font-family: inherit;
+    }
+
+    .proxy-center-search input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.7;
+    }
+
+    .proxy-center-search button {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--accent-color);
+      border: none;
+      color: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--accent-color);
-      font-size: 22px;
-    }
-
-    .proxy-start-title {
-      font-size: 2rem;
-      font-weight: 800;
-      margin: 0;
-      color: var(--text-main);
-    }
-
-    /* Quick Launch Grid */
-    .quick-tiles-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      max-width: 540px;
-      width: 100%;
-      margin-top: 2rem;
-    }
-
-    .quick-tile {
-      background: var(--bg-card);
-      border: 1px solid var(--border-main);
-      border-radius: 14px;
-      padding: 14px 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      color: var(--text-muted);
       cursor: pointer;
-      text-decoration: none;
       transition: all 0.2s ease;
-      font-size: 0.8rem;
-      font-weight: 500;
+      font-size: 13px;
     }
 
-    .quick-tile:hover {
-      border-color: var(--accent-color);
-      color: var(--text-main);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-    }
-
-    .quick-tile i {
-      font-size: 20px;
-      color: var(--accent-color);
+    .proxy-center-search button:hover {
+      background: #7c3aed;
+      transform: scale(1.05);
     }
 
     #proxyViewport {
@@ -244,41 +267,19 @@
     <div class="proxy-workspace">
       <!-- Start screen -->
       <div class="proxy-start-screen" id="startScreen">
-
-        <div class="quick-tiles-grid">
-          <div class="quick-tile" onclick="navigate('https://google.com')">
-            <i class="fa-brands fa-google"></i>
-            <span>Google</span>
-          </div>
-          <div class="quick-tile" onclick="navigate('https://youtube.com')">
-            <i class="fa-brands fa-youtube"></i>
-            <span>YouTube</span>
-          </div>
-          <div class="quick-tile" onclick="navigate('https://discord.com')">
-            <i class="fa-brands fa-discord"></i>
-            <span>Discord</span>
-          </div>
-          <div class="quick-tile" onclick="navigate('https://reddit.com')">
-            <i class="fa-brands fa-reddit-alien"></i>
-            <span>Reddit</span>
-          </div>
-          <div class="quick-tile" onclick="navigate('https://tiktok.com')">
-            <i class="fa-brands fa-tiktok"></i>
-            <span>TikTok</span>
-          </div>
-          <div class="quick-tile" onclick="navigate('https://github.com')">
-            <i class="fa-brands fa-github"></i>
-            <span>GitHub</span>
-          </div>
-          <div class="quick-tile" onclick="navigate('https://wikipedia.org')">
-            <i class="fa-brands fa-wikipedia-w"></i>
-            <span>Wikipedia</span>
-          </div>
-          <div class="quick-tile" onclick="navigate('https://now.gg')">
-            <i class="fa-solid fa-gamepad"></i>
-            <span>Now.gg</span>
-          </div>
+        <div class="proxy-hero">
+          <img src="images/logo-white.png" alt="12AM" class="proxy-logo">
+          <h1 class="proxy-title">12AM Web</h1>
+          <p class="proxy-subtitle">Private, unblocked web browsing.</p>
         </div>
+
+        <form class="proxy-center-search" onsubmit="handleCenterSearch(event)">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="centerSearchInput" placeholder="Search the web or enter address..." autocomplete="off" autofocus>
+          <button type="submit" title="Navigate">
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </form>
       </div>
 
       <!-- Iframe viewport -->
@@ -294,6 +295,14 @@
 
     let historyStack = [];
     let historyIdx = -1;
+
+    function handleCenterSearch(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById('centerSearchInput');
+      const val = input ? input.value.trim() : '';
+      if (!val) return;
+      navigate(val);
+    }
 
     function handleNavigate(e) {
       if (e) e.preventDefault();

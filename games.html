@@ -248,15 +248,18 @@
     .category-slider {
       display: flex;
       align-items: center;
+      width: 100%;
       transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .category-slide {
       width: 100%;
-      max-width: 440px;
-      flex-shrink: 0;
+      min-width: 100%;
+      max-width: 100%;
+      flex: 0 0 100%;
       padding: 0.5rem 0.75rem;
       user-select: none;
+      box-sizing: border-box;
     }
 
     .category-slide h2 {
@@ -278,7 +281,6 @@
     .color-strongdog { color: #FFA500 !important; }
     .color-gnmath { color: #FB2651 !important; }
     .color-tglsc { color: #3B82F6 !important; } /* Blue category */
-    .color-others { color: #AAAAAA !important; }
 
     /* Category Navigation Dots */
     .category-dots-row {
@@ -333,145 +335,179 @@
       color: var(--text-muted);
     }
 
-    /* Games Grid */
+    /* Games Grid / Row Layout (pinpoint-mini reference-3.9.36 style) */
     .games-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
       transition: opacity 0.2s ease;
+      width: 100%;
+      max-width: 860px;
+      margin: 0 auto;
     }
 
-    /* Game Card */
+    /* Game Card Row */
     .game-card {
       background: var(--bg-card);
       border: 1px solid var(--border-main);
-      border-radius: 16px;
-      padding: 1rem;
+      border-radius: 14px;
+      padding: 12px 18px;
       display: flex;
-      flex-direction: column;
+      align-items: center;
       justify-content: space-between;
-      gap: 0.9rem;
+      gap: 16px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       cursor: pointer;
       position: relative;
-      overflow: hidden;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .game-card:hover {
+      background: rgba(255, 255, 255, 0.03);
       border-color: var(--accent-color);
-      transform: translateY(-3px);
-      box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.7), 0 0 20px var(--accent-glow);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5), 0 0 18px var(--accent-glow);
+      z-index: 2;
     }
 
-    .game-card-thumb-wrap {
-      width: 100%;
-      height: 120px;
-      border-radius: 12px;
-      overflow: hidden;
-      background: #141418;
-      border: 1px solid var(--border-faint);
-      position: relative;
+    .game-left {
       display: flex;
       align-items: center;
-      justify-content: center;
-    }
-
-    .game-card-thumb {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.3s ease;
-    }
-
-    .game-card:hover .game-card-thumb {
-      transform: scale(1.05);
-    }
-
-    .game-card-thumb-fallback {
-      font-size: 2.2rem;
-      opacity: 0.7;
-    }
-
-    .game-card-category-badge {
-      position: absolute;
-      top: 8px;
-      left: 8px;
-      font-size: 0.65rem;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 6px;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .game-card-info {
       min-width: 0;
+      flex: 1;
     }
 
-    .game-card-title {
-      font-size: 0.92rem;
+    .game-details {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .game-title {
+      font-size: 15px;
       font-weight: 700;
-      color: var(--text-main);
+      color: #ffffff;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      margin-bottom: 4px;
+      display: block;
+      transition: color 0.15s ease;
     }
 
-    .game-card-meta {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .game-card-actions {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding-top: 8px;
-      border-top: 1px solid var(--border-faint);
-    }
-
-    .btn-pin-card {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      padding: 6px;
-      border-radius: 8px;
-      transition: all 0.15s ease;
-      font-size: 0.9rem;
-    }
-
-    .btn-pin-card:hover, .btn-pin-card.active {
-      color: #fbbf24;
-      background: rgba(251, 191, 36, 0.1);
-    }
-
-    .btn-play-card {
-      background: var(--btn-bg);
-      border: 1px solid var(--accent-color);
+    .game-card:hover .game-title {
       color: var(--accent-color);
-      padding: 5px 12px;
-      border-radius: 10px;
-      font-size: 0.78rem;
+    }
+
+    .game-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    .badge-cat {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-faint);
+      font-size: 11px;
       font-weight: 600;
-      cursor: pointer;
+    }
+
+    .badge-pinned {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: rgba(251, 191, 36, 0.12);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      font-size: 11px;
+      font-weight: 600;
+      color: #fbbf24;
+    }
+
+    .game-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .btn-sharp {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: all 0.2s ease;
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      border-radius: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+      border: 1px solid var(--border-main);
+      background: rgba(255, 255, 255, 0.04);
+      color: #fafafa;
     }
 
-    .btn-play-card:hover {
-      background: var(--accent-color);
+    .btn-sharp:hover {
+      background: var(--btn-bg);
       color: #ffffff;
-      box-shadow: 0 0 14px var(--accent-glow);
+      border-color: var(--accent-color);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    .btn-primary-sharp {
+      background: var(--accent-color);
+      color: #000000;
+      border: 1px solid var(--accent-color);
+      font-weight: 700;
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .btn-primary-sharp:hover {
+      background: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px var(--accent-glow);
+    }
+
+    .btn-icon-sharp {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-main);
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-icon-sharp:hover, .btn-icon-sharp.pinned-active {
+      color: #fbbf24;
+      border-color: rgba(251, 191, 36, 0.4);
+      background: rgba(251, 191, 36, 0.1);
+    }
+
+    .search-item-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-faint);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
     }
 
     /* Favorites Section */
@@ -693,10 +729,6 @@
               <h2 class="color-tglsc">TGLSC</h2>
               <p>Ultra-Fast High-Speed CDN Catalog (199 Games)</p>
             </div>
-            <div class="category-slide" data-index="4">
-              <h2 class="color-others">Others</h2>
-              <p>Eaglercraft, Balatro, Carnage3D &amp; Open-Source</p>
-            </div>
           </div>
         </div>
 
@@ -711,7 +743,6 @@
         <div class="cat-dot" data-index="1"></div>
         <div class="cat-dot" data-index="2"></div>
         <div class="cat-dot" data-index="3"></div>
-        <div class="cat-dot" data-index="4"></div>
       </div>
 
       <!-- Catalog Count & Badge Bar -->
@@ -759,31 +790,15 @@
     </div>
   </div>
 
-  <!-- Unified Styled 12AM Footer -->
-  <footer class="site-footer">
-    <div class="site-footer-inner">
-      <div class="footer-brand">
-        <img src="images/logo-white.png" class="footer-logo" alt="12AM Logo">
-        <span class="footer-brand-title">12AM</span>
-      </div>
-      <p class="footer-copy">&copy; 2026 12AM. High Performance Unblocked Games &amp; Study Hub.</p>
-      <div class="footer-links">
-        <a href="legal.html" class="footer-link">Terms &amp; Privacy</a>
-        <a href="settings.html" class="footer-link">Settings</a>
-        <a href="messenger.html" class="footer-link">Messenger</a>
-        <a href="dashboard.html" class="footer-link">Dashboard</a>
-      </div>
-    </div>
-  </footer>
+
 
   <script>
     // Categories definition
     const CATEGORIES = [
-      { name: '12AM Vault', colorClass: 'color-vault', desc: '12AM Originals & Offline Storage' },
-      { name: 'StrongdogXP', colorClass: 'color-strongdog', desc: 'Core Classics by Josh P' },
-      { name: 'GN-Math', colorClass: 'color-gnmath', desc: 'Genizy High-Speed Mirror' },
-      { name: 'TGLSC', colorClass: 'color-tglsc', desc: 'High-Speed Game CDN (Blue Collection)' },
-      { name: 'Others', colorClass: 'color-others', desc: 'Eaglercraft, Balatro & Open Source' }
+      { name: '12AM Vault', colorClass: 'color-vault', desc: 'Offline IndexedDB & Local Originals' },
+      { name: 'StrongdogXP', colorClass: 'color-strongdog', desc: 'Core Flash, HTML5 & Web Classics by Josh P' },
+      { name: 'GN-Math', colorClass: 'color-gnmath', desc: 'Unblocked High-Speed Learning & Web Games' },
+      { name: 'TGLSC', colorClass: 'color-tglsc', desc: 'Ultra-Fast High-Speed CDN Catalog (199 Games)' }
     ];
 
     let currentCategoryIndex = 0;
@@ -791,8 +806,7 @@
       '12AM Vault': [],
       'StrongdogXP': [],
       'GN-Math': [],
-      'TGLSC': [],
-      'Others': []
+      'TGLSC': []
     };
     let allSearchableGames = [];
     let pinnedGames = new Set();
@@ -878,37 +892,7 @@
         console.warn('Failed loading TGLSC games:', e);
       }
 
-      // 5. Load Others
-      categoryGames['Others'] = [
-        {
-          id: 'other-eaglercraft',
-          name: 'Eaglercraft 1.12.2',
-          category: 'Others',
-          imgSrc: 'https://cdn.jsdelivr.net/gh/gn-math/covers@main/eaglercraft.png',
-          url: 'https://eaglercraft.com/mc/1.12.2/'
-        },
-        {
-          id: 'other-balatro',
-          name: 'Balatro Web Edition',
-          category: 'Others',
-          imgSrc: 'https://raw.githubusercontent.com/jman1593/balatro/main/icon.png',
-          url: 'https://jman1593.github.io/balatro/'
-        },
-        {
-          id: 'other-doom',
-          name: 'Classic Doom (JS-DOS)',
-          category: 'Others',
-          imgSrc: 'https://cdn.jsdelivr.net/gh/gn-math/covers@main/doom.png',
-          url: 'https://dos.zone/player/?bundleUrl=https%3A%2F%2Fcdn.dos.zone%2Fcustom%2Fdos%2Fdoom.jsdos'
-        },
-        {
-          id: 'other-carnage3d',
-          name: 'Grand Theft Auto (Carnage3D)',
-          category: 'Others',
-          imgSrc: 'https://cdn.jsdelivr.net/gh/gn-math/covers@main/gta.png',
-          url: 'https://carnage3d.net/'
-        }
-      ];
+
 
       // Assemble all searchable games
       allSearchableGames = [];
@@ -931,7 +915,7 @@
       function goToCategory(index) {
         if (index < 0 || index >= CATEGORIES.length) return;
         currentCategoryIndex = index;
-        slider.style.transform = `translateX(-${currentCategoryIndex * (100 / CATEGORIES.length)}%)`;
+        slider.style.transform = `translateX(-${currentCategoryIndex * 100}%)`;
 
         // Update dots
         dots.forEach((dot, idx) => {
@@ -998,36 +982,59 @@
       grid.style.opacity = '1';
     }
 
-    // Game Card Generator
+    function formatBytes(bytes) {
+      if (!bytes || bytes === 0) return 'Instant Web App';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    function escapeHTML(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>'"]/g, tag => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+      }[tag] || tag));
+    }
+
+    // Game Card Generator (Row view without images, pinpoint-mini reference-3.9.36)
     function createGameCardHTML(game) {
       const isPinned = pinnedGames.has(game.name);
       let catColorClass = 'color-vault';
       if (game.category === 'StrongdogXP') catColorClass = 'color-strongdog';
       if (game.category === 'GN-Math') catColorClass = 'color-gnmath';
       if (game.category === 'TGLSC') catColorClass = 'color-tglsc';
-      if (game.category === 'Others') catColorClass = 'color-others';
 
-      const thumbHTML = game.imgSrc 
-        ? `<img src="${game.imgSrc}" alt="${game.name}" class="game-card-thumb" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><i class="fa-solid fa-gamepad game-card-thumb-fallback ${catColorClass}" style="display: none;"></i>`
-        : `<i class="fa-solid fa-gamepad game-card-thumb-fallback ${catColorClass}"></i>`;
+      const metaText = game.sizeBytes 
+        ? formatBytes(game.sizeBytes) 
+        : (game.status || (game.isLocal ? 'Offline Ready' : 'Fast Mirror'));
 
       return `
         <div class="game-card" onclick="launchGame('${encodeURIComponent(game.url)}', '${encodeURIComponent(game.name)}', ${game.isLocal || false})">
-          <div class="game-card-thumb-wrap">
-            ${thumbHTML}
-            <span class="game-card-category-badge ${catColorClass}">${game.category}</span>
-          </div>
-          <div class="game-card-info">
-            <h3 class="game-card-title" title="${game.name}">${game.name}</h3>
-            <div class="game-card-meta">
-              <span>${game.status || (game.isLocal ? 'Instant / Offline' : 'Web Mirror')}</span>
+          <div class="game-left">
+            <div class="game-details">
+              <span class="game-title">${escapeHTML(game.name)}</span>
+              <div class="game-meta">
+                <span class="badge-cat ${catColorClass}">${game.category}</span>
+                <span>${metaText}</span>
+                ${isPinned ? `
+                  <span class="badge-pinned">
+                    <i class="fa-solid fa-star" style="font-size: 11px;"></i>
+                    Pinned
+                  </span>
+                ` : ''}
+              </div>
             </div>
           </div>
-          <div class="game-card-actions">
-            <button class="btn-pin-card ${isPinned ? 'active' : ''}" onclick="event.stopPropagation(); togglePin('${encodeURIComponent(game.name)}')" title="${isPinned ? 'Unpin' : 'Pin to favorites'}">
+          <div class="game-actions">
+            <button class="btn-icon-sharp ${isPinned ? 'pinned-active' : ''}" onclick="event.stopPropagation(); togglePin('${encodeURIComponent(game.name)}')" title="${isPinned ? 'Unpin game' : 'Pin to top'}">
               <i class="fa-solid fa-star"></i>
             </button>
-            <button class="btn-play-card" onclick="event.stopPropagation(); launchGame('${encodeURIComponent(game.url)}', '${encodeURIComponent(game.name)}', ${game.isLocal || false})">
+            <button class="btn-sharp btn-primary-sharp" onclick="event.stopPropagation(); launchGame('${encodeURIComponent(game.url)}', '${encodeURIComponent(game.name)}', ${game.isLocal || false})">
               <i class="fa-solid fa-play"></i>
               <span>Play</span>
             </button>
@@ -1105,23 +1112,19 @@
           if (g.category === 'StrongdogXP') catColor = 'color-strongdog';
           if (g.category === 'GN-Math') catColor = 'color-gnmath';
           if (g.category === 'TGLSC') catColor = 'color-tglsc';
-          if (g.category === 'Others') catColor = 'color-others';
-
-          const thumb = g.imgSrc 
-            ? `<img src="${g.imgSrc}" class="search-item-thumb" onerror="this.src=''; this.style.display='none';">` 
-            : `<div class="search-item-thumb"><i class="fa-solid fa-gamepad ${catColor}"></i></div>`;
 
           return `
             <div class="search-item" onclick="launchGame('${encodeURIComponent(g.url)}', '${encodeURIComponent(g.name)}', ${g.isLocal || false})">
               <div class="search-item-info">
-                ${thumb}
+                <div class="search-item-icon"><i class="fa-solid fa-gamepad ${catColor}"></i></div>
                 <div class="search-item-meta">
-                  <div class="search-item-title">${g.name}</div>
+                  <div class="search-item-title">${escapeHTML(g.name)}</div>
                   <div class="search-item-badge ${catColor}">${g.category}</div>
                 </div>
               </div>
-              <button class="btn-play-card" style="padding: 4px 10px;">
+              <button class="btn-sharp btn-primary-sharp" style="padding: 5px 12px; font-size: 11px;">
                 <i class="fa-solid fa-play"></i>
+                <span>Play</span>
               </button>
             </div>
           `;

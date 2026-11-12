@@ -1110,27 +1110,11 @@
                             </div>
                             <input type="checkbox" id="showOfflineToggle" class="custom-checkbox w-5 h-5">
                         </div>
-                        
-                        <div class="flex items-center justify-between border-t border-[var(--border-main)] pt-6">
-                            <div>
-                                <p class="text-emphasis">Leaderboard Participation</p>
-                                <p class="text-xs font-light text-[var(--text-muted)] opacity-60">Show your profile and activity on the global leaderboard.</p>
-                            </div>
-                            <input type="checkbox" id="leaderboardToggle" checked class="custom-checkbox w-5 h-5">
-                        </div>
-                        
-                        <div class="flex items-center justify-between border-t border-[var(--border-main)] pt-6">
-                            <div>
-                                <p class="text-emphasis">Hide Friend Streaks</p>
-                                <p class="text-xs font-light text-[var(--text-muted)] opacity-60">When enabled, mutual friend streaks will show as "Someone" with a placeholder pfp for other users.</p>
-                            </div>
-                            <input type="checkbox" id="hideStreaksToggle" class="custom-checkbox w-5 h-5">
-                        </div>
 
                         <div class="flex justify-between items-center pt-4 border-t border-[var(--border-main)]">
                             <p id="activityPresenceMessage" class="general-message-area text-sm"></p>
                             <button id="saveActivityPresenceBtn" class="btn-toolbar-style btn-primary-override w-36" style="padding: 0.5rem 0.75rem;">
-                                <i class="fa-solid fa-check mr-1"></i> Save Socials
+                                <i class="fa-solid fa-check mr-1"></i> Save
                             </button>
                         </div>
                     </div>
@@ -3705,18 +3689,14 @@
 
             // --- 2. Activity Presence Logic ---
             const showOfflineToggle = document.getElementById('showOfflineToggle');
-            const leaderboardToggle = document.getElementById('leaderboardToggle');
-            const hideStreaksToggle = document.getElementById('hideStreaksToggle');
             const saveActivityPresenceBtn = document.getElementById('saveActivityPresenceBtn');
             const activityPresenceMessage = document.getElementById('activityPresenceMessage');
 
-            if (currentUser) {
+            if (currentUser && showOfflineToggle && saveActivityPresenceBtn) {
                 const uid = currentUser.uid || currentUser.id;
                 const userData = await getUserData(uid);
                 if (userData) {
                     showOfflineToggle.checked = !!userData.showOffline;
-                    leaderboardToggle.checked = !userData.leaderboardOptOut;
-                    hideStreaksToggle.checked = !!userData.hide_streaks;
                 }
 
                 saveActivityPresenceBtn.addEventListener('click', async () => {
@@ -3725,14 +3705,12 @@
                         showMessage(activityPresenceMessage, '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Saving...', 'warning');
 
                         await saveUserData(uid, {
-                            showOffline: showOfflineToggle.checked,
-                            leaderboardOptOut: !leaderboardToggle.checked,
-                            hideStreaks: hideStreaksToggle.checked
+                            showOffline: showOfflineToggle.checked
                         });
 
-                        showMessage(activityPresenceMessage, 'Social settings saved!', 'success');
+                        showMessage(activityPresenceMessage, 'Privacy settings saved!', 'success');
                     } catch (e) {
-                        console.error("Error saving social permissions:", e);
+                        console.error("Error saving privacy settings:", e);
                         showMessage(activityPresenceMessage, 'Error saving settings.', 'error');
                     } finally {
                         saveActivityPresenceBtn.disabled = false;
@@ -4265,7 +4243,7 @@
                 }
 
                 // --- NEW: Sorting Logic ---
-                const orderedThemeNames = ['Dark', 'Light', 'Christmas', 'The New Year', 'Potato'];
+                const orderedThemeNames = ['Dark', 'Light', 'Christmas', 'The New Year', 'Tokyo Night'];
                 const sortedThemes = [];
                 let remainingThemes = [];
 
@@ -4283,7 +4261,7 @@
 
                 // 3. Sort subgroups (Rainbow/Alphabetical)
                 const colorMap = {
-                    'Crimson': 1, 'Fire': 1, 'Orange': 2, 'Sunset': 2, 'Potato': 2, 'Ember': 2, 'Copper': 2, 'Gold': 3,
+                    'Crimson': 1, 'Fire': 1, 'Orange': 2, 'Sunset': 2, 'Tokyo Night': 2, 'Ember': 2, 'Copper': 2, 'Gold': 3,
                     'Green': 4, 'Forest': 4, 'Matrix': 4, 'Mint': 5, 'Ocean': 6, 'Deep Blue': 6,
                     'Purple': 7, 'Royal': 7, 'Haze': 7, 'Lavender': 7, 'Pink': 8, 'Coral': 8, 'Rose Gold': 8,
                     'Clanker': 9, 'Monochrome': 9, 'Silver': 9, 'Slate': 9

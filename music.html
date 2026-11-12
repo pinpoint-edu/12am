@@ -2249,6 +2249,19 @@
         .page-now-playing, #page-now-playing {
             background: #040404 !important;
         }
+
+        *, html, body, input, button, select, textarea {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        }
+        body {
+            padding-top: calc(var(--navbar-height, 64px) + 1.25rem) !important;
+        }
+        #portrait-lock-overlay, #smallLogo, button[onclick="returnToMainHome()"] {
+            display: none !important;
+        }
+        #main-header {
+            top: calc(var(--navbar-height, 64px) + 0.75rem) !important;
+        }
     </style>
 </head>
 <body class="dark dark-mode text-white bg-[#040404] h-screen w-screen overflow-hidden selection:bg-purple-500/30 selection:text-white relative" data-page="search">
@@ -2320,10 +2333,11 @@
     <div id="page-search" class="page active">
         <!-- Central Search Block -->
         <div id="search-block">
-            <!-- Large Logo -->
-            <div id="large-logo-wrapper" class="cursor-pointer select-none transition-transform hover:scale-[1.02] active:scale-95" title="Yolk! Home">
-                <div class="logo-inner flex flex-col items-center justify-center mb-6">
-                    <img src="images/logo-white.png" alt="12AM" class="h-9 mx-auto object-contain opacity-90">
+            <!-- Large Logo with 12 Music Text -->
+            <div id="large-logo-wrapper" class="cursor-pointer select-none transition-transform hover:scale-[1.02] active:scale-95 mb-6" title="12 Music">
+                <div class="flex items-center justify-center gap-4">
+                    <img src="images/logo-white.png" alt="12AM Logo" class="h-12 w-auto object-contain opacity-95">
+                    <span class="text-3xl sm:text-4xl font-bold tracking-tight text-white" style="font-family: 'Geist', sans-serif;">12 Music</span>
                 </div>
             </div>
 
