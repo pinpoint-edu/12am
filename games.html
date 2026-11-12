@@ -386,7 +386,7 @@
     .game-title {
       font-size: 15px;
       font-weight: 700;
-      color: #ffffff;
+      color: var(--text-main, #ffffff) !important;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -395,7 +395,7 @@
     }
 
     .game-card:hover .game-title {
-      color: var(--accent-color);
+      color: var(--accent-color) !important;
     }
 
     .game-meta {
@@ -403,7 +403,7 @@
       align-items: center;
       gap: 8px;
       font-size: 12px;
-      color: var(--text-muted);
+      color: var(--text-muted, #a1a1aa) !important;
       margin-top: 3px;
     }
 
@@ -542,8 +542,8 @@
 
     .player-header {
       height: 54px;
-      background: #09090b;
-      border-bottom: 1px solid #27272a;
+      background: var(--navbar-bg, var(--bg-secondary, #09090b)) !important;
+      border-bottom: 1px solid var(--navbar-border, var(--border-primary, #27272a)) !important;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -565,9 +565,9 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: #18181b;
-      border: 1px solid #27272a;
-      color: #fafafa;
+      background: var(--bg-card, var(--bg-secondary, #18181b));
+      border: 1px solid var(--border-primary, #27272a);
+      color: var(--text-main, #fafafa);
       cursor: pointer;
       transition: all 0.15s ease;
       padding: 0;
@@ -576,9 +576,9 @@
     }
 
     .player-btn-squircle:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: var(--accent-color, #8b5cf6);
-      color: #ffffff;
+      background: var(--button-bg, rgba(255, 255, 255, 0.1));
+      border-color: var(--accent-primary, #8b5cf6);
+      color: var(--accent-primary, #ffffff);
       box-shadow: 0 0 12px var(--accent-glow, rgba(139, 92, 246, 0.3));
       transform: translateY(-1px);
     }
@@ -599,9 +599,9 @@
 
     .player-title {
       font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif !important;
-      font-size: 13.5px;
+      font-size: 14px;
       font-weight: 600;
-      color: #f4f4f5;
+      color: var(--text-main, #f4f4f5) !important;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;

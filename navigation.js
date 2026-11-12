@@ -322,17 +322,48 @@
         });
     }
 
-    // Expose theme logo update callback
+    // Expose theme logo update callback (v6 drop-shadow tinting)
     window.__updateNavbarLogo = function(theme) {
-        const logo = document.getElementById('navbar-logo');
-        if (logo) {
-            logo.src = getLogoSrc(theme);
+        const logos = document.querySelectorAll('.navbar-logo, #navbar-logo');
+        const t = theme || (typeof window.getCurrentTheme === 'function' ? window.getCurrentTheme() : null);
+        if (!t) return;
+        const isLight = lightThemeNames.includes(t.name);
+        const noFilterThemes = ['Dark', 'Light', 'Christmas'];
+        const isNoFilter = noFilterThemes.includes(t.name);
+        const tintColor = t['accent-primary'] || t['tab-active-text'] || '#ffffff';
+        const prefix = window.location.pathname.includes('/logged-in/') ? '../' : '';
+
+        logos.forEach(logo => {
+            if (!logo) return;
+            if (isNoFilter) {
+                logo.src = `${prefix}${isLight ? 'images/logo-black.png' : 'images/logo-white.png'}`;
+                logo.style.filter = '';
+                logo.style.transform = '';
+            } else {
+                logo.src = `${prefix}images/logo-white.png`;
+                logo.style.filter = `drop-shadow(100px 0 0 ${tintColor})`;
+                logo.style.transform = 'translateX(-100px)';
+            }
+        });
+    };
+
+    // Listen for theme changes to tint logo
+    window.addEventListener('12am:theme-changed', (e) => {
+        if (e && e.detail) {
+            window.__updateNavbarLogo(e.detail);
         }
+    });
+
+    const initNav = () => {
+        createNavbar();
+        try {
+            window.__updateNavbarLogo();
+        } catch(e) {}
     };
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', createNavbar);
+        document.addEventListener('DOMContentLoaded', initNav);
     } else {
-        createNavbar();
+        initNav();
     }
 })();

@@ -1486,11 +1486,24 @@
             fixStyle.textContent = "";
         }
 
-        // Relative logo path for file:/// compatibility
+        // Logo Tinting with v6 drop-shadow trick
         const logos = document.querySelectorAll(".navbar-logo, #navbar-logo");
-        const logoPath = isLightTheme ? "images/logo-black.png" : "images/logo-white.png";
+        const prefix = window.location.pathname.includes("/logged-in/") ? "../" : "";
+        const noFilterThemes = ['Dark', 'Light', 'Christmas'];
+        const isNoFilter = noFilterThemes.includes(theme.name);
+        const tintColor = theme['accent-primary'] || theme['tab-active-text'] || '#ffffff';
+
         logos.forEach(img => {
-            if (img) img.src = logoPath;
+            if (!img) return;
+            if (isNoFilter) {
+                img.src = prefix + (isLightTheme ? "images/logo-black.png" : "images/logo-white.png");
+                img.style.filter = "";
+                img.style.transform = "";
+            } else {
+                img.src = prefix + "images/logo-white.png";
+                img.style.filter = `drop-shadow(100px 0 0 ${tintColor})`;
+                img.style.transform = "translateX(-100px)";
+            }
         });
 
         if (save) {

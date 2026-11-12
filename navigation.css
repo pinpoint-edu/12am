@@ -70,22 +70,29 @@ body {
 .nav-brand-group {
   display: flex;
   align-items: center;
+  justify-content: center;
   text-decoration: none;
   flex-shrink: 0;
-  padding: 0 4px;
+  width: 38px;
+  height: 38px;
+  overflow: hidden;
+  position: relative;
+  padding: 0;
+  border-radius: 8px;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-brand-group:hover {
+  transform: scale(1.08);
 }
 
 .navbar-logo {
-  height: 40px;
+  height: 30px;
   width: auto;
-  max-width: 140px;
+  max-width: none;
   object-fit: contain;
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
   display: block;
-}
-
-.nav-brand-group:hover .navbar-logo {
-  transform: scale(1.05);
 }
 
 /* Tab Scroll Wrapper */

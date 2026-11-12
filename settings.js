@@ -110,49 +110,110 @@
         // --- Shared Helper Functions ---
 
         /**
-         * Fetches user data from Supabase profiles.
+         * Fetches user data from Supabase profiles, with graceful local fallback.
          */
         async function getUserData(uid) {
-            if (!window.supabase) return null;
-
-            try {
-                const { data: profile, error } = await window.supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', uid)
-                    .maybeSingle();
-                
-                if (error) throw error;
-
-                if (profile) {
-                    // Map Supabase snake_case to the app's internal camelCase
-                    return {
-                        ...profile,
-                        displayName: profile.display_name,
-                        pfpType: profile.pfp_type,
-                        customPfp: profile.avatar_url,
-                        pfpLetterBg: profile.pfp_letter_bg,
-                        pfpLetterChar: profile.pfp_letter_char,
-                        letterAvatarText: profile.pfp_letter_char,
-                        mibiConfig: profile.mibi_config
-                    };
+            let profile = null;
+            if (window.supabase && uid) {
+                try {
+                    const { data, error } = await window.supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', uid)
+                        .maybeSingle();
+                    
+                    if (!error && data) {
+                        profile = data;
+                    }
+                } catch (e) {
+                    // Soft fail to fallback
                 }
-            } catch (e) {
-                console.error("Supabase profile fetch error:", e);
             }
 
-            return null;
+            if (profile) {
+                return {
+                    ...profile,
+                    displayName: profile.display_name,
+                    pfpType: profile.pfp_type,
+                    customPfp: profile.avatar_url,
+                    pfpLetterBg: profile.pfp_letter_bg,
+                    pfpLetterChar: profile.pfp_letter_char,
+                    letterAvatarText: profile.pfp_letter_char,
+                    mibiConfig: profile.mibi_config
+                };
+            }
+
+            // Fallback to local 12AM device auth account so General Settings ALWAYS loads
+            const localAcc = (typeof TwelveAMAuth !== 'undefined' && TwelveAMAuth.getCurrentUser) ? TwelveAMAuth.getCurrentUser() : null;
+            const name = (localAcc && (localAcc.displayName || localAcc.nickname || (localAcc.firstName ? `${localAcc.firstName} ${localAcc.lastName}` : ''))) || (currentUser ? currentUser.displayName : '12AM Member') || '12AM Member';
+            const initial = name.trim().charAt(0).toUpperCase() || '1';
+
+            return {
+                id: uid || (currentUser ? (currentUser.uid || currentUser.id) : 'local_user'),
+                displayName: name,
+                nickname: (localAcc && localAcc.nickname) || name,
+                pfpType: 'letter',
+                customPfp: '',
+                avatar_url: '',
+                pfpLetterBg: '#7c3aed',
+                pfpLetterChar: initial,
+                letterAvatarText: initial,
+                usernameChangesThisMonth: 0,
+                lastUsernameChangeMonth: 0
+            };
         }
 
         /**
-         * Saves user data to Supabase profiles.
+         * Saves user data to local storage and Supabase profiles.
          */
         async function saveUserData(uid, updates) {
-            if (!window.supabase) return;
+            const actualUid = uid || (currentUser ? (currentUser.uid || currentUser.deviceToken || currentUser.id) : null);
+            if (!actualUid) return;
 
+            // 1. Save locally to 12AM account
             try {
-                // Map Firestore field names to Supabase snake_case if they differ
+                if (typeof TwelveAMAuth !== 'undefined' && TwelveAMAuth.getCurrentUser) {
+                    const acc = TwelveAMAuth.getCurrentUser();
+                    if (acc) {
+                        if (updates.displayName) acc.displayName = updates.displayName;
+                        if (updates.nickname) acc.nickname = updates.nickname;
+                        if (updates.navbarTheme) acc.navbarTheme = updates.navbarTheme;
+                        localStorage.setItem('12am_account', JSON.stringify(acc));
+                    }
+                }
+            } catch(e) {}
+
+            // 2. Try Supabase upsert (soft fail if schema doesn't exist)
+            if (!window.supabase) return;
+            try {
                 const supabaseUpdates = {};
+                const mapping = {
+                    pfpType: 'pfp_type',
+                    pfp_type: 'pfp_type',
+                    customPfp: 'avatar_url',
+                    photoURL: 'avatar_url',
+                    displayName: 'display_name',
+                    description: 'description',
+                    pfpLetterBg: 'pfp_letter_bg',
+                    pfpLetterChar: 'pfp_letter_char',
+                    letterAvatarText: 'pfp_letter_char',
+                    mibiConfig: 'mibi_config',
+                    showOffline: 'show_offline',
+                    leaderboardOptOut: 'leaderboard_opt_out',
+                    hideStreaks: 'hide_streaks',
+                    navbarTheme: 'navbar_theme',
+                };
+                for (const [key, value] of Object.entries(updates)) {
+                    const mappedKey = mapping[key] || key;
+                    supabaseUpdates[mappedKey] = value;
+                }
+                await window.supabase
+                    .from('profiles')
+                    .upsert({ id: actualUid, ...supabaseUpdates });
+            } catch (e) {
+                console.warn("Supabase saveUserData warning:", e);
+            }
+        }
                 const mapping = {
                     pfpType: 'pfp_type',
                     pfp_type: 'pfp_type',
@@ -4344,7 +4405,8 @@
                             // 3. Save to Firestore & Supabase (Persistence)
                             if (currentUser) {
                                 try {
-                                    await saveUserData(uid, { navbarTheme: themeToApply });
+                                    const uId = currentUser.uid || currentUser.deviceToken || currentUser.id || 'local_user';
+                                    await saveUserData(uId, { navbarTheme: themeToApply });
                                 } catch (error) {
                                     console.error("Error saving theme:", error);
                                     // Don't block UI feedback for this

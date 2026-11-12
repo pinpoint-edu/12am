@@ -2207,40 +2207,72 @@
     <style>
         :root {
             --parabola-ease: cubic-bezier(0.16, 1, 0.3, 1);
+            --bg-page: var(--bg-primary, #040404);
+            --bg-card: var(--bg-secondary, #0c0c0e);
+            --text-main: var(--text-primary, #ffffff);
+            --text-muted: var(--text-secondary, #a1a1aa);
+            --accent-color: var(--accent-primary, #8b5cf6);
+            --accent-glow: var(--accent-secondary, rgba(139, 92, 246, 0.4));
+            --border-main: var(--border-primary, #1c1c20);
+        }
+        *, html, body, input, button, select, textarea {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif !important;
         }
         html, body {
             background-color: var(--bg-primary, #040404) !important;
-            color: var(--text-primary, #ffffff) !important;
-            font-family: 'Geist', sans-serif !important;
+            color: var(--text-main, #ffffff) !important;
+            overflow-x: hidden;
         }
         body {
             padding-top: calc(var(--navbar-height, 64px) + 1.25rem) !important;
-            background-color: var(--bg-primary, #040404) !important;
-            color: var(--text-primary, #ffffff) !important;
         }
         .dark, .dark-mode {
             background-color: var(--bg-primary, #040404) !important;
-            color: var(--text-primary, #ffffff) !important;
+            color: var(--text-main, #ffffff) !important;
+        }
+        /* Top navbar pill in music */
+        #main-header {
+            top: calc(var(--navbar-height, 64px) + 0.85rem) !important;
+        }
+        #top-nav-bar {
+            background: var(--navbar-bg, var(--bg-secondary, rgba(24, 24, 29, 0.88))) !important;
+            border: 1px solid var(--navbar-border, var(--border-primary, rgba(255, 255, 255, 0.12))) !important;
+            backdrop-filter: blur(12px) !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+        }
+        #top-nav-bar a:not(.yolk-active) {
+            color: var(--text-muted, #a1a1aa) !important;
+        }
+        #top-nav-bar a:not(.yolk-active):hover {
+            color: var(--text-main, #ffffff) !important;
+        }
+        #top-nav-bar a.yolk-active, .yolk-active {
+            background: var(--accent-primary, #8b5cf6) !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 12px var(--accent-secondary, rgba(139, 92, 246, 0.45)) !important;
+        }
+        /* Pushed down search block so it NEVER clips under navbar */
+        body.is-loaded:not(.is-searching) #search-block {
+            top: calc(50% + 24px) !important;
+        }
+        body.is-searching #search-block {
+            top: calc(var(--navbar-height, 64px) + 32px) !important;
         }
         #bottom-player {
             background: var(--bg-secondary, rgba(12, 12, 14, 0.95)) !important;
             border-color: var(--border-primary, rgba(255, 255, 255, 0.1)) !important;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px var(--accent-secondary, rgba(139, 92, 246, 0.15)) !important;
         }
-        #bottom-player-title { color: var(--text-primary, #ffffff) !important; }
-        #bottom-player-artist { color: var(--text-secondary, #a1a1aa) !important; }
+        #bottom-player-title { color: var(--text-main, #ffffff) !important; }
+        #bottom-player-artist { color: var(--text-muted, #a1a1aa) !important; }
         #bottom-player-progress-fill, #now-playing-progress-fill {
             background: var(--accent-primary, #8b5cf6) !important;
             box-shadow: 0 0 10px var(--accent-secondary, rgba(139, 92, 246, 0.5)) !important;
         }
-        .yolk-active {
-            background: var(--accent-primary, #8b5cf6) !important;
-            color: #ffffff !important;
-        }
         #searchInput {
             background: var(--bg-secondary, rgba(18, 18, 22, 0.9)) !important;
-            border-color: var(--border-primary, rgba(255, 255, 255, 0.1)) !important;
-            color: var(--text-primary, #ffffff) !important;
+            border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.12)) !important;
+            color: var(--text-main, #ffffff) !important;
         }
         #searchInput:focus {
             border-color: var(--accent-primary, #8b5cf6) !important;
@@ -2249,18 +2281,8 @@
         .page-now-playing, #page-now-playing {
             background: var(--bg-primary, #040404) !important;
         }
-        #top-white-fade-bar {
+        #top-white-fade-bar, #portrait-lock-overlay, #smallLogo, button[onclick="returnToMainHome()"] {
             display: none !important;
-        }
-
-        *, html, body, input, button, select, textarea {
-            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif !important;
-        }
-        #portrait-lock-overlay, #smallLogo, button[onclick="returnToMainHome()"] {
-            display: none !important;
-        }
-        #main-header {
-            top: calc(var(--navbar-height, 64px) + 0.75rem) !important;
         }
     </style>
 </head>
@@ -2336,8 +2358,10 @@
             <!-- Large Logo with 12 Music Text -->
             <div id="large-logo-wrapper" class="cursor-pointer select-none transition-transform hover:scale-[1.02] active:scale-95 mb-6" title="12 Music">
                 <div class="flex items-center justify-center gap-4">
-                    <img src="images/logo-white.png" alt="12AM Logo" class="h-12 w-auto object-contain opacity-95">
-                    <span class="text-3xl sm:text-4xl font-bold tracking-tight text-white" style="font-family: 'Geist', sans-serif;">12 Music</span>
+                    <div style="width: 52px; height: 52px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
+                        <img src="images/logo-white.png" alt="12AM Logo" class="navbar-logo h-12 w-auto object-contain opacity-95" id="music-hero-logo">
+                    </div>
+                    <span class="text-4xl sm:text-5xl font-extrabold tracking-tight text-[var(--text-main)]" style="font-family: 'Geist', sans-serif;">12 Music</span>
                 </div>
             </div>
 
