@@ -70,27 +70,34 @@
       flex: 1;
     }
 
-    /* Top Search Bar (No bold header - clean and direct) */
+    /* Floating Bottom Search Bar */
     .search-bar-wrap {
-      max-width: 680px;
-      margin: 0 auto 2rem;
-      position: relative;
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 2rem);
+      max-width: 600px;
+      z-index: 1000;
+      margin: 0;
     }
 
     .search-box {
       display: flex;
       align-items: center;
-      background: var(--bg-card);
+      background: rgba(12, 12, 16, 0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--border-main);
       border-radius: 9999px;
       padding: 0.65rem 1.25rem;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 20px rgba(139, 92, 246, 0.15);
       transition: all 0.25s ease;
     }
 
     .search-box:focus-within {
       border-color: var(--accent-color);
-      box-shadow: 0 0 0 3px var(--accent-glow);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 24px var(--accent-glow);
     }
 
     .search-box input {
@@ -119,10 +126,11 @@
       font-family: monospace;
     }
 
-    /* Search Dropdown Results */
+    /* Search Dropdown Results Opening Upwards */
     #searchDropdown {
       position: absolute;
-      top: calc(100% + 8px);
+      bottom: calc(100% + 10px);
+      top: auto;
       left: 0;
       right: 0;
       background: #0d0d11;
@@ -131,7 +139,7 @@
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
       max-height: 380px;
       overflow-y: auto;
-      z-index: 100;
+      z-index: 1001;
       display: none;
     }
 
@@ -308,19 +316,22 @@
       box-shadow: 0 0 10px var(--accent-glow);
     }
 
-    /* Sub-bar showing active count and clear metadata */
+    /* Centered sub-bar showing active count and clear metadata */
     .catalog-bar {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
+      gap: 12px;
       padding: 0.75rem 0.5rem;
       border-bottom: 1px solid var(--border-faint);
       margin-bottom: 1.5rem;
+      text-align: center;
     }
 
     .catalog-bar-left {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 10px;
     }
 
@@ -464,19 +475,27 @@
     }
 
     .btn-primary-sharp {
-      background: var(--accent-color);
-      color: #000000;
-      border: 1px solid var(--accent-color);
+      background: #09090c;
+      color: var(--accent-color, #8b5cf6);
+      border: 1px solid var(--accent-color, #8b5cf6);
       font-weight: 500;
-      box-shadow: 0 4px 12px var(--accent-glow);
+      box-shadow: 0 2px 8px rgba(139, 92, 246, 0.15);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      line-height: 1;
     }
 
     .btn-primary-sharp:hover {
-      background: #ffffff;
-      color: #000000;
-      border-color: #ffffff;
-      transform: translateY(-1px);
-      box-shadow: 0 6px 16px var(--accent-glow);
+      background: var(--btn-bg, rgba(139, 92, 246, 0.16));
+      color: #ffffff;
+      border-color: var(--accent-color, #8b5cf6);
+      box-shadow: 0 4px 14px var(--accent-glow, rgba(139, 92, 246, 0.35));
     }
 
     .btn-icon-sharp {
@@ -740,10 +759,6 @@
               <p>Core Flash, HTML5 &amp; Web Classics by Josh P</p>
             </div>
             <div class="category-slide" data-index="2">
-              <h2 class="color-gnmath">GN-Math</h2>
-              <p>Unblocked High-Speed Learning &amp; Web Games</p>
-            </div>
-            <div class="category-slide" data-index="3">
               <h2 class="color-tglsc">TGLSC</h2>
               <p>Ultra-Fast High-Speed CDN Catalog (199 Games)</p>
             </div>
@@ -760,7 +775,6 @@
         <div class="cat-dot active" data-index="0"></div>
         <div class="cat-dot" data-index="1"></div>
         <div class="cat-dot" data-index="2"></div>
-        <div class="cat-dot" data-index="3"></div>
       </div>
 
       <!-- Catalog Count & Badge Bar -->
@@ -809,7 +823,6 @@
     const CATEGORIES = [
       { name: '12AM Vault', colorClass: 'color-vault', desc: 'Offline IndexedDB & Local Originals' },
       { name: 'StrongdogXP', colorClass: 'color-strongdog', desc: 'Core Flash, HTML5 & Web Classics by Josh P' },
-      { name: 'GN-Math', colorClass: 'color-gnmath', desc: 'Unblocked High-Speed Learning & Web Games' },
       { name: 'TGLSC', colorClass: 'color-tglsc', desc: 'Ultra-Fast High-Speed CDN Catalog (199 Games)' }
     ];
 
@@ -817,7 +830,6 @@
     let categoryGames = {
       '12AM Vault': [],
       'StrongdogXP': [],
-      'GN-Math': [],
       'TGLSC': []
     };
     let allSearchableGames = [];
@@ -860,30 +872,22 @@
       try {
         const res = await fetch('strongdog-games.json');
         const data = await res.json();
-        categoryGames['StrongdogXP'] = data.map(g => ({
-          ...g,
-          category: 'StrongdogXP'
-        }));
+        categoryGames['StrongdogXP'] = data.map(g => {
+          let u = g.url || '';
+          if (u.includes('pinpoint-edu.github.io/strongdog6/html/') && u.endsWith('/index.html') && !u.includes('/game/index.html')) {
+            u = u.replace(/\/index\.html$/, '/game/index.html');
+          }
+          return {
+            ...g,
+            url: u,
+            category: 'StrongdogXP'
+          };
+        });
       } catch (e) {
         console.warn('Failed loading Strongdog games:', e);
       }
 
-      // 3. Load GN-Math
-      try {
-        const res = await fetch('gn-math-games.json');
-        const data = await res.json();
-        categoryGames['GN-Math'] = data.map(g => ({
-          id: `gn-${g.id}`,
-          name: g.name,
-          category: 'GN-Math',
-          imgSrc: (g.cover || '').replace("{COVER_URL}", "https://cdn.jsdelivr.net/gh/gn-math/covers@main").replace("{HTML_URL}", "https://cdn.jsdelivr.net/gh/gn-math/html@main"),
-          url: (g.url || '').replace("{COVER_URL}", "https://cdn.jsdelivr.net/gh/gn-math/covers@main").replace("{HTML_URL}", "https://cdn.jsdelivr.net/gh/gn-math/html@main")
-        }));
-      } catch (e) {
-        console.warn('Failed loading GN-Math games:', e);
-      }
-
-      // 4. Load TGLSC (The Blue Category)
+      // 3. Load TGLSC (The Blue Category)
       try {
         const res = await fetch('tglsc-games.json');
         const data = await res.json();
@@ -1018,7 +1022,6 @@
       const isPinned = pinnedGames.has(game.name);
       let catColorClass = 'color-vault';
       if (game.category === 'StrongdogXP') catColorClass = 'color-strongdog';
-      if (game.category === 'GN-Math') catColorClass = 'color-gnmath';
       if (game.category === 'TGLSC') catColorClass = 'color-tglsc';
 
       const metaText = game.sizeBytes 
@@ -1026,7 +1029,7 @@
         : (game.status || (game.isLocal ? 'Offline Ready' : 'Fast Mirror'));
 
       return `
-        <div class="game-card" onclick="launchGame('${encodeURIComponent(game.url)}', '${encodeURIComponent(game.name)}', ${game.isLocal || false})">
+        <div class="game-card" onclick="launchGame('${encodeURIComponent(game.url)}', '${encodeURIComponent(game.name)}', ${game.isLocal || false}, '${game.category || ''}')">
           <div class="game-left">
             <div class="game-details">
               <span class="game-title">${escapeHTML(game.name)}</span>
@@ -1046,7 +1049,7 @@
             <button class="btn-icon-sharp ${isPinned ? 'pinned-active' : ''}" onclick="event.stopPropagation(); togglePin('${encodeURIComponent(game.name)}')" title="${isPinned ? 'Unpin game' : 'Pin to top'}">
               <i class="fa-solid fa-star"></i>
             </button>
-            <button class="btn-sharp btn-primary-sharp" onclick="event.stopPropagation(); launchGame('${encodeURIComponent(game.url)}', '${encodeURIComponent(game.name)}', ${game.isLocal || false})">
+            <button class="btn-sharp btn-primary-sharp" onclick="event.stopPropagation(); launchGame('${encodeURIComponent(game.url)}', '${encodeURIComponent(game.name)}', ${game.isLocal || false}, '${game.category || ''}')">
               <i class="fa-solid fa-play"></i>
               <span>Play</span>
             </button>
@@ -1122,11 +1125,10 @@
         dropdown.innerHTML = matches.map(g => {
           let catColor = 'color-vault';
           if (g.category === 'StrongdogXP') catColor = 'color-strongdog';
-          if (g.category === 'GN-Math') catColor = 'color-gnmath';
           if (g.category === 'TGLSC') catColor = 'color-tglsc';
 
           return `
-            <div class="search-item" onclick="launchGame('${encodeURIComponent(g.url)}', '${encodeURIComponent(g.name)}', ${g.isLocal || false})">
+            <div class="search-item" onclick="launchGame('${encodeURIComponent(g.url)}', '${encodeURIComponent(g.name)}', ${g.isLocal || false}, '${g.category || ''}')">
               <div class="search-item-info">
                 <div class="search-item-icon"><i class="fa-solid fa-gamepad ${catColor}"></i></div>
                 <div class="search-item-meta">
@@ -1155,9 +1157,20 @@
     // Launch Game in Fullscreen Player View
     let currentGameUrl = '';
 
-    function launchGame(urlEnc, titleEnc, isLocal) {
-      const url = decodeURIComponent(urlEnc);
+    function launchGame(urlEnc, titleEnc, isLocal, category) {
+      let url = decodeURIComponent(urlEnc);
       const title = decodeURIComponent(titleEnc);
+
+      // Clean StrongdogXP nested container
+      if (url.includes('pinpoint-edu.github.io/strongdog6/html/') && url.endsWith('/index.html') && !url.includes('/game/index.html')) {
+        url = url.replace(/\/index\.html$/, '/game/index.html');
+      }
+
+      // Proxy TGLSC games through the worker gateway
+      if (category === 'TGLSC' || url.includes('glseries.net')) {
+        url = `https://classroom-docs.googleus-cloud1.workers.dev/browse?url=${encodeURIComponent(url)}&embed=1`;
+      }
+
       currentGameUrl = url;
 
       const player = document.getElementById('player-view');

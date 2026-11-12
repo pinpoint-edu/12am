@@ -238,7 +238,7 @@
                 const styleEl = document.createElement('style');
                 styleEl.id = '12am-auth-styles';
                 styleEl.textContent = `
-                    @keyframes 12amFadeIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+                    @keyframes twelveAmFadeIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
                     #12am-auth-overlay {
                         position: fixed;
                         inset: 0;
@@ -261,7 +261,7 @@
                         padding: 2rem 1.75rem;
                         box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(139, 92, 246, 0.15);
                         color: #ffffff;
-                        animation: 12amFadeIn 0.2s ease-out;
+                        animation: twelveAmFadeIn 0.2s ease-out;
                         box-sizing: border-box;
                     }
                     .auth-modal-input {

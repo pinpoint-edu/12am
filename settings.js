@@ -1769,7 +1769,7 @@
                     
                     <h3 class="text-xl font-bold text-[var(--text-main)] mt-6 mb-2">Version</h3>
                     <p class="text-[var(--text-muted)] opacity-80">
-                        Current Version: <span class="text-blue-400 text-emphasis">6.0.0</span>
+                        Current Version: <span class="text-blue-400 text-emphasis">v1 beta</span>
                     </p>
 
                     <h3 class="text-xl font-bold text-[var(--text-main)] mt-6 mb-3">Legal Information</h3>
@@ -2895,820 +2895,288 @@
         }
 
         /**
-         * Loads user data, checks rate limit, and renders the General tab.
+         * Streamlined General Settings tab.
+         * Contains ONLY: Profile Picture editing, Username editing, and PIN editing requiring current PIN verification.
          */
         async function loadGeneralTab() {
-            if (!currentUser) return; 
-
-            const isEmailPasswordUser = (currentUser.providerData || []).some(
-                (info) => info.providerId === 'password'
-            );
-            
-            const uid = currentUser.uid || currentUser.id;
-            const userData = await getUserData(uid);
-
-            if (!userData) {
-                mainView.innerHTML = `<h2 class="text-3xl font-bold text-[var(--text-main)] mb-6">General Settings</h2><p class="text-red-400">Error: User data not found. Please log out and back in.</p>`;
-                return;
+            let devUser = null;
+            if (window.TwelveAMAuth && typeof window.TwelveAMAuth.getCurrentUser === 'function') {
+                devUser = window.TwelveAMAuth.getCurrentUser();
             }
-
-            const today = new Date();
-            const currentMonthNumber = today.getMonth() + 1; 
-            const currentMonthName = today.toLocaleDateString('en-US', { month: 'long' }); 
-            
-            let changesThisMonth = userData.usernameChangesThisMonth || 0;
-            let lastChangeMonth = userData.lastUsernameChangeMonth || 0;
-
-            // --- Monthly Reset Logic (Only if Firestore is accessible) ---
-            if (currentMonthNumber !== lastChangeMonth) {
+            if (!devUser) {
                 try {
-                    await saveUserData(uid, {
-                        usernameChangesThisMonth: 0,
-                        lastUsernameChangeMonth: currentMonthNumber
-                    });
-                    changesThisMonth = 0;
-                } catch (e) {
-                    console.warn("Could not reset monthly changes:", e);
-                }
+                    devUser = JSON.parse(localStorage.getItem('12am_user') || 'null');
+                } catch(e) {}
             }
-            
-            const changesRemaining = MAX_CHANGES - changesThisMonth;
-
-            // 1. Render the General Content
-            mainView.innerHTML = getGeneralContent(
-                userData.username, 
-                changesRemaining, 
-                changesThisMonth, 
-                currentMonthName,
-                isEmailPasswordUser, 
-                currentUser.providerData || [] // Pass provider info
-            );
-            
-            // 2. Element References (Username Section)
-            const viewMode = document.getElementById('viewMode');
-            const editMode = document.getElementById('editMode');
-            const enterEditModeBtn = document.getElementById('enterEditModeBtn');
-            const cancelEditBtn = document.getElementById('cancelEditBtn');
-            const applyUsernameBtn = document.getElementById('applyUsernameBtn');
-            const newUsernameInput = document.getElementById('newUsernameInput');
-            const messageElement = document.getElementById('usernameChangeMessage');
-            const charCountElement = document.getElementById('charCount');
-            const minLengthElement = document.getElementById('minLength');
-            const maxLengthElement = document.getElementById('maxLength');
-
-            // --- Username UI State Management Functions ---
-            const setEditMode = (isEditing) => {
-                showMessage(messageElement, '', 'success'); // Clear message
-                
-                if (isEditing) {
-                    if (changesRemaining <= 0) {
-                        showMessage(messageElement, `You have reached your limit of ${MAX_CHANGES} username changes for the current month.`, 'error'); 
-                        return;
-                    }
-                    viewMode.classList.add('hidden');
-                    editMode.classList.remove('hidden');
-                    newUsernameInput.focus();
-                    updateCounterAndValidation(); 
-                } else {
-                    editMode.classList.add('hidden');
-                    viewMode.classList.remove('hidden');
-                    newUsernameInput.value = userData.username; // Reset input value
-                    applyUsernameBtn.disabled = true;
-                }
-            };
-
-            const updateCounterAndValidation = () => {
-                const newUsername = newUsernameInput.value.trim();
-                const count = newUsername.length;
-                
-                charCountElement.textContent = count;
-                
-                const isValidLength = count >= MIN_LENGTH && count <= MAX_LENGTH;
-                const isChanged = newUsername !== userData.username;
-                
-                // 1. Update counter colors
-                minLengthElement.classList.toggle('text-red-400', count < MIN_LENGTH);
-                maxLengthElement.classList.toggle('text-red-400', count > MAX_LENGTH);
-                
-                minLengthElement.classList.toggle('text-gray-400', count >= MIN_LENGTH);
-                maxLengthElement.classList.toggle('text-gray-400', count <= MAX_LENGTH);
-                
-                charCountElement.classList.toggle('text-red-400', !isValidLength);
-                charCountElement.classList.toggle('text-gray-400', isValidLength);
-
-
-                // 2. Update button state
-                applyUsernameBtn.disabled = !isChanged || !isValidLength || changesRemaining <= 0;
-            };
-
-            // --- Username Event Listeners ---
-            enterEditModeBtn.addEventListener('click', () => setEditMode(true));
-            cancelEditBtn.addEventListener('click', () => setEditMode(false));
-            newUsernameInput.addEventListener('input', updateCounterAndValidation);
-
-
-            applyUsernameBtn.addEventListener('click', async (e) => {
-                e.preventDefault();
-                const newUsername = newUsernameInput.value.trim();
-                
-                if (applyUsernameBtn.disabled || changesRemaining <= 0) {
-                    showMessage(messageElement, 'Cannot apply changes due to validation errors, rate limit, or no change was made.', 'error');
-                    return;
-                }
-
-                applyUsernameBtn.disabled = true;
-                showMessage(messageElement, '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Checking availability and profanity...', 'warning');
-
-                try {
-                    // --- Validation ---
-                    if (newUsername.length < MIN_LENGTH || newUsername.length > MAX_LENGTH) { 
-                        showMessage(messageElement, `Username must be between ${MIN_LENGTH} and ${MAX_LENGTH} characters.`, 'error'); 
-                        return; 
-                    }
-                    if (!/^[a-zA-Z0-9.,\-+_\!\?\$\\]+$/.test(newUsername)) { 
-                        showMessage(messageElement, 'Username contains invalid characters (Allowed symbols: .,-+\\_!?$).', 'error'); 
-                        return; 
-                    }
-                    
-                    // --- Checks ---
-                    if (await checkProfanity(newUsername)) { 
-                        showMessage(messageElement, 'This username is not allowed (Profanity filter triggered).', 'error'); 
-                        return; 
-                    }
-                    if (await isUsernameTaken(newUsername)) { 
-                        showMessage(messageElement, 'This username is already taken.', 'error'); 
-                        return; 
-                    }
-                    
-                    // --- Update Logic ---
-                    const newChangesCount = changesThisMonth + 1;
-
-                    // Update User Document (Supabase Only)
-                    await saveUserData(uid, {
-                        username: newUsername,
-                        usernameChangesThisMonth: newChangesCount,
-                        lastUsernameChangeMonth: currentMonthNumber 
-                    });
-
-                    showMessage(messageElement, `Username successfully changed to ${newUsername}!`, 'success');
-                    
-                    // Re-render the tab content to update the display, counter, and state
-                    setTimeout(() => { switchTab('general'); }, 1500);
-
-                } catch (error) {
-                    console.error("Error updating username:", error);
-                    showMessage(messageElement, `An unexpected error occurred: ${error.message}`, 'error');
-                } finally {
-                    if (messageElement.innerHTML.includes('Error') || messageElement.innerHTML.includes('not allowed') || messageElement.innerHTML.includes('taken')) {
-                        applyUsernameBtn.disabled = false;
-                    }
-                }
-            });
-            
-            
-            // =================================================================
-            // --- PASSWORD CHANGE LOGIC (Conditional) ---
-            // =================================================================
-            if (isEmailPasswordUser) {
-                const currentPasswordInput = document.getElementById('currentPasswordInput');
-                const newPasswordInput = document.getElementById('newPasswordInput');
-                const confirmPasswordInput = document.getElementById('confirmPasswordInput');
-                const applyPasswordBtn = document.getElementById('applyPasswordBtn');
-                const passwordMessage = document.getElementById('passwordMessage');
-                
-                // Input handler for enabling/disabling apply button
-                const checkPasswordFields = () => {
-                    const currentPass = currentPasswordInput.value;
-                    const newPass = newPasswordInput.value;
-                    const confirmPass = confirmPasswordInput.value;
-                    
-                    const MIN_PASS_LENGTH = 6;
-                    
-                    const isLengthValid = newPass.length >= MIN_PASS_LENGTH;
-                    const isMatch = newPass === confirmPass;
-                    const isCurrentProvided = currentPass.length > 0;
-                    
-                    // Enable if all requirements are met
-                    applyPasswordBtn.disabled = !(isLengthValid && isMatch && isCurrentProvided);
-                    
-                    // Provide gentle feedback
-                    showMessage(passwordMessage, '', 'success');
-                    if (newPass.length > 0 && newPass.length < MIN_PASS_LENGTH) {
-                        showMessage(passwordMessage, `New password must be at least ${MIN_PASS_LENGTH} characters.`, 'warning');
-                    } else if (newPass.length >= MIN_PASS_LENGTH && confirmPass.length > 0 && newPass !== confirmPass) {
-                         showMessage(passwordMessage, 'New and confirmation passwords do not match.', 'warning');
-                    } else if (newPass === currentPass && isLengthValid && isMatch) {
-                         showMessage(passwordMessage, 'New password cannot be the same as your current password.', 'warning');
-                         applyPasswordBtn.disabled = true;
-                    }
-                };
-
-                currentPasswordInput.addEventListener('input', checkPasswordFields);
-                newPasswordInput.addEventListener('input', checkPasswordFields);
-                confirmPasswordInput.addEventListener('input', checkPasswordFields);
-                
-                applyPasswordBtn.addEventListener('click', async () => {
-                    applyPasswordBtn.disabled = true;
-                    showMessage(passwordMessage, '', 'success'); // Clear prior message
-                    showMessage(passwordMessage, '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Attempting password change...', 'warning');
-
-                    const currentPass = currentPasswordInput.value;
-                    const newPass = newPasswordInput.value;
-                    
-                    if (newPass.length < 6) {
-                         showMessage(passwordMessage, 'New password must be at least 6 characters.', 'error');
-                         applyPasswordBtn.disabled = false;
-                         return;
-                    }
-                    if (newPass === currentPass) {
-                        showMessage(passwordMessage, 'New password cannot be the same as your current password.', 'error');
-                        applyPasswordBtn.disabled = false;
-                        return;
-                    }
-
-                    try {
-                        // 1. Re-authenticate the user (confirm they know the current password)
-                        const { error: reauthError } = await window.supabase.auth.signInWithPassword({
-                            email: currentUser.email,
-                            password: currentPass
-                        });
-                        if (reauthError) throw reauthError;
-
-                        // 2. Update the password
-                        const { error: updateError } = await window.supabase.auth.updateUser({
-                            password: newPass
-                        });
-                        if (updateError) throw updateError;
-
-                        showMessage(passwordMessage, 'Password successfully updated!', 'success');
-                        
-                        // Clear fields on success
-                        currentPasswordInput.value = '';
-                        newUsernameInput.value = '';
-                        confirmPasswordInput.value = '';
-                        // Re-check fields to disable the button
-                        checkPasswordFields(); 
-
-                    } catch (error) {
-                        console.error("Error changing password:", error);
-                        let errorMessage = "An unknown error occurred.";
-                        
-                        if (error.message) {
-                            errorMessage = `Password change failed: ${error.message}`;
-                        }
-                        showMessage(passwordMessage, errorMessage, 'error');
-                    } finally {
-                        // Re-enable button if there was an error
-                        if (!passwordMessage.innerHTML.includes('success')) {
-                            applyPasswordBtn.disabled = false;
-                        }
-                    }
-                });
-            }
-            
-            // =================================================================
-            // --- ACCOUNT DELETION LOGIC (Supabase) ---
-            // =================================================================
-            const deleteConfirmText = document.getElementById('deleteConfirmText');
-            const finalDeleteBtn = document.getElementById('finalDeleteBtn');
-            const deleteMessage = document.getElementById('deleteMessage');
-
-            /**
-             * Orchestrates the deletion of a user's account and data via Supabase RPC.
-             */
-            const performAccountDeletion = async () => {
-                try {
-                    const userId = currentUser.id;
-                    showLoading("Permanently deleting your account and all associated data...");
-
-                    // 1. Call the Supabase RPC function to delete user data and account
-                    const { error } = await supabase.rpc('delete_user');
-
-                    if (error) throw error;
-
-                    // --- 2. Device Auth Cleanup ---
-                    if (window.TwelveAMAuth) await window.TwelveAMAuth.resetDevice();
-                    localStorage.clear();
-
-                    // --- 3. Sign Out & Redirect to Home ---
-                    if (window.supabase) await window.supabase.auth.signOut();
-                    window.location.href = 'index.html';
-
-                } catch (error) {
-                    console.error("Error deleting account:", error);
-                    let msg = "Failed to delete account completely. Please try again or contact support.";
-                    
-                    if (error.message.includes('permission-denied')) {
-                        msg = 'Deletion failed: Permission denied.';
-                    } else if (error.message) {
-                        msg = `Deletion failed: ${error.message}`;
-                    }
-
-                    if (deleteMessage) showMessage(deleteMessage, msg, 'error');
-                    hideLoading();
-                }
-            };
-
-            if (deleteConfirmText && finalDeleteBtn) {
-                deleteConfirmText.addEventListener('input', () => {
-                    finalDeleteBtn.disabled = deleteConfirmText.value.trim().toLowerCase() !== 'delete my account';
-                });
-
-                finalDeleteBtn.addEventListener('click', performAccountDeletion);
-            }
-        }
-        
-        /**
-         * NEW: Loads data and adds event listeners for the Privacy tab.
-         */
-        async function loadPrivacyTab() {
-            // --- 1. Get Element References ---
-            // Panic Key
-            const panicKeyInputs = document.querySelectorAll('.panic-key-input');
-            const panicUrl1 = document.getElementById('panicUrl1');
-            const panicUrl2 = document.getElementById('panicUrl2');
-            const panicUrl3 = document.getElementById('panicUrl3');
-            const applyPanicKeyBtn = document.getElementById('applyPanicKeyBtn');
-            const panicKeyMessage = document.getElementById('panicKeyMessage');
-            
-            // URL Changer
-            const modeSelect = document.getElementById('tabDisguiseMode');
-            const presetGroup = document.getElementById('tabDisguisePresetGroup');
-            const presetSelect = document.getElementById('tabDisguisePreset');
-            const customGroup = document.getElementById('tabDisguiseCustomGroup');
-            const customTitle = document.getElementById('customTabTitle');
-            const applyUrlChangerBtn = document.getElementById('applyUrlChangerBtn');
-            const urlChangerMessage = document.getElementById('urlChangerMessage');
-            
-            // NEW Favicon Fetcher Elements
-            const faviconFetchInput = document.getElementById('faviconFetchInput');
-            const fetchFaviconBtn = document.getElementById('fetchFaviconBtn');
-            const previewContainer = document.getElementById('favicon-fetch-preview-container');
-            const previewImg = previewContainer.querySelector('img');
-
-            // --- Initialize Custom Dropdowns ---
-            const modeDropdown = setupCustomDropdown(modeSelect, (value) => {
-                presetGroup.classList.toggle('hidden', value !== 'preset');
-                customGroup.classList.toggle('hidden', value !== 'custom');
-            });
-            
-            const presetDropdown = setupCustomDropdown(presetSelect, null);
-
-            
-            // --- 2. Load Panic Key Settings ---
-            try {
-                const settingsMap = await getPanicKeySettings();
-                const key1 = settingsMap.get('panicKey1');
-                const key2 = settingsMap.get('panicKey2');
-                const key3 = settingsMap.get('panicKey3');
-
-                if (key1) {
-                    document.getElementById('panicKey1').value = key1.key || '';
-                    panicUrl1.value = key1.url || '';
-                }
-                if (key2) {
-                    document.getElementById('panicKey2').value = key2.key || '';
-                    panicUrl2.value = key2.url || '';
-                }
-                if (key3) {
-                    document.getElementById('panicKey3').value = key3.key || '';
-                    panicUrl3.value = key3.url || '';
-                }
-            } catch (e) {
-                console.error("Error loading panic key settings:", e);
-                showMessage(panicKeyMessage, 'Error loading panic key settings.', 'error');
-            }
-            
-            // --- 3. Load URL Changer Settings ---
-            const savedUrlSettings = getSavedUrlChangerSetting();
-            
-            // Set values and update UI
-            if (savedUrlSettings.type) {
-                modeDropdown.setValue(savedUrlSettings.type);
-                // Manually trigger visibility logic
-                presetGroup.classList.toggle('hidden', savedUrlSettings.type !== 'preset');
-                customGroup.classList.toggle('hidden', savedUrlSettings.type !== 'custom');
+            if (!devUser && window.TwelveAMAuth && typeof window.TwelveAMAuth.getBoundDeviceAccount === 'function') {
+                devUser = await window.TwelveAMAuth.getBoundDeviceAccount();
             }
 
-            if (savedUrlSettings.type === 'preset' && savedUrlSettings.id) {
-                presetDropdown.setValue(savedUrlSettings.id);
-            } else if (savedUrlSettings.type === 'custom') {
-                customTitle.value = savedUrlSettings.title || '';
-                
-                // NEW logic to load saved custom favicon into the preview
-                if (savedUrlSettings.favicon) {
-                    previewImg.src = savedUrlSettings.favicon;
-                    previewImg.style.display = 'block';
-                }
-            }
+            const currentUsername = devUser?.nickname || devUser?.firstName || 'user';
+            const avatarUrl = devUser?.avatar_url || devUser?.avatar || devUser?.pfp || localStorage.getItem('12am_profile_picture') || '';
+            const safeUsername = String(currentUsername).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-            // --- 4. Add Event Listeners ---
-            
-            // Panic Key Input Validation (Whitelist)
-            const validKeyRegex = /^[a-z0-9`\-=\[\]\\;',\.\/]$/;
-            panicKeyInputs.forEach(input => {
-                input.addEventListener('keydown', e => {
-                    // Allow control keys like Tab, Backspace, Arrow keys
-                    if (e.key.length > 1 && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Tab') {
-                        e.preventDefault();
-                        return;
-                    }
-                    
-                    const lowerKey = e.key.toLowerCase();
-                    
-                    if (lowerKey.length === 1 && !validKeyRegex.test(lowerKey)) {
-                         e.preventDefault(); // Block invalid key
-                         showMessage(panicKeyMessage, `Invalid key. Only a-z, 0-9, and \` - = [ ] \\ ; ' , . / are allowed.`, 'warning');
-                    } else if (lowerKey.length === 1) {
-                        e.preventDefault(); // Prevent typing
-                        input.value = lowerKey; // Set value
-                        showMessage(panicKeyMessage, '', 'success'); // Clear message
-                    }
-                });
-            });
+            mainView.innerHTML = `
+                <div class="w-full max-w-2xl">
+                    <h2 class="text-3xl font-bold text-[var(--text-main)] mb-6">General Settings</h2>
 
-            // Panic Key Apply Button
-            applyPanicKeyBtn.addEventListener('click', async () => {
-                showMessage(panicKeyMessage, '', 'success');
-                const keys = [
-                    document.getElementById('panicKey1').value,
-                    document.getElementById('panicKey2').value,
-                    document.getElementById('panicKey3').value
-                ];
-                const urls = [
-                    panicUrl1.value,
-                    panicUrl2.value,
-                    panicUrl3.value
-                ];
-                
-                const settingsToSave = [];
-                let hasError = false;
-
-                for (let i = 0; i < 3; i++) {
-                    const key = keys[i];
-                    let url = urls[i]; // Make it 'let'
-                    const id = `panicKey${i + 1}`;
-                    
-                    // If either is blank, skip (or save as empty)
-                    if (!key && !url) {
-                         settingsToSave.push({ id, key: '', url: '' });
-                        continue;
-                    }
-                    
-                    // If one is filled but not the other
-                    if ( (key && !url) || (!key && url) ) {
-                        showMessage(panicKeyMessage, `Panic Key ${i+1} is incomplete. Both key and URL must be filled, or both must be empty.`, 'error');
-                        hasError = true;
-                        break;
-                    }
-
-                    // NEW: Check for relative paths and block them to avoid confusion
-                    if (url.startsWith('/') || url.startsWith('../') || url.startsWith('./')) {
-                        showMessage(panicKeyMessage, `Panic Key ${i+1} must be a full web address (e.g., google.com), not a relative path.`, 'error');
-                        hasError = true;
-                        break;
-                    }
-
-                    // NEW: Prepend https:// if it's missing
-                    if (!url.startsWith('https://') && !url.startsWith('http://')) {
-                        url = 'https://' + url;
-                    }
-
-                    // NEW: Validate URL
-                    try {
-                        new URL(url); // This will validate "https://google.com" and "https://youtube.com/page.html"
-                    } catch (e) {
-                        showMessage(panicKeyMessage, `Panic Key ${i+1} has an invalid URL. Please enter a valid web address (e.g., google.com).`, 'error');
-                        hasError = true;
-                        break;
-                    }
-                    
-                    // Add valid setting
-                    settingsToSave.push({ id, key, url }); // Push the (potentially modified) URL
-                }
-
-                if (hasError) return;
-
-                // Check for duplicate keys
-                const filledKeys = settingsToSave.map(s => s.key).filter(k => k);
-                if (new Set(filledKeys).size !== filledKeys.length) {
-                    showMessage(panicKeyMessage, 'Duplicate panic keys found. Each key must be unique.', 'error');
-                    return;
-                }
-                
-                // Save to IndexedDB
-                try {
-                    applyPanicKeyBtn.disabled = true;
-                    showMessage(panicKeyMessage, '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Saving...', 'warning');
-                    await savePanicKeySettings(settingsToSave);
-                    showMessage(panicKeyMessage, 'Panic key settings saved successfully!', 'success');
-                    
-                    // ADDED: Refresh page after 1 second
-                    setTimeout(() => location.reload(), 1000); 
-
-                } catch (e) {
-                    console.error("Error saving panic key settings:", e);
-                    showMessage(panicKeyMessage, 'An error occurred while saving.', 'error');
-                } finally {
-                    applyPanicKeyBtn.disabled = false;
-                }
-            });
-
-            // Mode Select Event Removed - Handled by setupCustomDropdown callback
-
-            // NEW: Favicon Fetcher Button
-            fetchFaviconBtn.addEventListener('click', async () => {
-                let domain = faviconFetchInput.value.trim();
-                if (!domain) {
-                    showMessage(urlChangerMessage, 'Please enter a domain to fetch from.', 'warning');
-                    return;
-                }
-                if (!domain.startsWith('http')) {
-                    domain = 'https://' + domain;
-                }
-
-                fetchFaviconBtn.disabled = true;
-                fetchFaviconBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-                showMessage(urlChangerMessage, 'Fetching favicon...', 'warning');
-
-                try {
-                    if (typeof urlChanger === 'undefined' || !urlChanger.fetchFavicon) {
-                        throw new Error("URL Changer script not loaded correctly.");
-                    }
-                    
-                    const faviconUrl = await urlChanger.fetchFavicon(domain);
-                    
-                    // Show preview
-                    previewImg.src = faviconUrl;
-                    previewImg.style.display = 'block';
-                    
-                    showMessage(urlChangerMessage, 'Favicon found and set as preview.', 'success');
-                    
-                } catch (error) {
-                    console.error("Error fetching favicon:", error);
-                    showMessage(urlChangerMessage, `Failed to find favicon: ${error.message}`, 'error');
-                    previewImg.src = '';
-                    previewImg.style.display = 'none';
-                } finally {
-                    fetchFaviconBtn.disabled = false;
-                    fetchFaviconBtn.textContent = 'Fetch';
-                }
-            });
-
-            // URL Changer Apply Button
-            applyUrlChangerBtn.addEventListener('click', () => {
-                const mode = modeSelect.value;
-                let settingsToSave = { type: 'none' };
-                
-                if (mode === 'preset') {
-                    const presetId = presetSelect.value;
-                    if (!presetId) {
-                         showMessage(urlChangerMessage, 'Please select a preset.', 'error');
-                         return;
-                    }
-                    settingsToSave = { type: 'preset', id: presetId };
-                } 
-                else if (mode === 'custom') {
-                    const title = customTitle.value.trim();
-                    // NEW: Get favicon from preview image
-                    const favicon = (previewImg.src && previewImg.style.display !== 'none') ? previewImg.src : '';
-                    
-                    if (!title && !favicon) { // Check against new favicon variable
-                         showMessage(urlChangerMessage, 'Please provide at least a custom title or fetch a favicon.', 'error'); // Update message
-                        return;
-                    }
-                    settingsToSave = { type: 'custom', title: title, favicon: favicon }; // Use new favicon variable
-                }
-                
-                // Save to localStorage
-                if (saveUrlChangerSetting(settingsToSave)) {
-                    showMessage(urlChangerMessage, 'Tab Disguise settings saved! They will be applied on the next page you load.', 'success');
-                    
-                    // ADDED: Refresh page after 1 second
-                    setTimeout(() => location.reload(), 1000); 
-                    
-                } else {
-                    showMessage(urlChangerMessage, 'An error occurred while saving.', 'error');
-                }
-            });
-        }
-
-        /**
-         * NEW: Loads data and adds event listeners for the Social Permissions tab.
-         */
-        async function loadSocialTab() {
-            // --- 1. School & District Logic ---
-            const schoolDisplay = document.getElementById('current-school-display');
-            const districtDisplay = document.getElementById('current-district-display');
-            const changeSchoolBtn = document.getElementById('changeSchoolBtn');
-            const removeSchoolBtn = document.getElementById('removeSchoolBtn');
-            const schoolRemaining = document.getElementById('schoolChangesRemaining');
-            const schoolMessage = document.getElementById('schoolMessage');
-            
-            const currentView = document.getElementById('school-current-view');
-            const selectorView = document.getElementById('school-selector-view');
-            const cancelChangeBtn = document.getElementById('cancelSchoolChange');
-            const stateSearch = document.getElementById('settings-state-search');
-            const stateResults = document.getElementById('settings-state-results');
-            const schoolSearch = document.getElementById('settings-school-search');
-            const schoolResults = document.getElementById('settings-school-results');
-            const backToStatesBtn = document.getElementById('settings-back-to-states');
-            const stateStep = document.getElementById('settings-state-step');
-            const schoolStep = document.getElementById('settings-school-step');
-
-            if (currentUser) {
-                const uid = currentUser.uid || currentUser.id;
-                const userData = await getUserData(uid);
-                if (!userData) return;
-
-                const currentMonth = new Date().getMonth() + 1;
-                let schoolChangesThisMonth = userData?.schoolChangesThisMonth || 0;
-                const lastSchoolChangeMonth = userData?.lastSchoolChangeMonth || 0;
-
-                if (currentMonth !== lastSchoolChangeMonth) {
-                    schoolChangesThisMonth = 0;
-                }
-
-                schoolDisplay.textContent = userData?.schoolName || 'None';
-                districtDisplay.textContent = userData?.districtId || 'None';
-                schoolRemaining.textContent = `Changes remaining this month: ${Math.max(0, 2 - schoolChangesThisMonth)}`;
-
-                let allStates = [];
-                let currentStateSchools = [];
-                let selectedState = null;
-
-                const fetchStates = async () => {
-                    try {
-                        const res = await fetch('/schools/states.json');
-                        allStates = await res.json();
-                    } catch (err) { console.error("Failed to load states:", err); }
-                };
-
-                const toggleView = (showSelector) => {
-                    currentView.classList.toggle('hidden', showSelector);
-                    selectorView.classList.toggle('hidden', !showSelector);
-                    schoolMessage.textContent = '';
-                };
-
-                changeSchoolBtn.addEventListener('click', async () => {
-                    if (schoolChangesThisMonth >= 2 && currentUser.email !== '4simpleproblems@gmail.com') {
-                        showMessage(schoolMessage, 'You have reached the monthly limit for school changes.', 'error');
-                        return;
-                    }
-                    if (allStates.length === 0) await fetchStates();
-                    toggleView(true);
-                });
-
-                cancelChangeBtn.addEventListener('click', () => toggleView(false));
-
-                stateSearch.oninput = () => {
-                    const term = stateSearch.value.trim().toLowerCase();
-                    if (!term) { stateResults.innerHTML = ''; return; }
-                    const filtered = allStates.filter(s => s.name.toLowerCase().includes(term) || s.abbr.toLowerCase().includes(term));
-                    stateResults.innerHTML = filtered.map(s => `
-                        <div class="p-3 bg-white/5 border border-white/5 rounded-xl cursor-pointer hover:border-indigo-500 transition-all flex justify-between items-center group" onclick="window.settingsSelectState('${s.abbr}')">
-                            <span class="text-sm font-bold text-white">${s.name}</span>
-                            <span class="text-[10px] opacity-40 group-hover:opacity-100 transition-opacity font-mono">${s.abbr}</span>
+                    <!-- 1. Profile Picture -->
+                    <div class="settings-box p-6 mb-6">
+                        <h3 class="text-xl font-bold text-[var(--text-main)] mb-1">Profile Picture</h3>
+                        <p class="text-xs text-[var(--text-muted)] mb-4">Upload a custom profile photo or avatar displayed across 12AM.</p>
+                        <div class="flex items-center gap-6">
+                            <div class="w-20 h-20 rounded-2xl border border-[var(--border-main)] bg-[var(--bg-page)] overflow-hidden flex items-center justify-center relative flex-shrink-0">
+                                <img id="settingsAvatarPreview" src="${avatarUrl || 'images/logo-white.png'}" alt="Avatar" class="w-full h-full object-cover">
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <div class="flex items-center gap-3">
+                                    <label class="btn-toolbar-style btn-primary-override cursor-pointer">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                                        <span>Upload Image</span>
+                                        <input type="file" id="settingsAvatarInput" accept="image/*" class="hidden">
+                                    </label>
+                                    <button type="button" id="settingsRemoveAvatarBtn" class="btn-toolbar-style">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                        <span>Remove</span>
+                                    </button>
+                                </div>
+                                <p class="text-xs text-[var(--text-muted)]">PNG, JPG, or WEBP under 5MB.</p>
+                            </div>
                         </div>
-                    `).join('');
-                    updateSettingsScrollFades(stateResults, 'settings-state-fade-top', 'settings-state-fade-bottom');
-                };
+                        <div id="avatarMessage" class="general-message-area"></div>
+                    </div>
 
-                stateResults.onscroll = () => updateSettingsScrollFades(stateResults, 'settings-state-fade-top', 'settings-state-fade-bottom');
-                schoolResults.onscroll = () => updateSettingsScrollFades(schoolResults, 'settings-school-fade-top', 'settings-school-fade-bottom');
-
-                function updateSettingsScrollFades(el, topId, bottomId) {
-                    const topFade = document.getElementById(topId);
-                    const bottomFade = document.getElementById(bottomId);
-                    if (!el || !topFade || !bottomFade) return;
-
-                    const isAtTop = el.scrollTop <= 5;
-                    const isAtBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 5;
-                    const hasScroll = el.scrollHeight > el.clientHeight;
-
-                    topFade.style.opacity = (hasScroll && !isAtTop) ? '1' : '0';
-                    bottomFade.style.opacity = (hasScroll && !isAtBottom) ? '1' : '0';
-                }
-
-                window.settingsSelectState = async (abbr) => {
-                    selectedState = allStates.find(s => s.abbr === abbr);
-                    stateResults.innerHTML = '<div class="p-4 text-center"><i class="fas fa-spinner fa-spin opacity-20 text-indigo-500"></i></div>';
-                    try {
-                        const res = await fetch(`/schools/${abbr.trim()}.json`);
-                        currentStateSchools = await res.json();
-                        currentStateSchools.sort((a, b) => a.name.localeCompare(b.name));
-                        stateStep.classList.add('hidden');
-                        schoolStep.classList.remove('hidden');
-                        renderSchools('');
-                    } catch (err) { 
-                        showMessage(schoolMessage, 'Failed to load schools.', 'error');
-                    }
-                };
-
-                schoolSearch.oninput = () => renderSchools(schoolSearch.value.trim());
-
-                function renderSchools(term) {
-                    const search = term.toLowerCase();
-                    const filtered = currentStateSchools.filter(s => {
-                        if (!search) return true;
-                        return s.name.toLowerCase().includes(search) || 
-                               (s.district && s.district.toLowerCase().includes(search)) ||
-                               (s.county && s.county.toLowerCase().includes(search));
-                    }).slice(0, 50);
-
-                    schoolResults.innerHTML = filtered.map(s => `
-                        <div class="p-3 bg-white/5 border border-white/5 rounded-xl cursor-pointer hover:border-indigo-500 transition-all" onclick="window.settingsConfirmSchool('${s.name.replace(/'/g, "\\'")}', '${(s.district || "").replace(/'/g, "\\'")}')">
-                            <div class="font-bold text-xs text-white mb-1 truncate">${s.name}</div>
-                            <div class="text-[9px] opacity-40 uppercase tracking-widest font-black truncate">${s.district || 'Independent'}</div>
+                    <!-- 2. Username Editing -->
+                    <div class="settings-box p-6 mb-6">
+                        <h3 class="text-xl font-bold text-[var(--text-main)] mb-1">Username</h3>
+                        <p class="text-xs text-[var(--text-muted)] mb-4">Choose your display name and unique handle on 12AM.</p>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <input type="text" id="settingsUsernameInput" value="${safeUsername}" placeholder="Enter username..." maxlength="24" class="input-text-style flex-1 font-mono">
+                            <button type="button" id="settingsSaveUsernameBtn" class="btn-toolbar-style btn-primary-override whitespace-nowrap">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                                <span>Save Username</span>
+                            </button>
                         </div>
-                    `).join('');
-                    updateSettingsScrollFades(schoolResults, 'settings-school-fade-top', 'settings-school-fade-bottom');
-                }
+                        <div id="usernameMessage" class="general-message-area"></div>
+                    </div>
 
-                window.settingsConfirmSchool = async (schoolName, districtName) => {
-                    if (confirm(`Confirm change to: ${schoolName}?`)) {
-                        try {
-                            await saveUserData(uid, {
-                                schoolId: schoolName,
-                                schoolName: schoolName,
-                                districtId: districtName || schoolName,
-                                state: selectedState.name,
-                                stateAbbr: selectedState.abbr,
-                                schoolSkipped: false,
-                                schoolChangesThisMonth: schoolChangesThisMonth + 1,
-                                lastSchoolChangeMonth: currentMonth
-                            });
-                            location.reload();
-                        } catch (e) {
-                            showMessage(schoolMessage, 'Failed to update school.', 'error');
-                        }
+                    <!-- 3. Security PIN (Requires Current PIN) -->
+                    <div class="settings-box p-6 mb-6">
+                        <h3 class="text-xl font-bold text-[var(--text-main)] mb-1">Security PIN</h3>
+                        <p class="text-xs text-[var(--text-muted)] mb-4">Update your 4 to 6-digit device unlock PIN. Your current PIN is required for verification.</p>
+                        
+                        <div class="flex flex-col gap-3 max-w-sm">
+                            <div>
+                                <label class="text-xs text-[var(--text-muted)] mb-1 block">Current PIN</label>
+                                <input type="password" id="currentPinInput" placeholder="••••" maxlength="6" pattern="[0-9]{4,6}" inputmode="numeric" class="input-text-style font-mono tracking-widest text-base">
+                            </div>
+                            <div>
+                                <label class="text-xs text-[var(--text-muted)] mb-1 block">New PIN (4–6 digits)</label>
+                                <input type="password" id="newPinInput" placeholder="••••" maxlength="6" pattern="[0-9]{4,6}" inputmode="numeric" class="input-text-style font-mono tracking-widest text-base">
+                            </div>
+                            <div>
+                                <label class="text-xs text-[var(--text-muted)] mb-1 block">Confirm New PIN</label>
+                                <input type="password" id="confirmNewPinInput" placeholder="••••" maxlength="6" pattern="[0-9]{4,6}" inputmode="numeric" class="input-text-style font-mono tracking-widest text-base">
+                            </div>
+                            <button type="button" id="settingsUpdatePinBtn" class="btn-toolbar-style btn-primary-override mt-2 self-start">
+                                <i class="fa-solid fa-key"></i>
+                                <span>Update PIN</span>
+                            </button>
+                        </div>
+                        <div id="pinMessage" class="general-message-area"></div>
+                    </div>
+                </div>
+            `;
+
+            // 1. Avatar Upload
+            const avatarInput = document.getElementById('settingsAvatarInput');
+            const avatarPreview = document.getElementById('settingsAvatarPreview');
+            const removeAvatarBtn = document.getElementById('settingsRemoveAvatarBtn');
+            const avatarMsg = document.getElementById('avatarMessage');
+
+            if (avatarInput) {
+                avatarInput.addEventListener('change', (e) => {
+                    const file = e.target.files && e.target.files[0];
+                    if (!file) return;
+                    if (file.size > 5 * 1024 * 1024) {
+                        showMessage(avatarMsg, 'File is too large (max 5MB).', 'error');
+                        return;
                     }
-                };
+                    const reader = new FileReader();
+                    reader.onload = (evt) => {
+                        const dataUrl = evt.target.result;
+                        avatarPreview.src = dataUrl;
+                        try {
+                            localStorage.setItem('12am_profile_picture', dataUrl);
+                            if (devUser) {
+                                devUser.avatar_url = dataUrl;
+                                devUser.avatar = dataUrl;
+                                devUser.pfp = dataUrl;
+                                localStorage.setItem('12am_user', JSON.stringify(devUser));
+                            }
+                            const bound = JSON.parse(localStorage.getItem('12am_device_account') || 'null');
+                            if (bound) {
+                                bound.avatar_url = dataUrl;
+                                bound.avatar = dataUrl;
+                                bound.pfp = dataUrl;
+                                localStorage.setItem('12am_device_account', JSON.stringify(bound));
+                            }
+                        } catch(err) {}
+                        if (typeof window.__updateNavbarUser === 'function') {
+                            window.__updateNavbarUser();
+                        }
+                        showMessage(avatarMsg, 'Profile picture updated successfully!', 'success');
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
 
-                backToStatesBtn.onclick = () => {
-                    schoolStep.classList.add('hidden');
-                    stateStep.classList.remove('hidden');
-                };
+            if (removeAvatarBtn) {
+                removeAvatarBtn.addEventListener('click', () => {
+                    avatarPreview.src = 'images/logo-white.png';
+                    try {
+                        localStorage.removeItem('12am_profile_picture');
+                        if (devUser) {
+                            delete devUser.avatar_url;
+                            delete devUser.avatar;
+                            delete devUser.pfp;
+                            localStorage.setItem('12am_user', JSON.stringify(devUser));
+                        }
+                        const bound = JSON.parse(localStorage.getItem('12am_device_account') || 'null');
+                        if (bound) {
+                            delete bound.avatar_url;
+                            delete bound.avatar;
+                            delete bound.pfp;
+                            localStorage.setItem('12am_device_account', JSON.stringify(bound));
+                        }
+                    } catch(err) {}
+                    if (typeof window.__updateNavbarUser === 'function') {
+                        window.__updateNavbarUser();
+                    }
+                    showMessage(avatarMsg, 'Profile picture removed.', 'success');
+                });
+            }
 
-                removeSchoolBtn.addEventListener('click', async () => {
-                    if (schoolChangesThisMonth >= 2 && currentUser.email !== '4simpleproblems@gmail.com') {
-                        showMessage(schoolMessage, 'You have reached the monthly limit for school changes.', 'error');
+            // 2. Username Save
+            const usernameInput = document.getElementById('settingsUsernameInput');
+            const saveUsernameBtn = document.getElementById('settingsSaveUsernameBtn');
+            const usernameMsg = document.getElementById('usernameMessage');
+
+            if (saveUsernameBtn && usernameInput) {
+                saveUsernameBtn.addEventListener('click', async () => {
+                    const newUsername = usernameInput.value.trim();
+                    if (!newUsername || newUsername.length < 2) {
+                        showMessage(usernameMsg, 'Username must be at least 2 characters.', 'error');
+                        return;
+                    }
+                    if (newUsername.length > 24) {
+                        showMessage(usernameMsg, 'Username cannot exceed 24 characters.', 'error');
+                        return;
+                    }
+                    try {
+                        if (devUser) {
+                            devUser.nickname = newUsername;
+                            devUser.firstName = newUsername;
+                            localStorage.setItem('12am_user', JSON.stringify(devUser));
+                        }
+                        const bound = JSON.parse(localStorage.getItem('12am_device_account') || 'null');
+                        if (bound) {
+                            bound.nickname = newUsername;
+                            bound.firstName = newUsername;
+                            localStorage.setItem('12am_device_account', JSON.stringify(bound));
+                        }
+                        if (window.supabase) {
+                            const uid = devUser?.id || devUser?.deviceToken;
+                            if (uid) {
+                                await window.supabase.from('profiles').upsert({ id: uid, username: newUsername }).catch(() => {});
+                            }
+                        }
+                    } catch(err) {}
+                    if (typeof window.__updateNavbarUser === 'function') {
+                        window.__updateNavbarUser();
+                    }
+                    showMessage(usernameMsg, 'Username saved successfully!', 'success');
+                });
+            }
+
+            // 3. PIN Update
+            const currentPinInput = document.getElementById('currentPinInput');
+            const newPinInput = document.getElementById('newPinInput');
+            const confirmNewPinInput = document.getElementById('confirmNewPinInput');
+            const updatePinBtn = document.getElementById('settingsUpdatePinBtn');
+            const pinMsg = document.getElementById('pinMessage');
+
+            if (updatePinBtn) {
+                updatePinBtn.addEventListener('click', async () => {
+                    const currentPin = (currentPinInput.value || '').trim();
+                    const newPin = (newPinInput.value || '').trim();
+                    const confirmPin = (confirmNewPinInput.value || '').trim();
+
+                    let bound = null;
+                    if (window.TwelveAMAuth && typeof window.TwelveAMAuth.getBoundDeviceAccount === 'function') {
+                        bound = await window.TwelveAMAuth.getBoundDeviceAccount();
+                    }
+                    if (!bound) {
+                        try {
+                            bound = JSON.parse(localStorage.getItem('12am_device_account') || 'null');
+                        } catch(e) {}
+                    }
+
+                    const actualPin = bound?.pin || devUser?.pin || '';
+
+                    if (!currentPin) {
+                        showMessage(pinMsg, 'Please enter your current PIN.', 'error');
+                        return;
+                    }
+                    if (actualPin && currentPin !== actualPin) {
+                        showMessage(pinMsg, 'Current PIN is incorrect.', 'error');
+                        return;
+                    }
+                    if (!/^\d{4,6}$/.test(newPin)) {
+                        showMessage(pinMsg, 'New PIN must be between 4 and 6 numeric digits.', 'error');
+                        return;
+                    }
+                    if (newPin !== confirmPin) {
+                        showMessage(pinMsg, 'New PIN and confirmation PIN do not match.', 'error');
                         return;
                     }
 
-                    if (confirm('Are you sure you want to remove your school and district affiliation?')) {
-                        try {
-                            await saveUserData(uid, {
-                                schoolId: null,
-                                schoolName: null,
-                                districtId: null,
-                                state: null,
-                                stateAbbr: null,
-                                schoolSkipped: true,
-                                schoolChangesThisMonth: schoolChangesThisMonth + 1,
-                                lastSchoolChangeMonth: currentMonth
-                            });
-                            location.reload();
-                        } catch (e) {
-                            showMessage(schoolMessage, 'Failed to remove school.', 'error');
-                        }
-                    }
-                });
-            }
-
-            // --- 2. Activity Presence Logic ---
-            const showOfflineToggle = document.getElementById('showOfflineToggle');
-            const saveActivityPresenceBtn = document.getElementById('saveActivityPresenceBtn');
-            const activityPresenceMessage = document.getElementById('activityPresenceMessage');
-
-            if (currentUser && showOfflineToggle && saveActivityPresenceBtn) {
-                const uid = currentUser.uid || currentUser.id;
-                const userData = await getUserData(uid);
-                if (userData) {
-                    showOfflineToggle.checked = !!userData.showOffline;
-                }
-
-                saveActivityPresenceBtn.addEventListener('click', async () => {
                     try {
-                        saveActivityPresenceBtn.disabled = true;
-                        showMessage(activityPresenceMessage, '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Saving...', 'warning');
+                        if (bound) {
+                            bound.pin = newPin;
+                            localStorage.setItem('12am_device_account', JSON.stringify(bound));
+                        }
+                        if (devUser) {
+                            devUser.pin = newPin;
+                            localStorage.setItem('12am_user', JSON.stringify(devUser));
+                        }
+                        if (window.indexedDB) {
+                            try {
+                                const req = indexedDB.open('12AM_DeviceDB', 1);
+                                req.onsuccess = (e) => {
+                                    const db = e.target.result;
+                                    if (db.objectStoreNames.contains('device_account')) {
+                                        const tx = db.transaction('device_account', 'readwrite');
+                                        tx.objectStore('device_account').put({
+                                            id: 'primary_device',
+                                            deviceToken: localStorage.getItem('12am_device_token') || '',
+                                            account: bound || devUser
+                                        });
+                                    }
+                                };
+                            } catch(idbErr) {}
+                        }
+                    } catch(err) {}
 
-                        await saveUserData(uid, {
-                            showOffline: showOfflineToggle.checked
-                        });
-
-                        showMessage(activityPresenceMessage, 'Privacy settings saved!', 'success');
-                    } catch (e) {
-                        console.error("Error saving privacy settings:", e);
-                        showMessage(activityPresenceMessage, 'Error saving settings.', 'error');
-                    } finally {
-                        saveActivityPresenceBtn.disabled = false;
-                    }
+                    currentPinInput.value = '';
+                    newPinInput.value = '';
+                    confirmNewPinInput.value = '';
+                    showMessage(pinMsg, 'PIN updated successfully!', 'success');
                 });
             }
         }
-        
-        
+
+
         /**
          * NEW: Loads data and adds event listeners for the Personalization tab.
          */

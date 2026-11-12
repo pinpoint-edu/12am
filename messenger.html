@@ -55,14 +55,24 @@
             --btn-text: var(--button-text, #8b5cf6);
         }
 
+        html, body {
+            height: 100vh;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body { 
             font-family: 'Geist', sans-serif; 
             background-color: var(--bg-page); 
             color: var(--text-muted); 
             font-size: 15px;
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
+            padding-top: var(--navbar-height, 64px) !important;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
             -webkit-font-smoothing: antialiased;
         }
 
@@ -213,6 +223,7 @@
 
         /* App Layout Container below Navbar */
         .messenger-frame {
+            flex: 1;
             height: calc(100vh - var(--navbar-height, 64px));
             width: 100vw;
             display: flex;

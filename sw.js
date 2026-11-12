@@ -1,24 +1,5 @@
 let streamRouter = null;
-try {
-    const d = (a) => String.fromCharCode(...a);
-    const p1 = d([47, 117, 118, 46, 98, 117, 110, 100, 108, 101, 46, 106, 115]);
-    const p2 = d([47, 117, 118, 46, 99, 111, 110, 102, 105, 103, 46, 106, 115]);
-    const p3 = d([47, 117, 118, 46, 115, 119, 46, 106, 115]);
-    const kCfg = d([95, 95, 117, 118, 36, 99, 111, 110, 102, 105, 103]);
-    const kCls = d([85, 86, 83, 101, 114, 118, 105, 99, 101, 87, 111, 114, 107, 101, 114]);
-    try {
-        importScripts(p1);
-        importScripts(p2);
-        importScripts((self[kCfg] && self[kCfg].sw) || p3);
-    } catch (e1) {
-        importScripts(p1.slice(1));
-        importScripts(p2.slice(1));
-        importScripts(p3.slice(1));
-    }
-    if (self[kCls]) {
-        streamRouter = new self[kCls]();
-    }
-} catch (e) {}
+// Ultraviolet / BareMux SharedWorker disabled - proxy traffic routed via unblocker gateway
 
 let textbookHTML = "";
 

@@ -87,13 +87,13 @@
             to { background-position: 300% center; }
         }
 
-        /* Hero Button */
+        /* Hero Button (Fully Rounded Pill) */
         .btn-primary-override {
             background-color: var(--btn-bg) !important;
             border: 1px solid var(--accent-color) !important;
             color: var(--accent-color) !important;
             outline: 1px solid var(--accent-glow);
-            border-radius: 14px;
+            border-radius: 9999px !important;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             font-weight: 500 !important;
             text-decoration: none;
@@ -106,16 +106,16 @@
             box-shadow: 0 12px 30px -8px var(--accent-glow);
         }
 
-        /* Social Link Squircles */
+        /* Fully Rounded Pill Action Buttons */
         .hero-btn-base {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 0.65rem 1.25rem;
+            padding: 0.65rem 1.4rem;
             font-size: 0.85rem;
             font-weight: 400 !important;
             color: var(--text-muted);
-            border-radius: 12px; 
+            border-radius: 9999px !important; 
             text-decoration: none;
             background: var(--bg-card);
             border: 1px solid var(--border-main);
@@ -190,16 +190,11 @@
     </main>
 
     <footer class="cinema-footer">
-        <div class="max-w-6xl mx-auto flex items-center justify-between flex-wrap gap-4 text-xs text-[var(--text-muted)]">
-            <div class="flex items-center gap-2.5">
-                <img src="images/logo-white.png" class="h-5 w-auto opacity-80 navbar-logo" alt="12AM">
-                <span>&copy; 2026 12AM Platform</span>
-            </div>
-            <div class="flex items-center gap-4">
-                <a href="dashboard.html" class="hover:text-[var(--text-main)] transition-colors">Dashboard</a>
-                <a href="legal.html" class="hover:text-[var(--text-main)] transition-colors">Legal &amp; Privacy</a>
-                <a href="settings.html" class="hover:text-[var(--text-main)] transition-colors">Settings</a>
-            </div>
+        <div class="max-w-xl mx-auto flex items-center justify-center flex-wrap gap-3 text-xs text-[var(--text-muted)] text-center">
+            <img src="images/logo-white.png" class="h-5 w-auto opacity-70 navbar-logo" alt="12AM">
+            <span>&copy; 2026 12AM. All rights reserved.</span>
+            <span class="opacity-30">•</span>
+            <a href="legal.html" class="hover:text-[var(--accent-color)] transition-colors">Terms &amp; Policies</a>
         </div>
     </footer>
 

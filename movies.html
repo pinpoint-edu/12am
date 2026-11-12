@@ -166,10 +166,15 @@
         }
 
         .cinema-squircle-btn.active {
-            background: var(--accent-color);
-            color: #ffffff !important;
+            background: var(--bg-card);
+            color: var(--accent-color) !important;
             border-color: var(--accent-color);
-            box-shadow: 0 0 15px var(--accent-glow);
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        .cinema-squircle-btn.active:hover {
+            background: var(--btn-bg);
+            color: #ffffff !important;
         }
 
         .cinema-squircle-btn .material-symbols-sharp {
@@ -569,22 +574,52 @@
             background: #000000;
         }
 
-        /* Minimal clean footer */
-        .cinema-footer {
-            margin-top: 5rem;
-            border-top: 1px solid var(--border-main);
-            padding: 2.5rem 1.5rem;
-            background: var(--bg-card);
+        /* Home View Media Rows */
+        .media-row-section {
+            margin-bottom: 3rem;
+            width: 100%;
         }
 
-        .cinema-footer-inner {
-            max-width: 1350px;
-            margin: 0 auto;
+        .media-row-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-faint);
+        }
+
+        .media-row-title {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: var(--text-main);
+            letter-spacing: -0.02em;
+        }
+
+        .media-row-scroll {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+            gap: 1.25rem;
+            width: 100%;
+        }
+
+        /* Minimal clean centered footer */
+        .cinema-footer {
+            margin-top: 5rem;
+            border-top: 1px solid var(--border-faint);
+            padding: 2rem 1.5rem;
+            background: transparent;
+        }
+
+        .cinema-footer-inner {
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
             flex-wrap: wrap;
-            gap: 1.5rem;
+            text-align: center;
         }
     </style>
 </head>
@@ -701,20 +736,13 @@
         </div>
     </div>
 
-    <!-- Footer -->
+    <!-- Minimal Centered Footer -->
     <footer class="cinema-footer">
         <div class="cinema-footer-inner">
-            <div class="flex items-center gap-3">
-                <img src="images/logo-white.png" class="h-6 w-auto opacity-80" alt="12AM">
-                <span class="text-sm font-semibold tracking-wider text-[var(--text-main)]">12AM Movies &amp; Shows</span>
-            </div>
-            <p class="text-xs text-[var(--text-muted)]">&copy; 2026 12AM. Powered by Vidy video embed proxy.</p>
-            <div class="flex items-center gap-4 text-xs text-[var(--text-muted)]">
-                <a href="dashboard.html" class="hover:text-[var(--text-main)] transition-colors">Dashboard</a>
-                <a href="games.html" class="hover:text-[var(--text-main)] transition-colors">Games</a>
-                <a href="music.html" class="hover:text-[var(--text-main)] transition-colors">Music</a>
-                <a href="legal.html" class="hover:text-[var(--text-main)] transition-colors">Terms</a>
-            </div>
+            <img src="images/logo-white.png" class="h-5 w-auto opacity-70" alt="12AM">
+            <span class="text-xs text-[var(--text-muted)]">&copy; 2026 12AM. All rights reserved.</span>
+            <span class="text-xs text-[var(--text-muted)] opacity-30">•</span>
+            <a href="legal.html" class="text-xs text-[var(--text-muted)] hover:text-[var(--accent-color)] transition-colors">Terms &amp; Policies</a>
         </div>
     </footer>
 
@@ -783,16 +811,62 @@
 
         window.addEventListener('12am:theme-changed', applyThemeLogo);
 
-        // Load Trending Worldwide
+        // Load Trending Worldwide with 3 Dedicated Rows: Top Movies, Top TV Series, Top Anime
         async function loadTrending() {
-            const data = await fetchTMDB('/trending/all/day');
-            if (!data || !data.results) return;
+            const headingEl = document.getElementById('gridHeading');
+            const countEl = document.getElementById('resultsCount');
+            const grid = document.getElementById('cinemaGrid');
 
-            const items = data.results.filter(i => (i.title || i.name) && (i.poster_path || i.backdrop_path));
-            if (items.length > 0) {
-                renderSpotlight(items[0]);
+            if (headingEl) headingEl.style.display = 'none';
+            if (countEl) countEl.style.display = 'none';
+
+            grid.innerHTML = '<div class="py-12 text-center text-sm text-[var(--text-muted)]"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading cinema rows...</div>';
+
+            const [moviesRes, tvRes, animeList] = await Promise.all([
+                fetchTMDB('/movie/popular'),
+                fetchTMDB('/tv/popular'),
+                fetchAnimeData()
+            ]);
+
+            const topMovies = (moviesRes?.results || []).map(i => ({ ...i, media_type: 'movie' }));
+            const topTV = (tvRes?.results || []).map(i => ({ ...i, media_type: 'tv' }));
+            const topAnime = animeList || [];
+
+            if (topMovies.length > 0) {
+                renderSpotlight(topMovies[0]);
             }
-            renderGrid(items, 'Trending Worldwide');
+
+            grid.innerHTML = `
+                <div class="media-row-section">
+                    <div class="media-row-header">
+                        <h2 class="media-row-title">Top Movies</h2>
+                        <button class="text-xs text-[var(--accent-color)] hover:underline cursor-pointer bg-transparent border-0" onclick="switchCinemaTab('movie')">View All</button>
+                    </div>
+                    <div class="media-row-scroll">
+                        ${topMovies.slice(0, 10).map(item => createMediaCardHTML(item)).join('')}
+                    </div>
+                </div>
+
+                <div class="media-row-section">
+                    <div class="media-row-header">
+                        <h2 class="media-row-title">Top TV Series</h2>
+                        <button class="text-xs text-[var(--accent-color)] hover:underline cursor-pointer bg-transparent border-0" onclick="switchCinemaTab('tv')">View All</button>
+                    </div>
+                    <div class="media-row-scroll">
+                        ${topTV.slice(0, 10).map(item => createMediaCardHTML(item)).join('')}
+                    </div>
+                </div>
+
+                <div class="media-row-section">
+                    <div class="media-row-header">
+                        <h2 class="media-row-title">Top Anime</h2>
+                        <button class="text-xs text-[var(--accent-color)] hover:underline cursor-pointer bg-transparent border-0" onclick="switchCinemaTab('anime')">View All</button>
+                    </div>
+                    <div class="media-row-scroll">
+                        ${topAnime.slice(0, 10).map(item => createMediaCardHTML(item)).join('')}
+                    </div>
+                </div>
+            `;
         }
 
         // Load Movies
@@ -813,8 +887,8 @@
             renderGrid(items, 'Popular TV Series');
         }
 
-        // Load Anime (via AniList GraphQL API)
-        async function loadAnime() {
+        // Fetch Anime Data (via AniList GraphQL API)
+        async function fetchAnimeData() {
             const query = `
             query {
                 Page(page: 1, perPage: 24) {
@@ -843,7 +917,7 @@
                 });
                 const json = await res.json();
                 const media = json?.data?.Page?.media || [];
-                const items = media.map(a => ({
+                return media.map(a => ({
                     id: a.id,
                     title: a.title.english || a.title.romaji,
                     name: a.title.english || a.title.romaji,
@@ -856,11 +930,17 @@
                     isAnime: true,
                     totalEpisodes: a.episodes || 12
                 }));
-                if (items.length > 0) renderSpotlight(items[0]);
-                renderGrid(items, 'Trending Anime');
             } catch(e) {
                 console.warn('AniList Anime Error:', e);
+                return [];
             }
+        }
+
+        // Load Anime
+        async function loadAnime() {
+            const items = await fetchAnimeData();
+            if (items.length > 0) renderSpotlight(items[0]);
+            renderGrid(items, 'Trending Anime');
         }
 
         // Switch Tabs
@@ -907,51 +987,59 @@
             playBtn.onclick = () => openPlayer(item);
         }
 
+        function createMediaCardHTML(item) {
+            const isAnime = item.isAnime || item.media_type === 'anime';
+            const isMovie = !isAnime && (item.media_type === 'movie' || Boolean(item.title));
+            const title = item.title || item.name || 'Untitled';
+            const year = isAnime ? 'Anime' : (item.release_date || item.first_air_date || '2026').slice(0, 4);
+            const rating = item.vote_average ? item.vote_average.toString() : '7.8';
+            
+            let poster = 'images/logo-white.png';
+            if (item.poster_path) {
+                poster = item.poster_path.startsWith('http') ? item.poster_path : `${IMG_W500}${item.poster_path}`;
+            }
+
+            const itemPayload = JSON.stringify(item).replace(/'/g, "&apos;");
+
+            return `
+                <div class="media-card" onclick='openPlayer(${itemPayload})'>
+                    <div class="media-poster-wrap">
+                        <img src="${poster}" alt="${title}" class="media-poster" loading="lazy">
+                        <span class="media-badge-rating">
+                            <span class="material-symbols-sharp text-[13px] text-yellow-400">star</span>
+                            <span>${rating}</span>
+                        </span>
+                        <span class="media-badge-type">${isAnime ? 'Anime' : (isMovie ? 'Movie' : 'TV')}</span>
+                    </div>
+                    <div class="media-info">
+                        <h3 class="media-title" title="${title}">${title}</h3>
+                        <div class="media-meta-row">
+                            <span>${year}</span>
+                            <span class="text-[var(--accent-color)] font-medium inline-flex items-center gap-1">
+                                <span class="material-symbols-sharp text-[14px]">play_arrow</span>Watch
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
         // Render Media Grid
         function renderGrid(items, heading) {
             const grid = document.getElementById('cinemaGrid');
             const headingEl = document.getElementById('gridHeading');
             const countEl = document.getElementById('resultsCount');
 
-            if (headingEl) headingEl.textContent = heading;
-            if (countEl) countEl.textContent = `${items.length} titles available`;
+            if (headingEl) {
+                headingEl.style.display = 'block';
+                headingEl.textContent = heading;
+            }
+            if (countEl) {
+                countEl.style.display = 'block';
+                countEl.textContent = `${items.length} titles available`;
+            }
 
-            grid.innerHTML = items.map(item => {
-                const isAnime = item.isAnime || item.media_type === 'anime';
-                const isMovie = !isAnime && (item.media_type === 'movie' || Boolean(item.title));
-                const title = item.title || item.name || 'Untitled';
-                const year = isAnime ? 'Anime' : (item.release_date || item.first_air_date || '2026').slice(0, 4);
-                const rating = item.vote_average ? item.vote_average.toString() : '7.8';
-                
-                let poster = 'images/logo-white.png';
-                if (item.poster_path) {
-                    poster = item.poster_path.startsWith('http') ? item.poster_path : `${IMG_W500}${item.poster_path}`;
-                }
-
-                const itemPayload = JSON.stringify(item).replace(/'/g, "&apos;");
-
-                return `
-                    <div class="media-card" onclick='openPlayer(${itemPayload})'>
-                        <div class="media-poster-wrap">
-                            <img src="${poster}" alt="${title}" class="media-poster" loading="lazy">
-                            <span class="media-badge-rating">
-                                <span class="material-symbols-sharp text-[13px] text-yellow-400">star</span>
-                                <span>${rating}</span>
-                            </span>
-                            <span class="media-badge-type">${isAnime ? 'Anime' : (isMovie ? 'Movie' : 'TV')}</span>
-                        </div>
-                        <div class="media-info">
-                            <h3 class="media-title" title="${title}">${title}</h3>
-                            <div class="media-meta-row">
-                                <span>${year}</span>
-                                <span class="text-[var(--accent-color)] font-semibold inline-flex items-center gap-1">
-                                    <span class="material-symbols-sharp text-[14px]">play_arrow</span>Watch
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            grid.innerHTML = items.map(item => createMediaCardHTML(item)).join('');
         }
 
         // Search Setup

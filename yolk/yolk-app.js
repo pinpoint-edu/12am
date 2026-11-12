@@ -2446,7 +2446,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function performSearch(query, clear) {
         isLoadingMore = true;
         if (clear) {
-            searchResults.innerHTML = '<div class="text-[11px] font-semibold text-zinc-400 uppercase tracking-widest text-left w-full mb-1 pl-5">Searching YouTube Music…</div>';
+            searchResults.innerHTML = '<div class="text-[11px] font-semibold text-zinc-400 uppercase tracking-widest text-left w-full mb-1 pl-5">Searching…</div>';
             if (query && query.trim().length >= 2) {
                 saveRecentSearch(query.trim());
             }
@@ -2501,7 +2501,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const hasAnyResults = (tracks && tracks.length > 0) || (albums && albums.length > 0) || (artists && artists.length > 0) || (playlists && playlists.length > 0);
 
         if (!hasAnyResults) {
-            searchResults.innerHTML = '<div class="text-xs text-zinc-400 pl-5 py-4">No results found on YouTube Music.</div>';
+            searchResults.innerHTML = '<div class="text-xs text-zinc-400 pl-5 py-4">No results found.</div>';
             return;
         }
 

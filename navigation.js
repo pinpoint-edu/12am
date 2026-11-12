@@ -13,6 +13,7 @@
         { id: "movies", name: "Movies", icon: "fa-solid fa-film", url: "movies.html" },
         { id: "music", name: "Music", icon: "fa-solid fa-music", url: "music.html" },
         { id: "messenger", name: "Messenger", icon: "fa-solid fa-comments", url: "messenger.html" },
+        { id: "soundboard", name: "Soundboard", icon: "fa-solid fa-volume-high", url: "soundboard.html" },
         { id: "notes", name: "Notes", icon: "fa-solid fa-note-sticky", url: "notes.html" },
         { id: "dictionary", name: "Dictionary", icon: "fa-solid fa-book-bookmark", url: "dictionary.html" },
         { id: "ai", name: "AI", icon: "fa-solid fa-robot", url: "ai.html" },
@@ -30,6 +31,9 @@
         const cleanName = path.split('/').filter(Boolean).pop() || '';
         const base = cleanName.replace(/\.html$/, '');
 
+        // If on landing or legal, no tab is active
+        if (base === 'index' || base === 'legal' || base === '') return '';
+
         // Direct matching against NAV_PAGES
         for (const p of NAV_PAGES) {
             if (base === p.id) return p.id;
@@ -40,14 +44,15 @@
         if (base === 'movies' || base.includes('movie') || href.includes('movies')) return 'movies';
         if (base === 'music' || base.includes('music') || href.includes('music') || href.includes('yolk')) return 'music';
         if (base === 'messenger' || base.includes('messenger') || href.includes('messenger')) return 'messenger';
+        if (base === 'soundboard' || base.includes('sound') || href.includes('soundboard')) return 'soundboard';
         if (base === 'notes' || base.includes('note') || href.includes('notes')) return 'notes';
         if (base === 'dictionary' || base.includes('dict') || href.includes('dictionary')) return 'dictionary';
         if (base === 'ai' || base.includes('ai') || href.includes('/ai')) return 'ai';
         if (base === 'proxy' || base.includes('proxy') || base.includes('web') || href.includes('proxy')) return 'proxy';
         if (base === 'settings' || base.includes('setting') || href.includes('settings')) return 'settings';
-        if (base === 'dashboard' || base.includes('dash') || href.includes('dashboard') || base === '' || base === 'index') return 'dashboard';
+        if (base === 'dashboard' || base.includes('dash') || href.includes('dashboard')) return 'dashboard';
 
-        return 'dashboard';
+        return '';
     }
 
     // Local Page Visit & Duration Tracker
@@ -128,12 +133,16 @@
         if (currentUser && (currentUser.nickname || currentUser.firstName)) {
             const displayName = currentUser.firstName ? `${currentUser.firstName} ${currentUser.lastName || ''}`.trim() : currentUser.nickname;
             const handle = currentUser.nickname || 'user';
+            const avatarUrl = currentUser.avatar_url || currentUser.avatar || currentUser.pfp || currentUser.photoURL || localStorage.getItem('12am_profile_picture');
+            const avatarHtml = avatarUrl 
+                ? `<img src="${escapeHtml(avatarUrl)}" alt="Avatar" class="auth-toggle-avatar" onerror="this.outerHTML='<i class=\\'fa-solid fa-user-check\\'></i>'">` 
+                : `<i class="fa-solid fa-user-check"></i>`;
 
             return `
                 <div class="nav-right-controls" id="navRightControls">
                     <div id="auth-button-container" class="auth-btn-container">
                         <button id="auth-toggle" class="auth-toggle-btn" title="@${escapeHtml(handle)}">
-                            <i class="fa-solid fa-user-check"></i>
+                            ${avatarHtml}
                         </button>
                         <div id="auth-menu-container" class="auth-menu-container closed">
                             <div class="auth-menu-header">
@@ -241,6 +250,12 @@
         const activeId = getActivePageId();
         const logoSrc = getLogoSrc();
 
+        // Check if page is simplified navbar (index.html or legal.html: no center tabs)
+        const path = (window.location.pathname || '').toLowerCase();
+        const cleanName = path.split('/').filter(Boolean).pop() || '';
+        const base = cleanName.replace(/\.html$/, '');
+        const isSimplifiedNav = base === 'index' || base === 'legal' || path.endsWith('/index.html') || path.endsWith('/legal.html') || path === '/' || path === '';
+
         // 1. Brand Logo
         const brandHtml = `
             <a href="index.html" class="nav-brand-group" title="12AM">
@@ -248,7 +263,20 @@
             </a>
         `;
 
-        // 2. Tabs with relative URLs
+        // 2. Right Controls: v6 Auth Dropdown
+        const rightControlsHtml = getRightControlsHtml();
+
+        if (isSimplifiedNav) {
+            container.innerHTML = `
+                ${brandHtml}
+                ${rightControlsHtml}
+            `;
+            setupPanicKey();
+            setupAuthMenuListeners();
+            return;
+        }
+
+        // 3. Tabs with relative URLs
         const tabsHtml = NAV_PAGES.map(p => {
             const isActive = p.id === activeId;
             return `
@@ -258,9 +286,6 @@
                 </a>
             `;
         }).join('');
-
-        // 3. Right Controls: v6 Auth Dropdown
-        const rightControlsHtml = getRightControlsHtml();
 
         container.innerHTML = `
             ${brandHtml}

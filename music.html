@@ -3188,7 +3188,7 @@
     </div>
 
     <!-- Modal: Fullscreen Create / Edit Playlist (Questionnaire Customization & Pixel-Perfect Information Tab) -->
-    <div id="playlist-modal" class="modal-overlay fixed inset-0 w-screen h-screen z-50 bg-[#FCFBF8] dark:bg-[#0c0c0e] flex flex-col hidden overflow-hidden">
+    <div id="playlist-modal" class="modal-overlay fixed inset-0 w-screen h-screen z-[10000] pt-[64px] bg-[#FCFBF8] dark:bg-[#0c0c0e] flex flex-col hidden overflow-hidden">
         <!-- Fullscreen Top Header Bar -->
         <header class="w-full border-b border-zinc-200/80 dark:border-white/10 px-4 sm:px-8 py-3.5 flex items-center justify-between shrink-0 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl z-10">
             <div class="flex items-center gap-3">
@@ -3397,13 +3397,13 @@
                             <span>Playlist Collection</span>
                         </div>
                         <!-- Inline Editable Title matching real playlist title typography -->
-                        <input id="playlist-name-input" type="text" placeholder="Playlist Name" class="w-full font-extrabold text-xl sm:text-3xl text-zinc-900 dark:text-white tracking-tight leading-tight bg-transparent border border-transparent hover:border-zinc-300 dark:hover:border-zinc-700 focus:border-zinc-400 focus:bg-white/70 dark:focus:bg-zinc-800 rounded-xl px-2 py-0.5 focus:outline-none transition-all truncate" title="Click to edit playlist title">
+                        <input id="playlist-name-input" type="text" placeholder="Playlist Name" class="w-full font-medium text-xl sm:text-3xl text-zinc-900 dark:text-white tracking-tight leading-tight bg-zinc-100/60 dark:bg-white/5 border border-zinc-200 dark:border-white/10 hover:border-zinc-300 dark:hover:border-zinc-700 focus:border-purple-500 focus:bg-white dark:focus:bg-zinc-800 rounded-xl px-4 py-2.5 focus:outline-none transition-all truncate" title="Click to edit playlist title">
                         
-                        <p id="pl-info-track-meta" class="text-xs sm:text-sm font-bold text-zinc-500 mt-1 px-2">0 songs • 0 min</p>
+                        <p id="pl-info-track-meta" class="text-xs sm:text-sm font-medium text-zinc-500 mt-2 px-1">0 songs • 0 min</p>
 
                         <!-- Inline Editable Description matching real playlist description typography -->
-                        <div id="pl-info-desc-wrapper" class="relative group/desc cursor-pointer w-full max-w-xl mt-1.5" title="Click to edit full description">
-                            <input id="playlist-desc-input" type="text" placeholder="Add an optional description..." class="w-full text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-medium bg-transparent border border-transparent hover:border-zinc-300 dark:hover:border-zinc-700 focus:border-zinc-400 focus:bg-white/70 dark:focus:bg-zinc-800 rounded-xl px-2 py-0.5 focus:outline-none transition-all truncate">
+                        <div id="pl-info-desc-wrapper" class="relative group/desc cursor-pointer w-full max-w-xl mt-2" title="Click to edit full description">
+                            <input id="playlist-desc-input" type="text" placeholder="Add an optional description..." class="w-full text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 font-normal bg-zinc-100/60 dark:bg-white/5 border border-zinc-200 dark:border-white/10 hover:border-zinc-300 dark:hover:border-zinc-700 focus:border-purple-500 focus:bg-white dark:focus:bg-zinc-800 rounded-xl px-4 py-2.5 focus:outline-none transition-all truncate">
                         </div>
                     </div>
                 </div>
