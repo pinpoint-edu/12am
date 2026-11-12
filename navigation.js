@@ -1,5 +1,5 @@
 /**
- * 12AM Floating Sidebar Navigation
+ * 12AM Floating Squircle Sidebar Navigation & Injected Minimal Footer
  * Fully compatible with file:/// and http(s):// protocols
  */
 
@@ -7,42 +7,42 @@
     if (window.__12am_nav_loaded) return;
     window.__12am_nav_loaded = true;
 
-    // Top section: primary daily tabs (AI, Proxy, Music, Movies, Games, Dashboard)
-    const TOP_NAV_PAGES = [
+    // Full catalog of navigation pages for regular app pages
+    const REGULAR_NAV_PAGES = [
         { id: "dashboard", name: "Dashboard", icon: "fa-solid fa-house-user", url: "dashboard.html" },
         { id: "ai", name: "AI Chat", icon: "fa-solid fa-robot", url: "ai.html" },
         { id: "proxy", name: "Web Proxy", icon: "fa-solid fa-globe", url: "proxy.html" },
         { id: "music", name: "12 Music", icon: "fa-solid fa-music", url: "music.html" },
         { id: "movies", name: "Movies", icon: "fa-solid fa-film", url: "movies.html" },
-        { id: "games", name: "Games", icon: "fa-solid fa-gamepad", url: "games.html" }
-    ];
-
-    // Bottom section: utilities & communications
-    const BOTTOM_NAV_PAGES = [
+        { id: "games", name: "Games", icon: "fa-solid fa-gamepad", url: "games.html" },
         { id: "messenger", name: "Messenger", icon: "fa-solid fa-comments", url: "messenger.html" },
         { id: "soundboard", name: "Soundboard", icon: "fa-solid fa-volume-high", url: "soundboard.html" },
         { id: "notes", name: "Notes", icon: "fa-solid fa-note-sticky", url: "notes.html" },
-        { id: "dictionary", name: "Dictionary", icon: "fa-solid fa-book-bookmark", url: "dictionary.html" },
-        { id: "settings", name: "Settings", icon: "fa-solid fa-gear", url: "settings.html" }
+        { id: "dictionary", name: "Dictionary", icon: "fa-solid fa-book-bookmark", url: "dictionary.html" }
     ];
 
-    const ALL_NAV_PAGES = [...TOP_NAV_PAGES, ...BOTTOM_NAV_PAGES];
     const lightThemeNames = ['Light', 'Lavender', 'Rose Gold', 'Mint', 'Pink', 'Birthday'];
+
+    function isSimplifiedPage() {
+        const path = (window.location.pathname || '').toLowerCase();
+        const cleanName = path.split('/').filter(Boolean).pop() || '';
+        const base = cleanName.replace(/\.html$/, '');
+        return base === 'index' || base === 'legal' || base === '' || path.endsWith('/index.html') || path.endsWith('/legal.html') || path === '/';
+    }
 
     function getActivePageId() {
         const path = (window.location.pathname || '').toLowerCase();
         const href = (window.location.href || '').toLowerCase();
-
-        // Extract base page filename without directory and extension
         const cleanName = path.split('/').filter(Boolean).pop() || '';
         const base = cleanName.replace(/\.html$/, '');
 
-        // Direct matching against ALL_NAV_PAGES
-        for (const p of ALL_NAV_PAGES) {
+        if (base === 'index' || path.endsWith('/index.html') || path === '/' || base === '') return 'home';
+        if (base === 'legal' || path.endsWith('/legal.html')) return 'legal';
+
+        for (const p of REGULAR_NAV_PAGES) {
             if (base === p.id) return p.id;
         }
 
-        // Substring and alternate matching (works on Vercel clean URLs e.g. /games, /movies)
         if (base === 'games' || base.includes('game') || href.includes('games')) return 'games';
         if (base === 'movies' || base.includes('movie') || href.includes('movies')) return 'movies';
         if (base === 'music' || base.includes('music') || href.includes('music') || href.includes('yolk')) return 'music';
@@ -61,7 +61,7 @@
     // Local Page Visit & Duration Tracker
     try {
         const active = getActivePageId();
-        if (active) {
+        if (active && active !== 'home' && active !== 'legal') {
             const visits = JSON.parse(localStorage.getItem('12am_page_visits') || '{}');
             visits[active] = (visits[active] || 0) + 1;
             localStorage.setItem('12am_page_visits', JSON.stringify(visits));
@@ -93,11 +93,6 @@
     }
 
     window.open12AMAuth = function() {
-        const cluster = document.getElementById('sidebarAuthCluster');
-        if (cluster) {
-            cluster.classList.remove('open');
-            cluster.classList.add('closed');
-        }
         if (window.TwelveAMAuth && typeof window.TwelveAMAuth.showAuthModal === 'function') {
             window.TwelveAMAuth.showAuthModal();
         } else {
@@ -139,12 +134,12 @@
     }
     ensureIconFonts();
 
-    function renderNavAvatar(user, size = 30, fontSize = '12px', radius = '10px') {
+    function renderNavAvatar(user, size = 32, fontSize = '13px', radius = '12px') {
         if (typeof window.render12AMAvatar === 'function') {
             return window.render12AMAvatar(user, size, fontSize, radius);
         }
         if (!user) {
-            return `<div style="width:${size}px; height:${size}px; border-radius:${radius}; background:#000000; color:#ffffff; border:1px solid rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize};"><i class="fa-solid fa-user" style="font-size:12px;"></i></div>`;
+            return `<div style="width:${size}px; height:${size}px; border-radius:${radius}; background:#000000; color:#ffffff; border:1px solid rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize};"><i class="fa-solid fa-user" style="font-size:14px;"></i></div>`;
         }
         const type = user.avatar_type || user.pfpType || (user.mibiConfig ? 'mibi' : (user.avatar_url || user.avatar || user.pfp || localStorage.getItem('12am_profile_picture') ? 'image' : 'letter'));
         const imgUrl = user.avatar_url || user.avatar || user.pfp || user.photoURL || localStorage.getItem('12am_profile_picture');
@@ -182,8 +177,7 @@
         return `<div style="width:${size}px; height:${size}px; border-radius:${radius}; background:${bg}; color:${color}; border:1px solid rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize}; text-transform:uppercase; letter-spacing:0.5px; user-select:none; flex-shrink:0;">${letters}</div>`;
     }
 
-    function renderAuthControlsHtml() {
-        const prefix = window.location.pathname.includes('/logged-in/') ? '../' : '';
+    function renderAuthDockButtonsHtml(prefix, activeId) {
         let currentUser = null;
         try {
             if (window.TwelveAMAuth && typeof window.TwelveAMAuth.getCurrentUser === 'function') {
@@ -198,101 +192,40 @@
         const isSignedIn = !!(currentUser && (currentUser.nickname || currentUser.firstName));
         const handle = isSignedIn ? (currentUser.nickname || 'user') : '';
         const userTooltip = isSignedIn ? `@${handle}` : 'Account';
-        const avatarHtml = renderNavAvatar(currentUser, 28, '11px', '9px');
+        const avatarHtml = renderNavAvatar(currentUser, 32, '12px', '11px');
 
-        let clusterButtonsHtml = '';
         if (isSignedIn) {
-            clusterButtonsHtml = `
-                <a href="${prefix}settings.html" class="cluster-btn" aria-label="Settings">
+            return `
+                <div class="sidebar-btn sidebar-avatar-btn" title="@${escapeHtml(handle)}" aria-label="@${escapeHtml(handle)}">
+                    ${avatarHtml}
+                    <span class="sidebar-tooltip">@${escapeHtml(handle)}</span>
+                </div>
+                <a href="${prefix}settings.html" class="sidebar-btn ${activeId === 'settings' ? 'active' : ''}" aria-label="Settings">
                     <i class="fa-solid fa-gear"></i>
-                    <span class="cluster-tooltip-top">Settings</span>
+                    <span class="sidebar-tooltip">Settings</span>
                 </a>
-                <button type="button" onclick="window.open12AMAuth()" class="cluster-btn" aria-label="Switch Account">
+                <button type="button" onclick="window.open12AMAuth()" class="sidebar-btn" aria-label="Switch Account">
                     <i class="fa-solid fa-user-gear"></i>
-                    <span class="cluster-tooltip-top">Switch Account</span>
+                    <span class="sidebar-tooltip">Switch Account</span>
                 </button>
-                <a href="${prefix}legal.html" class="cluster-btn" aria-label="Terms &amp; Policies">
-                    <i class="fa-solid fa-shield-halved"></i>
-                    <span class="cluster-tooltip-top">Legal</span>
-                </a>
-                <button type="button" onclick="window.logOut12AM()" class="cluster-btn cluster-btn-logout" aria-label="Log Out">
+                <button type="button" onclick="window.logOut12AM()" class="sidebar-btn sidebar-logout-btn" aria-label="Log Out">
                     <i class="fa-solid fa-right-from-bracket"></i>
-                    <span class="cluster-tooltip-top">Log Out</span>
+                    <span class="sidebar-tooltip">Log Out</span>
                 </button>
             `;
         } else {
-            clusterButtonsHtml = `
-                <button type="button" onclick="window.open12AMAuth()" class="cluster-btn cluster-btn-primary" aria-label="Authenticate">
+            return `
+                <button type="button" onclick="window.open12AMAuth()" class="sidebar-btn sidebar-primary-btn" aria-label="Authenticate">
                     <i class="fa-solid fa-lock"></i>
-                    <span class="cluster-tooltip-top">Authenticate</span>
+                    <span class="sidebar-tooltip">Authenticate</span>
                 </button>
-                <a href="${prefix}settings.html" class="cluster-btn" aria-label="Settings">
+                <a href="${prefix}settings.html" class="sidebar-btn ${activeId === 'settings' ? 'active' : ''}" aria-label="Settings">
                     <i class="fa-solid fa-gear"></i>
-                    <span class="cluster-tooltip-top">Settings</span>
-                </a>
-                <a href="${prefix}legal.html" class="cluster-btn" aria-label="Terms &amp; Policies">
-                    <i class="fa-solid fa-shield-halved"></i>
-                    <span class="cluster-tooltip-top">Legal</span>
+                    <span class="sidebar-tooltip">Settings</span>
                 </a>
             `;
         }
-
-        return `
-            <div class="sidebar-auth-wrapper" id="sidebarAuthWrapper">
-                <button type="button" class="sidebar-btn sidebar-auth-toggle" id="sidebarAuthToggle" aria-label="${escapeHtml(userTooltip)}">
-                    ${avatarHtml}
-                    <span class="sidebar-tooltip" id="sidebarAuthTooltip">${escapeHtml(userTooltip)}</span>
-                </button>
-                <div class="sidebar-auth-cluster closed" id="sidebarAuthCluster">
-                    ${clusterButtonsHtml}
-                </div>
-            </div>
-        `;
     }
-
-    function setupAuthClusterListeners() {
-        const toggleBtn = document.getElementById('sidebarAuthToggle');
-        const cluster = document.getElementById('sidebarAuthCluster');
-        if (!toggleBtn || !cluster) return;
-
-        toggleBtn.onclick = (e) => {
-            e.stopPropagation();
-            const isOpen = cluster.classList.contains('open');
-            if (isOpen) {
-                cluster.classList.remove('open');
-                cluster.classList.add('closed');
-                toggleBtn.classList.remove('active');
-            } else {
-                cluster.classList.remove('closed');
-                cluster.classList.add('open');
-                toggleBtn.classList.add('active');
-            }
-        };
-
-        // Close on click outside
-        document.addEventListener('click', (e) => {
-            if (!cluster.contains(e.target) && !toggleBtn.contains(e.target)) {
-                if (cluster.classList.contains('open')) {
-                    cluster.classList.remove('open');
-                    cluster.classList.add('closed');
-                    toggleBtn.classList.remove('active');
-                }
-            }
-        });
-    }
-
-    window.__updateNavbarUser = function() {
-        const wrapper = document.getElementById('sidebarAuthWrapper');
-        if (wrapper && wrapper.parentElement) {
-            const temp = document.createElement('div');
-            temp.innerHTML = renderAuthControlsHtml();
-            const newChild = temp.firstElementChild;
-            if (newChild) {
-                wrapper.replaceWith(newChild);
-                setupAuthClusterListeners();
-            }
-        }
-    };
 
     function renderPageButton(p, activeId, prefix) {
         const isActive = p.id === activeId;
@@ -323,39 +256,78 @@
         const activeId = getActivePageId();
         const logoSrc = getLogoSrc();
         const prefix = window.location.pathname.includes('/logged-in/') ? '../' : '';
+        const simplified = isSimplifiedPage();
 
-        // 1. Logo button (Top Left Logo clicking goes to index.html)
-        const logoBtnHtml = `
-            <a href="${prefix}index.html" class="sidebar-btn sidebar-logo-btn" aria-label="12AM Home">
-                <img src="${logoSrc}" alt="12AM Logo" class="sidebar-logo-img navbar-logo" id="sidebar-logo">
-                <span class="sidebar-tooltip">12AM Home</span>
-            </a>
-        `;
+        let topSectionHtml = '';
 
-        // 2. Top section: AI, Proxy, Music, Movies, Games, Dashboard
-        const topButtonsHtml = TOP_NAV_PAGES.map(p => renderPageButton(p, activeId, prefix)).join('');
+        if (simplified) {
+            // Simplified Dock on index.html and legal.html: ONLY Home and Legal redirects
+            const isHome = activeId === 'home';
+            const isLegal = activeId === 'legal';
 
-        // 3. Bottom section: Messenger, Soundboard, Notes, Dictionary, Settings
-        const bottomButtonsHtml = BOTTOM_NAV_PAGES.map(p => renderPageButton(p, activeId, prefix)).join('');
+            topSectionHtml = `
+                <a href="${prefix}index.html" class="sidebar-btn sidebar-logo-btn ${isHome ? 'active' : ''}" aria-label="12AM Home">
+                    <img src="${logoSrc}" alt="12AM Logo" class="sidebar-logo-img navbar-logo" id="sidebar-logo">
+                    <span class="sidebar-tooltip">Home</span>
+                </a>
+                <a href="${prefix}legal.html" class="sidebar-btn ${isLegal ? 'active' : ''}" aria-label="Terms &amp; Policies">
+                    <i class="fa-solid fa-scale-balanced"></i>
+                    <span class="sidebar-tooltip">Terms &amp; Policies</span>
+                </a>
+            `;
+        } else {
+            // Regular Dock: Home logo + full suite of daily apps
+            const logoBtnHtml = `
+                <a href="${prefix}index.html" class="sidebar-btn sidebar-logo-btn" aria-label="12AM Home">
+                    <img src="${logoSrc}" alt="12AM Logo" class="sidebar-logo-img navbar-logo" id="sidebar-logo">
+                    <span class="sidebar-tooltip">Home</span>
+                </a>
+            `;
+            const appButtonsHtml = REGULAR_NAV_PAGES.map(p => renderPageButton(p, activeId, prefix)).join('');
+            topSectionHtml = `${logoBtnHtml}${appButtonsHtml}`;
+        }
 
-        // 4. Auth expandable cluster button
-        const authControlsHtml = renderAuthControlsHtml();
+        // Bottom section: Auth buttons directly in the left dock (no menu needed)
+        const authButtonsHtml = renderAuthDockButtonsHtml(prefix, activeId);
 
         container.innerHTML = `
             <div class="sidebar-section sidebar-section-top">
-                ${logoBtnHtml}
-                ${topButtonsHtml}
+                ${topSectionHtml}
             </div>
             <div class="sidebar-divider"></div>
             <div class="sidebar-section sidebar-section-bottom">
-                ${bottomButtonsHtml}
-                ${authControlsHtml}
+                ${authButtonsHtml}
             </div>
         `;
 
         setupPanicKey();
-        setupAuthClusterListeners();
+        injectMinimalFooter();
     }
+
+    function injectMinimalFooter() {
+        let footer = document.getElementById('minimal-footer-cluster');
+        if (!footer) {
+            footer = document.createElement('footer');
+            footer.id = 'minimal-footer-cluster';
+            footer.className = 'minimal-footer-cluster';
+            document.body.appendChild(footer);
+        }
+        const logoSrc = getLogoSrc();
+        const prefix = window.location.pathname.includes('/logged-in/') ? '../' : '';
+
+        footer.innerHTML = `
+            <a href="${prefix}legal.html" class="minimal-footer-icon-link" aria-label="12AM Legal &amp; Policies" title="Terms &amp; Policies">
+                <img src="${logoSrc}" alt="12AM" class="minimal-footer-logo navbar-logo">
+            </a>
+            <a href="${prefix}legal.html" class="minimal-footer-link">Terms &amp; Privacy Policy</a>
+            <span class="minimal-footer-dot">•</span>
+            <span class="minimal-footer-copy">All rights reserved</span>
+        `;
+    }
+
+    window.__updateNavbarUser = function() {
+        createFloatingSidebar();
+    };
 
     function setupPanicKey() {
         document.addEventListener('keydown', (e) => {
@@ -370,7 +342,7 @@
 
     // Expose theme logo update callback (v6 drop-shadow tinting)
     window.__updateNavbarLogo = function(theme) {
-        const logos = document.querySelectorAll('.navbar-logo, #navbar-logo, #sidebar-logo');
+        const logos = document.querySelectorAll('.navbar-logo, #navbar-logo, #sidebar-logo, .minimal-footer-logo');
         const t = theme || (typeof window.getCurrentTheme === 'function' ? window.getCurrentTheme() : null);
         if (!t) return;
         const isLight = lightThemeNames.includes(t.name);

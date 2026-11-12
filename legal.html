@@ -36,7 +36,8 @@
             background-color: var(--bg-page); 
             color: var(--text-muted); 
             font-weight: 300;
-            padding-top: var(--navbar-height, 64px);
+            margin: 0;
+            padding: 0;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -103,8 +104,8 @@
 
     <div class="flex-grow">
         <!-- Hero Section -->
-        <section class="text-center border-b border-white/5 py-14 bg-gradient-to-b from-purple-500/10 to-transparent relative z-10">
-            <div class="mx-auto max-w-4xl px-4">
+        <section class="text-center border-b border-white/5 py-20 bg-gradient-to-b from-purple-500/15 via-purple-500/5 to-transparent relative z-10 w-full">
+            <div class="mx-auto max-w-4xl px-4 pl-16 sm:pl-20">
                 <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/20 mb-4">
                     <i class="fa-solid fa-scale-balanced"></i> Official Guidelines
                 </span>
@@ -123,7 +124,7 @@
         </section>
 
         <!-- Main Content -->
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pl-16 sm:pl-20 py-12">
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
                 
                 <!-- Quick Navigation Sidebar -->
@@ -225,21 +226,5 @@
             </div>
         </div>
     </div>
-
-    <!-- Unified 12AM Footer -->
-    <footer class="mt-20 border-t border-white/5 py-10 text-center text-xs text-gray-500 relative z-10">
-        <div class="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <img src="images/logo-white.png" class="h-6 w-auto opacity-70" alt="12AM Logo">
-                <span class="text-sm font-semibold tracking-wider text-white">12AM</span>
-            </div>
-            <p>&copy; 2026 12AM. All rights reserved.</p>
-            <div class="flex items-center gap-4 text-xs">
-                <a href="legal.html" class="hover:text-white transition-colors">Terms & Privacy</a>
-                <a href="settings.html" class="hover:text-white transition-colors">Settings</a>
-                <a href="dashboard.html" class="hover:text-white transition-colors">Dashboard</a>
-            </div>
-        </div>
-    </footer>
 </body>
 </html>

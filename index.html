@@ -49,14 +49,14 @@
             font-weight: 300 !important;
             overflow-x: hidden;
             min-height: 100vh;
-            padding-top: calc(var(--navbar-height, 64px) + 2rem);
             margin: 0;
+            padding: 0;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: center;
         }
 
-        /* Subtle dot grid like v6 */
+        /* Subtle dot grid full bleed */
         .grid-bg {
             background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 0);
             background-size: 24px 24px;
@@ -65,7 +65,7 @@
         #dynamic-background {
             position: fixed;
             inset: 0;
-            background: radial-gradient(circle at 50% 25%, var(--accent-glow), transparent 65%);
+            background: radial-gradient(circle at 65% 35%, var(--accent-glow), transparent 65%);
             pointer-events: none;
             z-index: 0;
             opacity: 0.55;
@@ -131,41 +131,34 @@
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background: var(--border-main); border-radius: 10px; }
-
-        .cinema-footer {
-            border-top: 1px solid var(--border-main);
-            padding: 2rem 1.5rem;
-            background: var(--bg-card);
-            position: relative;
-            z-index: 10;
-        }
     </style>
 </head>
 
 <body class="grid-bg">
     <div id="dynamic-background"></div>
 
-    <main class="flex-1 min-w-0 flex items-center justify-center relative z-10 py-12 px-6">
-        <section class="text-center max-w-4xl mx-auto">
-            <h1 class="text-xs md:text-sm font-normal text-purple-400 uppercase tracking-widest mb-6 opacity-85">
+    <!-- Main Content Aligned to the Right -->
+    <main class="flex-1 min-w-0 flex items-center justify-end relative z-10 py-16 px-6 sm:px-12 md:px-16 lg:pr-24 xl:pr-32">
+        <section class="text-right max-w-2xl sm:max-w-3xl ml-auto flex flex-col items-end">
+            <h1 class="text-xs md:text-sm font-normal text-purple-400 uppercase tracking-widest mb-6 opacity-85 text-right">
                 Next-generation workspace &amp; entertainment platform
             </h1>
 
-            <h2 class="text-5xl md:text-7xl font-light tracking-tight mb-8 leading-tight">
+            <h2 class="text-4xl sm:text-6xl md:text-7xl font-light tracking-tight mb-8 leading-tight text-right">
                 <span class="gradient-text">Academic Collaboration, Reimagined.</span>
             </h2>
 
-            <p class="text-base md:text-xl text-[var(--text-muted)] max-w-2xl mx-auto mb-10 font-light leading-relaxed">
+            <p class="text-base md:text-xl text-[var(--text-muted)] max-w-2xl ml-auto mb-10 font-light leading-relaxed text-right">
                 Welcome to <strong>12AM</strong> — a student-focused environment featuring Vidy proxy streaming, high-speed games, focus audio, encrypted notes, and an integrated dictionary.
             </p>
             
-            <div id="auth-button-container" class="mb-10">
+            <div id="auth-button-container" class="mb-10 flex justify-end">
                 <a id="auth-button" href="authentication.html" class="btn-primary-override inline-flex items-center justify-center px-8 py-4 text-base md:text-lg tracking-wide shadow-xl">
                     Get Started <i class="fas fa-arrow-right ml-3"></i>
                 </a>
             </div>
 
-            <div class="flex flex-wrap items-center justify-center gap-3">
+            <div class="flex flex-wrap items-center justify-end gap-3">
                 <a href="dashboard.html" class="hero-btn-base">
                     <i class="fa-solid fa-gauge mr-2"></i> Dashboard
                 </a>
@@ -183,20 +176,11 @@
                 </a>
             </div>
             
-            <p class="text-xs text-[var(--text-muted)] mt-12 font-mono opacity-60">
+            <p class="text-xs text-[var(--text-muted)] mt-12 font-mono opacity-60 text-right">
                 12AM &bull; Independently developed and maintained.
             </p>
         </section>
     </main>
-
-    <footer class="cinema-footer">
-        <div class="max-w-xl mx-auto flex items-center justify-center flex-wrap gap-3 text-xs text-[var(--text-muted)] text-center">
-            <img src="images/logo-white.png" class="h-5 w-auto opacity-70 navbar-logo" alt="12AM">
-            <span>&copy; 2026 12AM. All rights reserved.</span>
-            <span class="opacity-30">•</span>
-            <a href="legal.html" class="hover:text-[var(--accent-color)] transition-colors">Terms &amp; Policies</a>
-        </div>
-    </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
