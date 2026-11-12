@@ -2206,55 +2206,55 @@
     <script src="navigation.js" defer></script>
     <style>
         :root {
-            --accent-primary: #8b5cf6 !important;
-            --accent-secondary: rgba(139, 92, 246, 0.4) !important;
             --parabola-ease: cubic-bezier(0.16, 1, 0.3, 1);
         }
         html, body {
-            background-color: #040404 !important;
-            color: #ffffff !important;
+            background-color: var(--bg-primary, #040404) !important;
+            color: var(--text-primary, #ffffff) !important;
             font-family: 'Geist', sans-serif !important;
         }
         body {
-            padding-top: var(--navbar-height, 64px) !important;
+            padding-top: calc(var(--navbar-height, 64px) + 1.25rem) !important;
+            background-color: var(--bg-primary, #040404) !important;
+            color: var(--text-primary, #ffffff) !important;
         }
         .dark, .dark-mode {
-            background-color: #040404 !important;
-            color: #ffffff !important;
+            background-color: var(--bg-primary, #040404) !important;
+            color: var(--text-primary, #ffffff) !important;
         }
         #bottom-player {
-            background: rgba(12, 12, 14, 0.95) !important;
-            border-color: rgba(255, 255, 255, 0.1) !important;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(139, 92, 246, 0.15) !important;
+            background: var(--bg-secondary, rgba(12, 12, 14, 0.95)) !important;
+            border-color: var(--border-primary, rgba(255, 255, 255, 0.1)) !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px var(--accent-secondary, rgba(139, 92, 246, 0.15)) !important;
         }
-        #bottom-player-title { color: #ffffff !important; }
-        #bottom-player-artist { color: #a1a1aa !important; }
+        #bottom-player-title { color: var(--text-primary, #ffffff) !important; }
+        #bottom-player-artist { color: var(--text-secondary, #a1a1aa) !important; }
         #bottom-player-progress-fill, #now-playing-progress-fill {
-            background: #8b5cf6 !important;
-            box-shadow: 0 0 10px rgba(139, 92, 246, 0.5) !important;
+            background: var(--accent-primary, #8b5cf6) !important;
+            box-shadow: 0 0 10px var(--accent-secondary, rgba(139, 92, 246, 0.5)) !important;
         }
         .yolk-active {
-            background: #8b5cf6 !important;
+            background: var(--accent-primary, #8b5cf6) !important;
             color: #ffffff !important;
         }
         #searchInput {
-            background: rgba(18, 18, 22, 0.9) !important;
-            border-color: rgba(255, 255, 255, 0.1) !important;
-            color: #ffffff !important;
+            background: var(--bg-secondary, rgba(18, 18, 22, 0.9)) !important;
+            border-color: var(--border-primary, rgba(255, 255, 255, 0.1)) !important;
+            color: var(--text-primary, #ffffff) !important;
         }
         #searchInput:focus {
-            border-color: #8b5cf6 !important;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.35) !important;
+            border-color: var(--accent-primary, #8b5cf6) !important;
+            box-shadow: 0 0 0 3px var(--accent-secondary, rgba(139, 92, 246, 0.35)) !important;
         }
         .page-now-playing, #page-now-playing {
-            background: #040404 !important;
+            background: var(--bg-primary, #040404) !important;
+        }
+        #top-white-fade-bar {
+            display: none !important;
         }
 
         *, html, body, input, button, select, textarea {
             font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif !important;
-        }
-        body {
-            padding-top: calc(var(--navbar-height, 64px) + 1.25rem) !important;
         }
         #portrait-lock-overlay, #smallLogo, button[onclick="returnToMainHome()"] {
             display: none !important;
@@ -2264,7 +2264,7 @@
         }
     </style>
 </head>
-<body class="dark dark-mode text-white bg-[#040404] h-screen w-screen overflow-hidden selection:bg-purple-500/30 selection:text-white relative" data-page="search">
+<body class="dark dark-mode h-screen w-screen overflow-hidden selection:bg-purple-500/30 selection:text-white relative" data-page="search">
     <script>
         try {
             if (localStorage.getItem('yolk_theme_mode') === 'dark') {

@@ -47,6 +47,54 @@
             font-weight: 300;
         }
 
+        /* Dynamic Theme Adaptive Text for Settings */
+        #settings-container,
+        #settings-sidebar,
+        #settings-main-view,
+        .settings-tab,
+        .about-section-content {
+            color: var(--text-main, #ffffff) !important;
+        }
+
+        #settings-main-view h1,
+        #settings-main-view h2,
+        #settings-main-view h3,
+        #settings-main-view h4,
+        #settings-main-view strong,
+        #settings-main-view .text-emphasis {
+            color: var(--text-main, #ffffff) !important;
+        }
+
+        #settings-main-view p,
+        #settings-main-view span,
+        #settings-main-view label,
+        #settings-main-view li {
+            color: var(--text-muted, #c0c0c0);
+        }
+
+        #settings-main-view .text-gray-400,
+        #settings-main-view .text-gray-500,
+        #settings-main-view .text-zinc-400,
+        #settings-main-view .text-zinc-500 {
+            color: var(--text-muted, #c0c0c0) !important;
+        }
+
+        #settings-main-view .text-white,
+        #settings-main-view .text-gray-100,
+        #settings-main-view .text-gray-200 {
+            color: var(--text-main, #ffffff) !important;
+        }
+
+        .settings-tab {
+            color: var(--text-muted, #c0c0c0) !important;
+        }
+
+        .settings-tab:hover,
+        .settings-tab.active {
+            color: var(--text-main, #ffffff) !important;
+            border-color: var(--accent-color, #8b5cf6) !important;
+        }
+
         h1, h2, h3, .font-bold, .font-semibold, strong, .tracking-widest {
             font-weight: 400 !important;
         }
@@ -644,6 +692,7 @@
 
   gtag('config', 'G-1D4F692C1Q');
 </script>
+  <script src="../device-auth.js"></script>
 </head>
 <body class="min-h-screen">
     <div id="page-content">

@@ -1767,22 +1767,6 @@
                         Current Version: <span class="text-blue-400 text-emphasis">6.0.0</span>
                     </p>
 
-                    <h3 class="text-xl font-bold text-[var(--text-main)] mt-6 mb-3">Connect & Support</h3>
-                    <div class="social-link-group">
-                        <a href="https://www.youtube.com/@4simpleproblems" target="_blank" class="btn-toolbar-style" title="YouTube">
-                            <i class="fa-brands fa-youtube fa-lg mr-2"></i> YouTube
-                        </a>
-                        <a href="https://x.com/4simpleproblems" target="_blank" class="btn-toolbar-style" title="X (Twitter)">
-                            <i class="fa-brands fa-x-twitter fa-lg mr-2 light-invert"></i>X
-                        </a>
-                        <a href="https://buymeacoffee.com/4simpleproblems" target="_blank" class="btn-toolbar-style" title="Buy Me a Coffee">
-                            <i class="fa-solid fa-mug-hot fa-lg mr-2"></i> Buy Me a Coffee
-                        </a>
-                        <a href="https://github.com/v5-4simpleproblems" target="_blank" class="btn-toolbar-style" title="GitHub">
-                            <i class="fa-brands fa-github fa-lg mr-2 light-invert"></i> Github
-                        </a>
-                    </div>
-                    
                     <h3 class="text-xl font-bold text-[var(--text-main)] mt-6 mb-3">Legal Information</h3>
                     <div class="legal-buttons">
                         <a href="legal.html#terms-of-service" class="btn-toolbar-style">Terms of Service</a>
@@ -4303,12 +4287,15 @@
                     const isActive = savedTheme && savedTheme.name === theme.name;
                     
                     // Use the theme's own background/accent for the button preview
-                    const activeText = theme['text-primary'] || theme['tab-active-text'] || '#ffffff';
+                    let activeText = theme['text-primary'] || theme['tab-active-text'] || '#ffffff';
+                    if (theme.name === 'Tokyo Night' || lightThemeNames.includes(theme.name)) {
+                        activeText = '#12131c';
+                    }
                     const activeBorder = theme['accent-primary'] || theme['tab-active-border'] || '#4f46e5';
                     const activeBg = theme['avatar-gradient'] || theme['bg-primary'] || theme['navbar-bg'] || '#000000'; 
                     
                     // Hover states (using accents)
-                    const hoverText = theme['text-primary'] || '#ffffff';
+                    const hoverText = (theme.name === 'Tokyo Night' || lightThemeNames.includes(theme.name)) ? '#12131c' : (theme['text-primary'] || '#ffffff');
                     const hoverBorder = theme['accent-primary'] || '#4f46e5';
                     const hoverBg = theme['accent-secondary'] || 'rgba(79, 70, 229, 0.2)';
 
@@ -4317,7 +4304,8 @@
                             class="theme-button ${isActive ? 'active' : ''}" 
                             data-theme-name="${theme.name}" 
                             style="
-                                color: ${activeText}; 
+                                color: ${activeText} !important; 
+                                font-weight: ${(theme.name === 'Tokyo Night' || lightThemeNames.includes(theme.name)) ? '700' : '500'};
                                 border-color: ${activeBorder}; 
                                 background: ${activeBg};
                                 --hover-color: ${hoverText};

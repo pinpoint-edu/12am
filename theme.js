@@ -1171,7 +1171,7 @@
         "border-primary": "#24283b",
         "border-secondary": "rgba(122, 162, 247, 0.12)",
         "button-bg": "rgba(122, 162, 247, 0.15)",
-        "button-text": "#7aa2f7"
+        "button-text": "#12131c"
     },
     {
         "name": "Silver",

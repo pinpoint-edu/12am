@@ -83,6 +83,24 @@
         return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
+    window.open12AMAuth = function() {
+        const menu = document.getElementById('auth-menu-container');
+        if (menu) {
+            menu.classList.remove('open');
+            menu.classList.add('closed');
+        }
+        if (window.TwelveAMAuth && typeof window.TwelveAMAuth.showAuthModal === 'function') {
+            window.TwelveAMAuth.showAuthModal();
+        } else {
+            const s = document.createElement('script');
+            s.src = 'device-auth.js';
+            s.onload = () => {
+                if (window.TwelveAMAuth) window.TwelveAMAuth.showAuthModal();
+            };
+            document.head.appendChild(s);
+        }
+    };
+
     window.logOut12AM = function() {
         if (window.TwelveAMAuth && typeof window.TwelveAMAuth.logout === 'function') {
             window.TwelveAMAuth.logout();
@@ -152,7 +170,7 @@
                                 <p class="auth-menu-handle">Not signed in</p>
                             </div>
                             <div class="auth-menu-divider"></div>
-                            <button type="button" onclick="if(window.TwelveAMAuth) window.TwelveAMAuth.showAuthModal();" class="auth-menu-button auth-menu-primary">
+                            <button type="button" onclick="window.open12AMAuth()" class="auth-menu-button auth-menu-primary">
                                 <i class="fa-solid fa-lock"></i>
                                 <span>Authenticate</span>
                             </button>
@@ -225,7 +243,7 @@
 
         // 1. Brand Logo
         const brandHtml = `
-            <a href="dashboard.html" class="nav-brand-group" title="12AM">
+            <a href="index.html" class="nav-brand-group" title="12AM">
                 <img src="${logoSrc}" alt="12AM Logo" class="navbar-logo" id="navbar-logo">
             </a>
         `;

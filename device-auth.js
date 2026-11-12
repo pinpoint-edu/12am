@@ -455,13 +455,14 @@
     };
 
     // Auto-check on protected pages (Modal popup directly over current page, ZERO redirects)
-    document.addEventListener('DOMContentLoaded', () => {
+    function enforcePageAuth() {
         try {
             const path = (window.location.pathname || '').toLowerCase();
-            const fileName = path.split('/').pop() || 'index.html';
+            const fileName = path.split('/').filter(Boolean).pop() || '';
+            const cleanName = fileName.replace(/\.html$/, '');
 
-            const publicPages = ['index.html', 'legal.html', 'authentication.html', ''];
-            const isPublic = publicPages.includes(fileName);
+            const publicPages = ['index', 'legal', 'authentication', ''];
+            const isPublic = publicPages.includes(cleanName);
 
             if (!isPublic) {
                 const user = window.TwelveAMAuth.getCurrentUser();
@@ -471,5 +472,11 @@
                 }
             }
         } catch(e) {}
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', enforcePageAuth);
+    } else {
+        enforcePageAuth();
+    }
 })();

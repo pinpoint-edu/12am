@@ -378,6 +378,19 @@
                         }
                     });
                 }
+
+                // Protect app links on landing page
+                document.querySelectorAll('.app-item').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const targetHref = link.getAttribute('href');
+                        if (window.TwelveAMAuth) {
+                            window.TwelveAMAuth.showAuthModal(() => {
+                                window.location.href = targetHref;
+                            });
+                        }
+                    });
+                });
             }
         });
     </script>
