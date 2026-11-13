@@ -1277,6 +1277,25 @@
                         </div>
                         <div id="customThemeMessage" class="general-message-area text-sm mt-3"></div>
                     </div>
+
+                    <!-- DOCK POSITION -->
+                    <h3 class="text-xl font-bold text-[var(--text-main)] mb-2 mt-8">Dock Position</h3>
+                    <div id="dockPositionSection" class="settings-box transition-all duration-300 p-6 mb-8">
+                        <p class="text-sm font-light text-[var(--text-muted)] opacity-70 mb-4">
+                            Choose whether the 12AM navigation dock floats on the left or right side of your screen. Content alignment and sidebars adapt automatically.
+                        </p>
+                        <div class="flex items-center gap-3">
+                            <button type="button" id="dockPosLeftBtn" class="dock-pos-btn btn-toolbar-style px-5 py-2.5 rounded-xl flex items-center gap-2.5 cursor-pointer">
+                                <i class="fa-solid fa-align-left text-sm"></i>
+                                <span>Left Side (Default)</span>
+                            </button>
+                            <button type="button" id="dockPosRightBtn" class="dock-pos-btn btn-toolbar-style px-5 py-2.5 rounded-xl flex items-center gap-2.5 cursor-pointer">
+                                <i class="fa-solid fa-align-right text-sm"></i>
+                                <span>Right Side</span>
+                            </button>
+                        </div>
+                        <div id="dockPosMessage" class="general-message-area text-sm mt-3"></div>
+                    </div>
                 </div>
              `;
         }
@@ -3108,7 +3127,7 @@
 
                     <!-- 2 & 3. Username and Security PIN Row -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <!-- Username Editing -->
+                        <!-- Username & Full Name Editing -->
                         <div class="settings-box p-6 flex flex-col justify-between">
                             <div>
                                 <h3 class="text-xl font-bold text-[var(--text-main)] mb-1">Username</h3>
@@ -3120,8 +3139,28 @@
                                         <span>Save Username</span>
                                     </button>
                                 </div>
+                                <div id="usernameMessage" class="general-message-area mt-2 mb-4"></div>
+
+                                <div class="pt-5 border-t border-[var(--border-main)]">
+                                    <h3 class="text-xl font-bold text-[var(--text-main)] mb-1">Full Name</h3>
+                                    <p class="text-xs text-[var(--text-muted)] mb-3">Set your first and last name for your account profile.</p>
+                                    <div class="grid grid-cols-2 gap-3 mb-3">
+                                        <div>
+                                            <label class="text-xs text-[var(--text-muted)] mb-1 block">First Name</label>
+                                            <input type="text" id="settingsFirstNameInput" value="${escapeHtml(devUser?.firstName || '')}" placeholder="First name..." maxlength="30" class="input-text-style">
+                                        </div>
+                                        <div>
+                                            <label class="text-xs text-[var(--text-muted)] mb-1 block">Last Name</label>
+                                            <input type="text" id="settingsLastNameInput" value="${escapeHtml(devUser?.lastName || '')}" placeholder="Last name..." maxlength="30" class="input-text-style">
+                                        </div>
+                                    </div>
+                                    <button type="button" id="settingsSaveNameBtn" class="btn-toolbar-style btn-primary-override self-start whitespace-nowrap">
+                                        <i class="fa-solid fa-user-check"></i>
+                                        <span>Save Name</span>
+                                    </button>
+                                    <div id="nameMessage" class="general-message-area mt-2"></div>
+                                </div>
                             </div>
-                            <div id="usernameMessage" class="general-message-area mt-3"></div>
                         </div>
 
                         <!-- Security PIN (Requires Current PIN) -->
@@ -3615,13 +3654,13 @@
                     try {
                         if (devUser) {
                             devUser.nickname = newUsername;
-                            devUser.firstName = newUsername;
+                            if (!devUser.firstName) devUser.firstName = newUsername;
                             localStorage.setItem('12am_user', JSON.stringify(devUser));
                         }
                         const bound = JSON.parse(localStorage.getItem('12am_device_account') || 'null');
                         if (bound) {
                             bound.nickname = newUsername;
-                            bound.firstName = newUsername;
+                            if (!bound.firstName) bound.firstName = newUsername;
                             localStorage.setItem('12am_device_account', JSON.stringify(bound));
                         }
                         if (window.supabase) {
@@ -3635,6 +3674,51 @@
                         window.__updateNavbarUser();
                     }
                     showMessage(usernameMsg, 'Username saved successfully!', 'success');
+                });
+            }
+
+            // 2b. Full Name Save (First & Last Name)
+            const firstNameInput = document.getElementById('settingsFirstNameInput');
+            const lastNameInput = document.getElementById('settingsLastNameInput');
+            const saveNameBtn = document.getElementById('settingsSaveNameBtn');
+            const nameMsg = document.getElementById('nameMessage');
+
+            if (saveNameBtn && firstNameInput && lastNameInput) {
+                saveNameBtn.addEventListener('click', async () => {
+                    const first = firstNameInput.value.trim();
+                    const last = lastNameInput.value.trim();
+                    if (!first) {
+                        showMessage(nameMsg, 'First name cannot be empty.', 'error');
+                        return;
+                    }
+                    try {
+                        if (devUser) {
+                            devUser.firstName = first;
+                            devUser.lastName = last;
+                            localStorage.setItem('12am_user', JSON.stringify(devUser));
+                        }
+                        const bound = JSON.parse(localStorage.getItem('12am_device_account') || 'null');
+                        if (bound) {
+                            bound.firstName = first;
+                            bound.lastName = last;
+                            localStorage.setItem('12am_device_account', JSON.stringify(bound));
+                        }
+                        if (window.supabase) {
+                            const uid = devUser?.id || devUser?.deviceToken;
+                            if (uid) {
+                                await window.supabase.from('profiles').upsert({
+                                    id: uid,
+                                    first_name: first,
+                                    last_name: last,
+                                    full_name: `${first} ${last}`.trim()
+                                }).catch(() => {});
+                            }
+                        }
+                    } catch(err) {}
+                    if (typeof window.__updateNavbarUser === 'function') {
+                        window.__updateNavbarUser();
+                    }
+                    showMessage(nameMsg, 'Name saved successfully!', 'success');
                 });
             }
 
@@ -4271,6 +4355,52 @@
                     } else {
                         showMessage(customThemeMessage, 'Theme engine not ready.', 'error');
                     }
+                });
+            }
+
+            // Wire Dock Position Selector (Left vs Right)
+            const dockLeftBtn = document.getElementById('dockPosLeftBtn');
+            const dockRightBtn = document.getElementById('dockPosRightBtn');
+            const dockPosMsg = document.getElementById('dockPosMessage');
+
+            function updateDockButtons() {
+                const currentPos = localStorage.getItem('12am_dock_position') || 'left';
+                if (dockLeftBtn && dockRightBtn) {
+                    if (currentPos === 'right') {
+                        dockRightBtn.classList.add('btn-primary-override', 'active');
+                        dockLeftBtn.classList.remove('btn-primary-override', 'active');
+                    } else {
+                        dockLeftBtn.classList.add('btn-primary-override', 'active');
+                        dockRightBtn.classList.remove('btn-primary-override', 'active');
+                    }
+                }
+            }
+
+            if (dockLeftBtn && dockRightBtn) {
+                updateDockButtons();
+
+                dockLeftBtn.addEventListener('click', () => {
+                    localStorage.setItem('12am_dock_position', 'left');
+                    if (window.__updateDockPosition) {
+                        window.__updateDockPosition('left');
+                    } else {
+                        document.body.classList.remove('dock-right');
+                        document.documentElement.classList.remove('dock-right');
+                    }
+                    updateDockButtons();
+                    showMessage(dockPosMsg, 'Dock moved to Left side!', 'success');
+                });
+
+                dockRightBtn.addEventListener('click', () => {
+                    localStorage.setItem('12am_dock_position', 'right');
+                    if (window.__updateDockPosition) {
+                        window.__updateDockPosition('right');
+                    } else {
+                        document.body.classList.add('dock-right');
+                        document.documentElement.classList.add('dock-right');
+                    }
+                    updateDockButtons();
+                    showMessage(dockPosMsg, 'Dock moved to Right side!', 'success');
                 });
             }
         }

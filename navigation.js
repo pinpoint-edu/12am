@@ -7,19 +7,53 @@
     if (window.__12am_nav_loaded) return;
     window.__12am_nav_loaded = true;
 
-    // Full catalog of navigation pages for regular app pages
-    const REGULAR_NAV_PAGES = [
+    // Apply Dock Position early
+    function applyDockPosition() {
+        try {
+            const pos = localStorage.getItem('12am_dock_position') || 'left';
+            if (pos === 'right') {
+                if (document.body) document.body.classList.add('dock-right');
+                if (document.documentElement) document.documentElement.classList.add('dock-right');
+            } else {
+                if (document.body) document.body.classList.remove('dock-right');
+                if (document.documentElement) document.documentElement.classList.remove('dock-right');
+            }
+        } catch(e) {}
+    }
+    applyDockPosition();
+
+    window.__updateDockPosition = function(newPos) {
+        if (newPos) {
+            try { localStorage.setItem('12am_dock_position', newPos); } catch(e) {}
+        }
+        applyDockPosition();
+        const secondDock = document.getElementById('settings-floating-dock');
+        const mainSidebar = document.getElementById('floating-sidebar');
+        if (secondDock && mainSidebar) {
+            const rect = mainSidebar.getBoundingClientRect();
+            secondDock.style.top = rect.top + 'px';
+        }
+    };
+
+    // Primary dock pages in requested order: Dashboard, Soundboard, Games, Music, Movies, Proxy, AI
+    const MAIN_NAV_PAGES = [
         { id: "dashboard", name: "Dashboard", icon: "fa-solid fa-house-user", url: "dashboard.html" },
-        { id: "ai", name: "AI Chat", icon: "fa-solid fa-robot", url: "ai.html" },
-        { id: "proxy", name: "Web Proxy", icon: "fa-solid fa-globe", url: "proxy.html" },
-        { id: "music", name: "12 Music", icon: "fa-solid fa-music", url: "music.html" },
-        { id: "movies", name: "Media", icon: "fa-solid fa-film", url: "movies.html" },
-        { id: "games", name: "Games", icon: "fa-solid fa-gamepad", url: "games.html" },
-        { id: "messenger", name: "Messenger", icon: "fa-solid fa-comments", url: "messenger.html" },
         { id: "soundboard", name: "Soundboard", icon: "fa-solid fa-volume-high", url: "soundboard.html" },
-        { id: "notes", name: "Notes", icon: "fa-solid fa-note-sticky", url: "notes.html" },
-        { id: "dictionary", name: "Dictionary", icon: "fa-solid fa-book-bookmark", url: "dictionary.html" }
+        { id: "games", name: "Games", icon: "fa-solid fa-gamepad", url: "games.html" },
+        { id: "music", name: "Music", icon: "fa-solid fa-music", url: "music.html" },
+        { id: "movies", name: "Media", icon: "fa-solid fa-film", url: "movies.html" },
+        { id: "proxy", name: "Web", icon: "fa-solid fa-globe", url: "proxy.html" },
+        { id: "ai", name: "AI", icon: "fa-solid fa-robot", url: "ai.html" }
     ];
+
+    // More popup menu pages: Notes, Dictionary, Messenger
+    const MORE_NAV_PAGES = [
+        { id: "notes", name: "Notes", icon: "fa-solid fa-note-sticky", url: "notes.html" },
+        { id: "dictionary", name: "Dictionary", icon: "fa-solid fa-book-bookmark", url: "dictionary.html" },
+        { id: "messenger", name: "Messenger", icon: "fa-solid fa-comments", url: "messenger.html" }
+    ];
+
+    const ALL_NAV_PAGES = [...MAIN_NAV_PAGES, ...MORE_NAV_PAGES];
 
     const lightThemeNames = ['Light'];
 
@@ -39,7 +73,7 @@
         if (base === 'index' || path.endsWith('/index.html') || path === '/' || base === '') return 'home';
         if (base === 'legal' || path.endsWith('/legal.html')) return 'legal';
 
-        for (const p of REGULAR_NAV_PAGES) {
+        for (const p of ALL_NAV_PAGES) {
             if (base === p.id) return p.id;
         }
 
@@ -233,10 +267,6 @@
                             <i class="fa-solid fa-shield-halved"></i>
                             <span>Terms &amp; Policies</span>
                         </a>
-                        <button type="button" onclick="window.open12AMAuth()" class="auth-menu-button">
-                            <i class="fa-solid fa-user-gear"></i>
-                            <span>Switch Account</span>
-                        </button>
                         <button type="button" id="authCollapseDocksBtn" class="auth-menu-button auth-menu-collapse">
                             <i class="fa-solid ${isCollapsed ? 'fa-angles-right' : 'fa-angles-left'}"></i>
                             <span>${isCollapsed ? 'Uncollapse Deck' : 'Collapse Docks'}</span>
@@ -290,6 +320,13 @@
         if (toggleBtn && menu) {
             toggleBtn.onclick = (e) => {
                 e.stopPropagation();
+                const moreMenu = document.getElementById('more-menu-container');
+                const moreToggle = document.getElementById('sidebarMoreToggle');
+                if (moreMenu && moreMenu.classList.contains('open')) {
+                    moreMenu.classList.remove('open');
+                    moreMenu.classList.add('closed');
+                    if (moreToggle) moreToggle.classList.remove('active');
+                }
                 const isOpen = menu.classList.contains('open');
                 if (isOpen) {
                     menu.classList.remove('open');
@@ -353,6 +390,96 @@
                 <span class="sidebar-tooltip">${escapeHtml(p.name)}</span>
             </a>
         `;
+    }
+
+    function renderMoreSectionHtml(prefix, activeId) {
+        const isMoreActive = activeId === 'notes' || activeId === 'dictionary' || activeId === 'messenger';
+        return `
+            <div class="sidebar-more-wrapper" id="sidebarMoreWrapper">
+                <button type="button" class="sidebar-btn nav-tab ${isMoreActive ? 'active' : ''}" id="sidebarMoreToggle" aria-label="More Apps">
+                    <i class="fa-solid fa-ellipsis"></i>
+                    <span class="sidebar-tooltip">More</span>
+                </button>
+                <div id="more-menu-container" class="more-menu-container closed">
+                    <div class="more-menu-header" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 6px;">
+                        <span style="font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted, #a1a1aa); font-weight: 500;">More Apps</span>
+                    </div>
+                    <div class="auth-menu-divider"></div>
+                    <a href="${prefix}notes.html" class="auth-menu-link ${activeId === 'notes' ? 'active' : ''}">
+                        <i class="fa-solid fa-note-sticky"></i>
+                        <span>Notes</span>
+                    </a>
+                    <a href="${prefix}dictionary.html" class="auth-menu-link ${activeId === 'dictionary' ? 'active' : ''}">
+                        <i class="fa-solid fa-book-bookmark"></i>
+                        <span>Dictionary</span>
+                    </a>
+                    <a href="${prefix}messenger.html" class="auth-menu-link ${activeId === 'messenger' ? 'active' : ''}">
+                        <i class="fa-solid fa-comments"></i>
+                        <span>Messenger</span>
+                    </a>
+                </div>
+            </div>
+        `;
+    }
+
+    function setupMoreMenuListeners() {
+        const moreToggle = document.getElementById('sidebarMoreToggle');
+        const moreMenu = document.getElementById('more-menu-container');
+        const authToggle = document.getElementById('sidebarAuthToggle');
+        const authMenu = document.getElementById('auth-menu-container');
+
+        let moreHoverTimer = null;
+        const closeMoreIfHoverAway = () => {
+            clearTimeout(moreHoverTimer);
+            moreHoverTimer = setTimeout(() => {
+                const isHoveringMenu = moreMenu && moreMenu.matches(':hover');
+                const isHoveringToggle = moreToggle && moreToggle.matches(':hover');
+                if (!isHoveringMenu && !isHoveringToggle && moreMenu && moreMenu.classList.contains('open')) {
+                    moreMenu.classList.remove('open');
+                    moreMenu.classList.add('closed');
+                    if (moreToggle) moreToggle.classList.remove('active');
+                }
+            }, 250);
+        };
+
+        if (moreMenu) {
+            moreMenu.addEventListener('mouseleave', closeMoreIfHoverAway);
+            moreMenu.addEventListener('mouseenter', () => clearTimeout(moreHoverTimer));
+        }
+
+        if (moreToggle && moreMenu) {
+            moreToggle.onclick = (e) => {
+                e.stopPropagation();
+                if (authMenu && authMenu.classList.contains('open')) {
+                    authMenu.classList.remove('open');
+                    authMenu.classList.add('closed');
+                    if (authToggle) authToggle.classList.remove('active');
+                }
+                const isOpen = moreMenu.classList.contains('open');
+                if (isOpen) {
+                    moreMenu.classList.remove('open');
+                    moreMenu.classList.add('closed');
+                    moreToggle.classList.remove('active');
+                } else {
+                    moreMenu.classList.remove('closed');
+                    moreMenu.classList.add('open');
+                    moreToggle.classList.add('active');
+                }
+            };
+
+            moreToggle.addEventListener('mouseleave', closeMoreIfHoverAway);
+            moreToggle.addEventListener('mouseenter', () => clearTimeout(moreHoverTimer));
+        }
+
+        document.addEventListener('click', (e) => {
+            if (moreMenu && moreToggle && !moreMenu.contains(e.target) && !moreToggle.contains(e.target)) {
+                if (moreMenu.classList.contains('open')) {
+                    moreMenu.classList.remove('open');
+                    moreMenu.classList.add('closed');
+                    moreToggle.classList.remove('active');
+                }
+            }
+        });
     }
 
     // Secondary Floating Dock for Settings Page
@@ -531,7 +658,9 @@
 
             topSectionHtml = `
                 <a href="${prefix}index.html" class="sidebar-btn sidebar-logo-btn ${isHome ? 'active' : ''}" aria-label="12AM Home">
-                    <img src="${logoSrc}" alt="12AM Logo" class="sidebar-logo-img navbar-logo" id="sidebar-logo">
+                    <div class="sidebar-logo-inner">
+                        <img src="${logoSrc}" alt="12AM Logo" class="sidebar-logo-img navbar-logo" id="sidebar-logo">
+                    </div>
                     <span class="sidebar-tooltip">Home</span>
                 </a>
                 <a href="${prefix}legal.html" class="sidebar-btn ${isLegal ? 'active' : ''}" aria-label="Terms &amp; Policies">
@@ -540,15 +669,18 @@
                 </a>
             `;
         } else {
-            // Full Dock: Home logo + complete catalog of daily apps
+            // Full Dock: Home logo + sorted apps (Dashboard, Soundboard, Games, Music, Media, Web, AI) + More button
             const logoBtnHtml = `
                 <a href="${prefix}index.html" class="sidebar-btn sidebar-logo-btn ${activeId === 'home' ? 'active' : ''}" aria-label="12AM Home">
-                    <img src="${logoSrc}" alt="12AM Logo" class="sidebar-logo-img navbar-logo" id="sidebar-logo">
+                    <div class="sidebar-logo-inner">
+                        <img src="${logoSrc}" alt="12AM Logo" class="sidebar-logo-img navbar-logo" id="sidebar-logo">
+                    </div>
                     <span class="sidebar-tooltip">Home</span>
                 </a>
             `;
-            const appButtonsHtml = REGULAR_NAV_PAGES.map(p => renderPageButton(p, activeId, prefix)).join('');
-            topSectionHtml = `${logoBtnHtml}${appButtonsHtml}`;
+            const appButtonsHtml = MAIN_NAV_PAGES.map(p => renderPageButton(p, activeId, prefix)).join('');
+            const moreBtnHtml = renderMoreSectionHtml(prefix, activeId);
+            topSectionHtml = `${logoBtnHtml}${appButtonsHtml}${moreBtnHtml}`;
         }
 
         // Bottom section: Auth section (auth toggle with menu when logged in, or direct buttons when logged out)
@@ -572,6 +704,7 @@
 
         setupPanicKey();
         setupAuthMenuListeners();
+        setupMoreMenuListeners();
         setupSettingsSecondaryDock();
         setupEdgeSensorAndPeek();
         injectMinimalFooter();

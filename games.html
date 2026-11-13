@@ -1236,7 +1236,7 @@
     function updatePlayerPinBtn() {
       const pinBtn = document.getElementById('playerPinBtn');
       if (!pinBtn) return;
-      const isPinned = pinnedGames.has(currentGameTitle);
+      const isPinned = Array.isArray(pinnedGames) ? pinnedGames.includes(currentGameTitle) : (pinnedGames && typeof pinnedGames.has === 'function' ? pinnedGames.has(currentGameTitle) : false);
       pinBtn.classList.toggle('pinned-active', isPinned);
       pinBtn.title = isPinned ? 'Unpin Game' : 'Pin Game';
     }

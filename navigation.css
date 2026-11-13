@@ -185,8 +185,22 @@ body {
 
 /* Brand Logo Squircle Button */
 .sidebar-logo-btn {
+  overflow: visible !important;
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.sidebar-logo-inner {
+  width: 28px;
+  height: 28px;
   overflow: hidden;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
 }
 
 .sidebar-logo-img {
@@ -345,10 +359,11 @@ body.sidebar-collapsed:has(#settings-floating-dock) #settings-container {
 }
 
 /* ==========================================================================
-   AUTH DROPDOWN MENU (For Logged In Users)
+   AUTH & MORE DROPDOWN MENUS
    ========================================================================== */
 
-.sidebar-auth-wrapper {
+.sidebar-auth-wrapper,
+.sidebar-more-wrapper {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -357,11 +372,12 @@ body.sidebar-collapsed:has(#settings-floating-dock) #settings-container {
   width: 100%;
 }
 
-.auth-menu-container {
+.auth-menu-container,
+.more-menu-container {
   position: absolute;
   left: calc(100% + 14px);
   bottom: 0;
-  width: 17rem;
+  width: 16rem;
   background: var(--bg-card, #0d0d12);
   border: 1px solid var(--border-main, rgba(255, 255, 255, 0.12));
   border-radius: 20px;
@@ -381,14 +397,16 @@ body.sidebar-collapsed:has(#settings-floating-dock) #settings-container {
   transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.22s ease !important;
 }
 
-.auth-menu-container.closed {
+.auth-menu-container.closed,
+.more-menu-container.closed {
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;
   transform: translateX(-10px) scale(0.96) !important;
 }
 
-.auth-menu-container.open {
+.auth-menu-container.open,
+.more-menu-container.open {
   opacity: 1 !important;
   visibility: visible !important;
   pointer-events: auto !important;
@@ -696,4 +714,207 @@ html.theme-amoled-midnight #playerModal video,
 html.theme-amoled-midnight .stream-iframe {
   filter: brightness(0.8) !important;
   transition: filter 0.3s ease;
+}
+
+/* ==========================================================================
+   RIGHT DOCK POSITION (dock-right)
+   ========================================================================== */
+
+body.dock-right #floating-sidebar,
+body.dock-right .floating-sidebar,
+body.dock-right #navbar-container {
+  left: auto !important;
+  right: 18px !important;
+}
+
+body.dock-right #settings-floating-dock,
+body.dock-right .settings-floating-dock {
+  left: auto !important;
+  right: 88px !important;
+}
+
+/* Tooltips flip to the LEFT of the dock */
+body.dock-right .sidebar-tooltip {
+  left: auto !important;
+  right: calc(100% + 14px) !important;
+  transform: translateY(-50%) translateX(6px) !important;
+}
+
+body.dock-right .sidebar-tooltip::before {
+  right: auto !important;
+  left: 100% !important;
+  border-right-color: transparent !important;
+  border-left-color: var(--border-main, rgba(255, 255, 255, 0.15)) !important;
+}
+
+body.dock-right .sidebar-btn:hover .sidebar-tooltip {
+  transform: translateY(-50%) translateX(0) !important;
+}
+
+/* Dropdown Menus flip to the LEFT of the dock */
+body.dock-right .auth-menu-container,
+body.dock-right .more-menu-container {
+  left: auto !important;
+  right: calc(100% + 14px) !important;
+  transform-origin: bottom right !important;
+  transform: translateX(10px) scale(0.96) !important;
+}
+
+body.dock-right .auth-menu-container.open,
+body.dock-right .more-menu-container.open {
+  transform: translateX(0) scale(1) !important;
+}
+
+body.dock-right .auth-menu-container.closed,
+body.dock-right .more-menu-container.closed {
+  transform: translateX(10px) scale(0.96) !important;
+}
+
+/* Collapsed sidebars & edge sensor */
+body.dock-right .sidebar-edge-sensor {
+  left: auto !important;
+  right: 0 !important;
+}
+
+body.dock-right.sidebar-collapsed #floating-sidebar,
+body.dock-right.sidebar-collapsed #navbar-container {
+  transform: translateY(-50%) translateX(120px) !important;
+}
+
+body.dock-right.sidebar-collapsed #settings-floating-dock {
+  transform: translateY(-50%) translateX(220px) !important;
+}
+
+body.dock-right.sidebar-collapsed.sidebar-peek-open #floating-sidebar,
+body.dock-right.sidebar-collapsed.sidebar-peek-open #navbar-container,
+body.dock-right.sidebar-collapsed.sidebar-peek-open #settings-floating-dock {
+  transform: translateY(-50%) translateX(0) !important;
+}
+
+/* Minimal footer shifts to bottom left when dock is on right to avoid collision */
+body.dock-right .minimal-footer-cluster {
+  right: auto !important;
+  left: 24px !important;
+}
+
+/* Page content padding when dock is on right */
+body.dock-right #page-content,
+body.dock-right main,
+body.dock-right .page-container,
+body.dock-right .main-content,
+body.dock-right .dashboard-container,
+body.dock-right .app-container,
+body.dock-right .soundboard-layout,
+body.dock-right #soundboard-container,
+body.dock-right #music-app,
+body.dock-right #games-container,
+body.dock-right #movies-container {
+  padding-left: 28px !important;
+  padding-right: 96px !important;
+}
+
+body.dock-right.sidebar-collapsed #page-content,
+body.dock-right.sidebar-collapsed main,
+body.dock-right.sidebar-collapsed .page-container,
+body.dock-right.sidebar-collapsed .main-content,
+body.dock-right.sidebar-collapsed .dashboard-container,
+body.dock-right.sidebar-collapsed .app-container,
+body.dock-right.sidebar-collapsed .soundboard-layout,
+body.dock-right.sidebar-collapsed #soundboard-container,
+body.dock-right.sidebar-collapsed #music-app,
+body.dock-right.sidebar-collapsed #games-container,
+body.dock-right.sidebar-collapsed #movies-container {
+  padding-left: 28px !important;
+  padding-right: 28px !important;
+}
+
+body.dock-right:has(#settings-floating-dock) #settings-container {
+  padding-left: 28px !important;
+  padding-right: 175px !important;
+}
+
+body.dock-right.sidebar-collapsed:has(#settings-floating-dock) #settings-container {
+  padding-left: 28px !important;
+  padding-right: 28px !important;
+}
+
+/* Index page alignment changes when dock is on right: content aligns left so nothing is clipped */
+body.dock-right #page-content.items-end,
+body.dock-right main.items-end {
+  align-items: flex-start !important;
+  text-align: left !important;
+  padding-left: calc(1.5rem + 24px) !important;
+  padding-right: 96px !important;
+}
+
+body.dock-right #page-content section.items-end,
+body.dock-right main section.items-end {
+  align-items: flex-start !important;
+  text-align: left !important;
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
+
+body.dock-right #page-content .text-right,
+body.dock-right main .text-right {
+  text-align: left !important;
+}
+
+body.dock-right #page-content .ml-auto,
+body.dock-right main .ml-auto {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
+
+body.dock-right #page-content .justify-end,
+body.dock-right main .justify-end {
+  justify-content: flex-start !important;
+}
+
+@media (max-width: 640px) {
+  body.dock-right #floating-sidebar,
+  body.dock-right .floating-sidebar,
+  body.dock-right #navbar-container {
+    right: 10px !important;
+    left: auto !important;
+  }
+  body.dock-right .minimal-footer-cluster {
+    margin-left: 14px !important;
+    margin-right: 0 !important;
+  }
+}
+
+/* ==========================================================================
+   MESSENGER SIDEBAR OPPOSITE OF DOCK
+   ========================================================================== */
+
+/* Default: Dock is on LEFT -> Messenger sidebar is on RIGHT (opposite side of dock) */
+.messenger-frame#app-container {
+  flex-direction: row-reverse !important;
+  padding-left: 82px !important;
+  padding-right: 0 !important;
+}
+
+.messenger-frame#app-container #contacts-view {
+  border-left: 1px solid var(--border-main) !important;
+  border-right: none !important;
+}
+
+/* When Dock is on RIGHT -> Messenger sidebar is on LEFT (opposite side of dock) */
+body.dock-right .messenger-frame#app-container {
+  flex-direction: row !important;
+  padding-left: 0 !important;
+  padding-right: 82px !important;
+}
+
+body.dock-right .messenger-frame#app-container #contacts-view {
+  border-right: 1px solid var(--border-main) !important;
+  border-left: none !important;
+}
+
+/* When sidebar dock is collapsed */
+body.sidebar-collapsed .messenger-frame#app-container,
+body.dock-right.sidebar-collapsed .messenger-frame#app-container {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
