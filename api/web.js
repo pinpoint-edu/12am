@@ -243,6 +243,55 @@ function rewriteHtml(html, finalUrl, webEndpoint, hostOrigin, isEmbed = false) {
     }
   } catch(e){}
 
+  // Safe dummy ServiceWorker to prevent cross-origin SecurityError
+  try {
+    if (navigator.serviceWorker) {
+      navigator.serviceWorker.register = markNative(function() {
+        return Promise.resolve({
+          active: null,
+          installing: null,
+          waiting: null,
+          addEventListener: function(){},
+          removeEventListener: function(){}
+        });
+      }, "register");
+    }
+  } catch(e){}
+
+  // Safe YaGames SDK Mock for Yandex game ports (e.g. Top Driver)
+  try {
+    window.YaGames = window.YaGames || {
+      init: markNative(function() {
+        return Promise.resolve({
+          adv: {
+            showFullscreenAdv: function(o) { if (o && o.callbacks && o.callbacks.onClose) o.callbacks.onClose(true); },
+            showRewardedVideo: function(o) { if (o && o.callbacks && o.callbacks.onRewarded) o.callbacks.onRewarded(); if (o && o.callbacks && o.callbacks.onClose) o.callbacks.onClose(); }
+          },
+          auth: {
+            isAuthorized: function() { return false; },
+            openAuthDialog: function() { return Promise.reject(); }
+          },
+          getPlayer: function() {
+            return Promise.resolve({
+              getName: function() { return "Player"; },
+              getPhoto: function() { return ""; },
+              getUniqueID: function() { return "player-1"; },
+              setData: function() { return Promise.resolve(); },
+              getData: function() { return Promise.resolve({}); }
+            });
+          },
+          feedback: {
+            canReview: function() { return Promise.resolve({ value: false }); },
+            requestReview: function() { return Promise.resolve(); }
+          },
+          features: {
+            LoadingAPI: { ready: function(){} }
+          }
+        });
+      }, "init")
+    };
+  } catch(e){}
+
   window.addEventListener("message", function(e) {
     try {
       if (e && e.data && (e.data.type === "VS_DEVTOOLS" || e.data.type === "vaplayer-devtools")) {
@@ -450,6 +499,19 @@ function rewriteHtml(html, finalUrl, webEndpoint, hostOrigin, isEmbed = false) {
     }, "Worker");
     window.Worker.prototype = OrigWorker.prototype;
   }
+
+  try {
+    var origImgDesc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, "src");
+    if (origImgDesc && origImgDesc.set) {
+      Object.defineProperty(HTMLImageElement.prototype, "src", {
+        set: function(val) {
+          return origImgDesc.set.call(this, wrapRaw(val));
+        },
+        get: origImgDesc.get,
+        configurable: true
+      });
+    }
+  } catch(e){}
 
   window.open = markNative(function(url) {
     if (IS_EMBED || window !== window.top) {
@@ -679,8 +741,37 @@ export default async function handler(req, res) {
       res.setHeader("Content-Type", contentType);
     }
 
-    const arrayBuf = await upstream.arrayBuffer();
-    return res.status(upstream.status).send(Buffer.from(arrayBuf));
+    let buffer = Buffer.from(await upstream.arrayBuffer());
+
+    // Automatic Git LFS resolution (fixes wasm magic word error: expected 00 61 73 6d, found 76 65 72 73 'vers')
+    if (buffer.length < 1000 && buffer.toString("utf8").includes("git-lfs.github.com/spec/v1")) {
+      const rawMatch = finalUrl.match(/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/(.+)/i);
+      const ioMatch = finalUrl.match(/([^/]+)\.github\.io\/([^/]+)\/(.+)/i);
+      let lfsUrl = null;
+      if (rawMatch) {
+        lfsUrl = `https://media.githubusercontent.com/media/${rawMatch[1]}/${rawMatch[2]}/${rawMatch[3]}/${rawMatch[4]}`;
+      } else if (ioMatch) {
+        lfsUrl = `https://media.githubusercontent.com/media/${ioMatch[1]}/${ioMatch[2]}/master/${ioMatch[3]}`;
+      }
+      if (lfsUrl) {
+        try {
+          const parsedLfs = new URL(lfsUrl);
+          let lfsRes = await fetch(lfsUrl, makeFetchOpts(parsedLfs));
+          if (!lfsRes.ok && ioMatch) {
+            const fallbackLfs = `https://media.githubusercontent.com/media/${ioMatch[1]}/${ioMatch[2]}/main/${ioMatch[3]}`;
+            lfsRes = await fetch(fallbackLfs, makeFetchOpts(new URL(fallbackLfs)));
+          }
+          if (lfsRes.ok) {
+            buffer = Buffer.from(await lfsRes.arrayBuffer());
+            if (lowerUrl.includes(".wasm")) {
+              res.setHeader("Content-Type", "application/wasm");
+            }
+          }
+        } catch(e) {}
+      }
+    }
+
+    return res.status(upstream.status).send(buffer);
   } catch (err) {
     return res.status(502).send(
       `<!DOCTYPE html><html><body style="background:#09090b;color:#fafafa;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;"><div style="background:#18181b;border:1px solid #27272a;padding:24px;border-radius:16px;max-width:440px;text-align:center;"><h3 style="color:#ef4444;margin:0 0 8px;">Connection Error</h3><p style="color:#a1a1aa;font-size:14px;margin:0;">${err.message || "Network Error"}</p></div></body></html>`

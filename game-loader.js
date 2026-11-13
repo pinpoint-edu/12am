@@ -144,127 +144,128 @@ function getGameId(fileUrl) {
 async function fetchGameHtml(file) {
   const cleanFile = file.split(/[?#]/)[0];
   
+  // Convert pinpoint-edu.github.io URLs to raw github equivalents
+  let convertedFile = file;
+  if (file.includes('pinpoint-edu.github.io/strongdog')) {
+    convertedFile = file.replace(/https?:\/\/pinpoint-edu\.github\.io\/(strongdog[0-9]*)\//i, 'https://raw.githubusercontent.com/pinpoint-edu/$1/master/');
+  } else if (file.includes('pinpoint-edu.github.io/GAMES/')) {
+    convertedFile = file.replace(/https?:\/\/pinpoint-edu\.github\.io\/GAMES\//i, 'https://raw.githubusercontent.com/pinpoint-edu/GAMES/main/');
+  } else if (file.includes('pinpoint-edu.github.io/assets/')) {
+    convertedFile = file.replace(/https?:\/\/pinpoint-edu\.github\.io\/assets\//i, 'https://raw.githubusercontent.com/pinpoint-edu/assets/main/');
+  }
+
   // Absolute URLs
   if (/^https?:\/\//i.test(cleanFile)) {
-    let mirrorUrl = file;
+    const urlsToTry = [convertedFile, file];
     if (file.includes('jsdelivr.net')) {
-      mirrorUrl = file.replace(/https?:\/\/[^/]*\.jsdelivr\.net\//i, activeMirror + '/');
+      urlsToTry.unshift(file.replace(/https?:\/\/[^/]*\.jsdelivr\.net\//i, activeMirror + '/'));
     }
-    try {
-      const res = await fetch(mirrorUrl);
-      if (res.ok) {
-        const text = await res.text();
-        if (!text.includes('Package size exceeded') && !text.includes('limit of 20 MB') && !text.includes('404: Not Found')) {
-          return { html: text, resolvedUrl: mirrorUrl };
-        }
-      }
-    } catch (e) {}
-
-    try {
-      const res2 = await fetch(file);
-      if (res2.ok) {
-        const text = await res2.text();
-        if (!text.includes('Package size exceeded') && !text.includes('limit of 20 MB') && !text.includes('404: Not Found')) {
-          return { html: text, resolvedUrl: file };
-        }
-      }
-    } catch (e) {}
-
     if (file.includes('jsdelivr.net/gh/')) {
-      const rawUrl = file.replace(/https?:\/\/[^/]*\.jsdelivr\.net\/gh\/([^/@]+)\/([^/@]+)(?:@[^/]+)?\//i, 'https://raw.githubusercontent.com/$1/$2/main/');
+      urlsToTry.push(file.replace(/https?:\/\/[^/]*\.jsdelivr\.net\/gh\/([^/@]+)\/([^/@]+)(?:@[^/]+)?\//i, 'https://raw.githubusercontent.com/$1/$2/main/'));
+    }
+
+    for (const tryUrl of urlsToTry) {
       try {
-        const res3 = await fetch(rawUrl);
-        if (res3.ok) {
-          const text = await res3.text();
-          return { html: text, resolvedUrl: rawUrl };
+        const res = await fetch(tryUrl);
+        if (res.ok) {
+          const text = await res.text();
+          if (!text.includes('Package size exceeded') && !text.includes('limit of 20 MB') && !text.includes('404: Not Found')) {
+            return { html: text, resolvedUrl: tryUrl };
+          }
         }
       } catch (e) {}
     }
 
     // Try via our local proxy on school Chromebooks
-    try {
-      const proxyRes = await fetch(`/api/proxy?url=${encodeURIComponent(file)}`);
-      if (proxyRes.ok) {
-        const text = await proxyRes.text();
-        if (!text.includes('404: Not Found') && text.length > 50) {
-          return { html: text, resolvedUrl: file };
+    for (const tryUrl of urlsToTry) {
+      try {
+        const proxyRes = await fetch(`/api/proxy?url=${encodeURIComponent(tryUrl)}`);
+        if (proxyRes.ok) {
+          const text = await proxyRes.text();
+          if (!text.includes('404: Not Found') && text.length > 50) {
+            return { html: text, resolvedUrl: tryUrl };
+          }
         }
-      }
-    } catch (e) {}
+      } catch (e) {}
+    }
 
     throw new Error('Could not fetch game from ' + file);
   }
 
   const cleanPath = cleanFile.replace(/^\/+/, '');
-  let fetchFile = cleanPath;
-  if (fetchFile.endsWith('/')) {
-    fetchFile += 'index.html';
+  let fetchCandidates = [cleanPath];
+  if (cleanPath.endsWith('/')) {
+    fetchCandidates = [cleanPath + 'index.html'];
+  } else if (!cleanPath.includes('.')) {
+    fetchCandidates = [cleanPath + '.html', cleanPath + '/index.html', cleanPath];
   }
 
-  // 1. Try local fetch first (especially for textbooks/ in 12AM)
-  try {
-    const localRes = await fetch(fetchFile);
-    if (localRes.ok) {
-      const text = await localRes.text();
-      if (!text.includes('Package size exceeded') && !text.includes('limit of 20 MB') && !text.includes('404: Not Found') && !text.trim().startsWith('{"status": 4')) {
-        let localResolved = fetchFile;
-        try {
-          localResolved = new URL(fetchFile, window.location.href).href;
-        } catch (e) {}
-        return { html: text, resolvedUrl: localResolved };
-      }
-    }
-  } catch (e) {}
-
-  // 2. Try remote repositories via mirrors
-  const mirrors = [activeMirror, ...CDN_MIRRORS.filter(m => m !== activeMirror)];
-  const primaryRepo = 'pinpoint-edu/assets@main/';
-  const fallbackRepo = 'pinpoint-edu/pinpoint-mini@main/';
-
-  const urlsToTry = [
-    ...mirrors.map(m => m + '/gh/' + primaryRepo + fetchFile),
-    'https://raw.githubusercontent.com/' + primaryRepo.replace(/@[^/]+\//, '/main/') + fetchFile,
-    'https://cdn.statically.io/gh/' + primaryRepo + fetchFile,
-    ...mirrors.map(m => m + '/gh/' + fallbackRepo + fetchFile),
-    'https://raw.githubusercontent.com/' + fallbackRepo.replace(/@[^/]+\//, '/main/') + fetchFile
-  ];
-
-  for (const url of urlsToTry) {
+  for (const fetchFile of fetchCandidates) {
+    // 1. Try local fetch first (especially for textbooks/ in 12AM)
     try {
-      const res = await fetch(url);
-      if (!res.ok) continue;
-      const text = await res.text();
-      if (text.includes('Package size exceeded') || text.includes('limit of 20 MB') || text.includes('404: Not Found') || text.trim().startsWith('{"status": 4')) {
-        continue;
-      }
-      for (const m of CDN_MIRRORS) {
-        if (url.startsWith(m)) {
-          activeMirror = m;
-          break;
-        }
-      }
-      return { html: text, resolvedUrl: url };
-    } catch (e) {
-      continue;
-    }
-  }
-
-  // 3. Fallback to our internal serverless proxy for school Chromebooks
-  const proxyFallbacks = [
-    `/api/proxy?url=${encodeURIComponent('https://raw.githubusercontent.com/pinpoint-edu/assets/main/' + fetchFile)}`,
-    `/api/proxy?url=${encodeURIComponent('https://raw.githubusercontent.com/pinpoint-edu/pinpoint-mini/main/' + fetchFile)}`,
-    `/api/web?mode=raw&url=${encodeURIComponent('https://raw.githubusercontent.com/pinpoint-edu/assets/main/' + fetchFile)}`
-  ];
-  for (const pUrl of proxyFallbacks) {
-    try {
-      const pRes = await fetch(pUrl);
-      if (pRes.ok) {
-        const text = await pRes.text();
-        if (!text.includes('404: Not Found') && text.length > 50) {
-          return { html: text, resolvedUrl: pUrl };
+      const localRes = await fetch(fetchFile);
+      if (localRes.ok) {
+        const text = await localRes.text();
+        if (!text.includes('Package size exceeded') && !text.includes('limit of 20 MB') && !text.includes('404: Not Found') && !text.trim().startsWith('{"status": 4')) {
+          let localResolved = fetchFile;
+          try {
+            localResolved = new URL(fetchFile, window.location.href).href;
+          } catch (e) {}
+          return { html: text, resolvedUrl: localResolved };
         }
       }
     } catch (e) {}
+
+    // 2. Try remote repositories via mirrors
+    const mirrors = [activeMirror, ...CDN_MIRRORS.filter(m => m !== activeMirror)];
+    const primaryRepo = 'pinpoint-edu/assets@main/';
+    const fallbackRepo = 'pinpoint-edu/pinpoint-mini@main/';
+
+    const urlsToTry = [
+      ...mirrors.map(m => m + '/gh/' + primaryRepo + fetchFile),
+      'https://raw.githubusercontent.com/' + primaryRepo.replace(/@[^/]+\//, '/main/') + fetchFile,
+      'https://cdn.statically.io/gh/' + primaryRepo + fetchFile,
+      ...mirrors.map(m => m + '/gh/' + fallbackRepo + fetchFile),
+      'https://raw.githubusercontent.com/' + fallbackRepo.replace(/@[^/]+\//, '/main/') + fetchFile
+    ];
+
+    for (const url of urlsToTry) {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) continue;
+        const text = await res.text();
+        if (text.includes('Package size exceeded') || text.includes('limit of 20 MB') || text.includes('404: Not Found') || text.trim().startsWith('{"status": 4')) {
+          continue;
+        }
+        for (const m of CDN_MIRRORS) {
+          if (url.startsWith(m)) {
+            activeMirror = m;
+            break;
+          }
+        }
+        return { html: text, resolvedUrl: url };
+      } catch (e) {
+        continue;
+      }
+    }
+
+    // 3. Fallback to our internal serverless proxy for school Chromebooks
+    const proxyFallbacks = [
+      `/api/proxy?url=${encodeURIComponent('https://raw.githubusercontent.com/pinpoint-edu/assets/main/' + fetchFile)}`,
+      `/api/proxy?url=${encodeURIComponent('https://raw.githubusercontent.com/pinpoint-edu/pinpoint-mini/main/' + fetchFile)}`,
+      `/api/web?mode=raw&url=${encodeURIComponent('https://raw.githubusercontent.com/pinpoint-edu/assets/main/' + fetchFile)}`
+    ];
+    for (const pUrl of proxyFallbacks) {
+      try {
+        const pRes = await fetch(pUrl);
+        if (pRes.ok) {
+          const text = await pRes.text();
+          if (!text.includes('404: Not Found') && text.length > 50) {
+            return { html: text, resolvedUrl: pUrl };
+          }
+        }
+      } catch (e) {}
+    }
   }
 
   throw new Error('Could not fetch game from any CDN mirror.');
@@ -284,19 +285,15 @@ function prepareGameHtml(html, fileUrl) {
   const mRepo = base.match(/^(https?:\/\/[^/]+\/(?:gh\/[^/]+\/[^/@]+@[^/]+\/|[^/]+\/[^/]+\/[^/]+\/))/i);
   if (mRepo) repoBase = mRepo[1];
 
-  // Strip Google Gadget / Module XML wrappers if present
-  if (html.includes('<module') || html.includes('<Module') || html.includes('<![CDATA[') || html.includes('[CDATA[')) {
+  // Strip Google Gadget / Module XML wrappers if present (only for XML files, avoiding JS string mutilation)
+  const trimmedHtml = html.trim();
+  if (trimmedHtml.startsWith('<?xml') || trimmedHtml.startsWith('<Module') || trimmedHtml.startsWith('<module') || /^\s*<!--[\s\S]*?-->\s*<[Mm]odule/i.test(html)) {
     const cdataMatch = html.match(/(?:<!(?:--)?\[CDATA\[|<!--\[CDATA\[)([\s\S]*?)(?:\]\](?:-->)?|\]\]&gt;|\]\]>)/i);
-    if (cdataMatch && cdataMatch[1] && cdataMatch[1].trim().length > 50) {
-      const modStart = html.search(/<module/i);
-      const modEnd = html.search(/<\/module>/i);
-      if (modStart !== -1 && modEnd !== -1) {
-        html = html.substring(0, modStart) + cdataMatch[1] + html.substring(modEnd + 9);
-      }
+    if (cdataMatch && cdataMatch[1] && cdataMatch[1].trim().length > 20) {
+      html = cdataMatch[1].trim();
+    } else {
+      html = html.replace(/<\/?(?:module|moduleprefs|content)\b[^>]*>/gi, '');
     }
-    html = html.replace(/<module[^>]*>[\s\S]*?<content[^>]*>(?:<!--|<!(?:--)?)?\[CDATA\[/gi, '')
-               .replace(/(?:\]\](?:-->)?|\]\]&gt;|\]\]>)\s*<\/content>\s*<\/moduleprefs>\s*<\/module>/gi, '')
-               .replace(/<\/?(?:module|moduleprefs|content)\b[^>]*>/gi, '');
   }
 
   // Strip dead blob scripts & wrappers
@@ -339,7 +336,7 @@ function prepareGameHtml(html, fileUrl) {
     }
   }
 
-  // Inject frame styling & window.top sandboxing
+  // Inject frame styling & window.top sandboxing & ServiceWorker / YaGames / wasm shims
   const frameStyle = '<style>html,body{height:100%;margin:0;padding:0;overflow:hidden;background:#000;}.webgl-content,#gameContainer,#canvas{width:100%;height:100%;}</style>';
   const innerScriptBody = [
     'try { Object.defineProperty(window, "top", { get: function() { return window; } }); } catch(e){}',
@@ -350,10 +347,59 @@ function prepareGameHtml(html, fileUrl) {
     '    return _origPostMessage.call(this, msg, targetOrigin, transfer);',
     '  };',
     '} catch(e){}',
+    'try { window.open = function() { return null; }; } catch(e){}',
     'window.ytgame = window.ytgame || {',
     '  game: { firstFrameReady: function(){}, gameReady: function(){}, pause: function(){}, resume: function(){} },',
     '  engagement: { sendScore: function(){} }',
     '};',
+    'try {',
+    '  if (window.navigator && window.navigator.serviceWorker) {',
+    '    window.navigator.serviceWorker.register = function() {',
+    '      return Promise.resolve({ active: null, installing: null, waiting: null, scope: "", addEventListener: function(){}, removeEventListener: function(){} });',
+    '    };',
+    '  }',
+    '} catch(e){}',
+    'try {',
+    '  window.YaGames = window.YaGames || {',
+    '    init: function() {',
+    '      return Promise.resolve({',
+    '        adv: { showFullscreenAdv: function(o){ if (o && o.callbacks && o.callbacks.onClose) o.callbacks.onClose(true); }, showRewardedVideo: function(o){ if (o && o.callbacks && o.callbacks.onRewarded) o.callbacks.onRewarded(); if (o && o.callbacks && o.callbacks.onClose) o.callbacks.onClose(true); } },',
+    '        auth: { getPlayer: function(){ return Promise.resolve({ getName: function(){ return "Player"; }, getPhoto: function(){ return ""; }, getUniqueID: function(){ return "12am-player"; } }); } },',
+    '        features: { LoadingAPI: { ready: function(){} } }',
+    '      });',
+    '    }',
+    '  };',
+    '} catch(e){}',
+    'try {',
+    '  var _origFetch = window.fetch;',
+    '  if (_origFetch) {',
+    '    window.fetch = function(input, init) {',
+    '      var url = typeof input === "string" ? input : (input && input.url ? input.url : "");',
+    '      if (url && typeof url === "string") {',
+    '        try {',
+    '          var abs = new URL(url, document.baseURI || window.location.href).href;',
+    '          if (abs.includes(".wasm") || abs.includes("pinpoint-edu.github.io") || abs.includes("raw.githubusercontent.com") || abs.includes("glseries.net")) {',
+    '            return _origFetch.call(this, "/api/proxy?url=" + encodeURIComponent(abs), init);',
+    '          }',
+    '        } catch(e) {}',
+    '      }',
+    '      return _origFetch.apply(this, arguments);',
+    '    };',
+    '  }',
+    '} catch(e){}',
+    'try {',
+    '  var _origXHROpen = XMLHttpRequest.prototype.open;',
+    '  XMLHttpRequest.prototype.open = function(method, url) {',
+    '    var rest = Array.prototype.slice.call(arguments, 2);',
+    '    try {',
+    '      var abs = new URL(url, document.baseURI || window.location.href).href;',
+    '      if (abs.includes(".wasm") || abs.includes("pinpoint-edu.github.io") || abs.includes("raw.githubusercontent.com") || abs.includes("glseries.net")) {',
+    '        return _origXHROpen.apply(this, [method, "/api/proxy?url=" + encodeURIComponent(abs)].concat(rest));',
+    '      }',
+    '    } catch(e) {}',
+    '    return _origXHROpen.apply(this, arguments);',
+    '  };',
+    '} catch(e){}',
     '(function() {',
     '  var px = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";',
     '  try {',

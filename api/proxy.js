@@ -73,18 +73,11 @@ export default async function handler(req, res) {
     }
 
     // Forward relevant headers
-    const contentType = response.headers.get('content-type') || 'application/octet-stream';
+    let contentType = response.headers.get('content-type') || 'application/octet-stream';
+    if (decodedUrl.toLowerCase().includes('.wasm')) {
+      contentType = 'application/wasm';
+    }
     res.setHeader('Content-Type', contentType);
-
-    const contentLength = response.headers.get('content-length');
-    if (contentLength && !contentType.includes('text/html')) {
-      res.setHeader('Content-Length', contentLength);
-    }
-
-    // Optimization: Cache images and static assets
-    if (contentType.startsWith('image/') || contentType.includes('font') || contentType.includes('audio')) {
-      res.setHeader('Cache-Control', 'public, max-age=86400');
-    }
 
     // URL Rewriting for TGLSC and text-based content
     if (contentType.includes('text/html') || contentType.includes('application/javascript') || contentType.includes('text/css')) {
@@ -107,8 +100,40 @@ export default async function handler(req, res) {
 
       res.send(text);
     } else {
-      const buffer = await response.arrayBuffer();
-      res.send(Buffer.from(buffer));
+      let buffer = Buffer.from(await response.arrayBuffer());
+
+      // Automatic Git LFS resolution (fixes wasm magic word error: expected 00 61 73 6d, found 76 65 72 73 'vers')
+      if (buffer.length < 1000 && buffer.toString('utf8').includes('git-lfs.github.com/spec/v1')) {
+        let lfsUrl = null;
+        const rawMatch = decodedUrl.match(/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/(.+)/i);
+        const ioMatch = decodedUrl.match(/([^/]+)\.github\.io\/([^/]+)\/(.+)/i);
+        if (rawMatch) {
+          lfsUrl = `https://media.githubusercontent.com/media/${rawMatch[1]}/${rawMatch[2]}/${rawMatch[3]}/${rawMatch[4]}`;
+        } else if (ioMatch) {
+          lfsUrl = `https://media.githubusercontent.com/media/${ioMatch[1]}/${ioMatch[2]}/master/${ioMatch[3]}`;
+        }
+        if (lfsUrl) {
+          try {
+            let lfsRes = await fetch(lfsUrl, fetchOptions);
+            if (!lfsRes.ok && ioMatch) {
+              lfsRes = await fetch(`https://media.githubusercontent.com/media/${ioMatch[1]}/${ioMatch[2]}/main/${ioMatch[3]}`, fetchOptions);
+            }
+            if (lfsRes.ok) {
+              buffer = Buffer.from(await lfsRes.arrayBuffer());
+              if (decodedUrl.toLowerCase().includes('.wasm')) {
+                res.setHeader('Content-Type', 'application/wasm');
+              }
+            }
+          } catch(e) {}
+        }
+      }
+
+      // Optimization: Cache images and static assets
+      if (contentType.startsWith('image/') || contentType.includes('font') || contentType.includes('audio') || contentType.includes('wasm')) {
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+      }
+
+      res.send(buffer);
     }
   } catch (error) {
     console.error('Proxy error:', error);

@@ -13,6 +13,18 @@
     {
       "source": "/tglsc-proxy/:path*",
       "destination": "/api/proxy?url=https://glseries.net/:path*"
+    },
+    {
+      "source": "/assets/applications/:path*",
+      "destination": "/api/proxy?url=https://glseries.net/assets/applications/:path*"
+    },
+    {
+      "source": "/assets/data/:path*",
+      "destination": "/api/proxy?url=https://glseries.net/assets/data/:path*"
+    },
+    {
+      "source": "/textbooks/:path*",
+      "destination": "/api/proxy?url=https://raw.githubusercontent.com/pinpoint-edu/assets/main/textbooks/:path*"
     }
   ]
 }

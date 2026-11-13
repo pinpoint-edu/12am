@@ -938,8 +938,8 @@
           id: `gn-${g.id}`,
           name: g.name,
           category: 'GN-Math',
-          imgSrc: (g.cover || '').replace("{COVER_URL}", "https://cdn.jsdelivr.net/gh/gn-math/covers@main").replace("{HTML_URL}", "https://cdn.jsdelivr.net/gh/gn-math/html@main"),
-          url: (g.url || '').replace("{COVER_URL}", "https://cdn.jsdelivr.net/gh/gn-math/covers@main").replace("{HTML_URL}", "https://cdn.jsdelivr.net/gh/gn-math/html@main")
+          imgSrc: (g.cover || '').replace("{COVER_URL}", "https://raw.githubusercontent.com/freebuisness/covers/main").replace("{HTML_URL}", "https://raw.githubusercontent.com/freebuisness/html/main"),
+          url: (g.url || '').replace("{COVER_URL}", "https://raw.githubusercontent.com/freebuisness/covers/main").replace("{HTML_URL}", "https://raw.githubusercontent.com/freebuisness/html/main")
         }));
       } catch (e) {
         console.warn('Failed loading GN-Math games:', e);
@@ -1285,7 +1285,7 @@
       player.style.display = 'flex';
       document.body.style.overflow = 'hidden';
 
-      if ((isLocal || url.includes('pinpoint-edu.github.io')) && window.playGame) {
+      if ((isLocal || url.includes('pinpoint-edu.github.io') || url.includes('raw.githubusercontent.com/pinpoint-edu')) && window.playGame) {
         window.playGame(encodeURIComponent(url), encodeURIComponent(title));
         return;
       }
