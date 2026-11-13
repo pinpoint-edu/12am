@@ -288,17 +288,17 @@
                 styleEl.textContent = `
                     @keyframes twelveAmFadeIn { from { opacity: 0; transform: scale(0.96) translateY(6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
                     #12am-auth-overlay {
-                        position: fixed;
-                        inset: 0;
-                        z-index: 9999999;
-                        background: rgba(3, 3, 6, 0.88);
-                        backdrop-filter: blur(28px);
-                        -webkit-backdrop-filter: blur(28px);
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        padding: 1.25rem;
-                        font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+                        position: fixed !important;
+                        inset: 0 !important;
+                        z-index: 100050 !important;
+                        background: rgba(3, 3, 6, 0.82) !important;
+                        backdrop-filter: blur(32px) !important;
+                        -webkit-backdrop-filter: blur(32px) !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        padding: 1.25rem !important;
+                        font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif !important;
                     }
                     .auth-modal-card {
                         background: var(--bg-card, #0c0c11);

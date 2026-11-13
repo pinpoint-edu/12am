@@ -531,13 +531,28 @@ body.sidebar-collapsed.sidebar-peek-open #settings-floating-dock {
   -webkit-backdrop-filter: blur(16px) !important;
   border: 1px solid var(--border-main, rgba(255, 255, 255, 0.09)) !important;
   color: var(--text-muted, #a1a1aa) !important;
-  font-size: 0.74rem !important;
-  font-weight: 400 !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45) !important;
   pointer-events: auto !important;
   user-select: none !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
   z-index: 10 !important;
+}
+
+#dashboard-footer-container .minimal-footer-cluster {
+  margin: 0 !important;
+}
+
+/* Ensure unlock and auth overlays are always strictly above floating docks */
+#12am-auth-overlay,
+.auth-page-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 100050 !important;
+  backdrop-filter: blur(32px) !important;
+  -webkit-backdrop-filter: blur(32px) !important;
+  background: rgba(3, 3, 6, 0.82) !important;
 }
 
 .minimal-footer-cluster:hover {

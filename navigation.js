@@ -586,14 +586,17 @@
             if (isSoundboard) {
                 document.body.appendChild(footer);
             } else {
-                const target = document.querySelector('.max-w-\\[1200px\\]') || document.querySelector('section') || document.getElementById('page-content') || document.body;
+                const dashTarget = document.getElementById('dashboard-footer-container');
+                const target = dashTarget || document.querySelector('.max-w-\\[1200px\\]') || document.querySelector('section') || document.getElementById('page-content') || document.body;
                 target.appendChild(footer);
             }
         }
         const prefix = window.location.pathname.includes('/logged-in/') ? '../' : '';
 
         footer.innerHTML = `
-            <a href="${prefix}legal.html" class="minimal-footer-link">Terms &amp; Privacy Policy</a>
+            <a href="${prefix}legal.html" class="minimal-footer-link" title="Terms &amp; Policies">
+                <i class="fa-solid fa-shield-halved mr-1.5" style="font-size: 11px; opacity: 0.8; color: var(--accent-color, #f59e0b);"></i>Terms &amp; Privacy Policy
+            </a>
             <span class="minimal-footer-dot">•</span>
             <span class="minimal-footer-copy">All rights reserved</span>
         `;
