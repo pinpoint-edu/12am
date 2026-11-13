@@ -13,7 +13,7 @@
         { id: "ai", name: "AI Chat", icon: "fa-solid fa-robot", url: "ai.html" },
         { id: "proxy", name: "Web Proxy", icon: "fa-solid fa-globe", url: "proxy.html" },
         { id: "music", name: "12 Music", icon: "fa-solid fa-music", url: "music.html" },
-        { id: "movies", name: "Movies", icon: "fa-solid fa-film", url: "movies.html" },
+        { id: "movies", name: "Media", icon: "fa-solid fa-film", url: "movies.html" },
         { id: "games", name: "Games", icon: "fa-solid fa-gamepad", url: "games.html" },
         { id: "messenger", name: "Messenger", icon: "fa-solid fa-comments", url: "messenger.html" },
         { id: "soundboard", name: "Soundboard", icon: "fa-solid fa-volume-high", url: "soundboard.html" },
@@ -65,6 +65,11 @@
             const visits = JSON.parse(localStorage.getItem('12am_page_visits') || '{}');
             visits[active] = (visits[active] || 0) + 1;
             localStorage.setItem('12am_page_visits', JSON.stringify(visits));
+
+            let recents = JSON.parse(localStorage.getItem('12am_recent_pages_history') || '[]');
+            recents = recents.filter(item => (typeof item === 'object' ? item.id : item) !== active);
+            recents.unshift({ id: active, time: Date.now() });
+            localStorage.setItem('12am_recent_pages_history', JSON.stringify(recents.slice(0, 10)));
         }
 
         if (!window.__12am_timer_started) {

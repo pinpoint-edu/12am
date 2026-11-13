@@ -208,7 +208,7 @@
                         <div class="flex justify-between items-end mb-8 border-b border-white/5 pb-6">
                             <div>
                                 <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-30 mb-2">Frequently Used</p>
-                                <h3 class="text-3xl font-light tracking-tight" style="color: var(--text-main);">Most Opened Pages</h3>
+                                <h3 class="text-3xl font-light tracking-tight" style="color: var(--text-main);">Recent Pages</h3>
                             </div>
                             <div class="text-right">
                                 <div id="stat-pageviews" class="text-4xl font-light opacity-60 text-indigo-400">0</div>
@@ -323,10 +323,10 @@
                 setInterval(render, 3000);
             }
 
-            // 5. Most Opened Pages Tracker
+            // 5. Recent Pages Tracker (Top 6)
             const PAGES_CONFIG = [
                 { id: 'games', name: 'Games', icon: 'fa-gamepad', url: 'games.html', desc: '2,200+ Unblocked Titles' },
-                { id: 'movies', name: 'Movies & TV', icon: 'fa-film', url: 'movies.html', desc: 'Fast Multi-Source Stream' },
+                { id: 'movies', name: 'Media', icon: 'fa-film', url: 'movies.html', desc: 'Fast Multi-Source Stream' },
                 { id: 'music', name: '12 Music', icon: 'fa-music', url: 'music.html', desc: 'Full Audio Player' },
                 { id: 'messenger', name: 'Messenger', icon: 'fa-comments', url: 'messenger.html', desc: 'Realtime Chat' },
                 { id: 'notes', name: 'Notes', icon: 'fa-note-sticky', url: 'notes.html', desc: 'Study Notebook' },
@@ -346,16 +346,39 @@
                     visits = JSON.parse(localStorage.getItem('12am_page_visits') || '{}');
                 } catch(e) {}
 
+                let recents = [];
+                try {
+                    recents = JSON.parse(localStorage.getItem('12am_recent_pages_history') || '[]');
+                } catch(e) {}
+
                 let totalViews = 0;
                 Object.values(visits).forEach(v => {
                     if (typeof v === 'number') totalViews += v;
                 });
                 if (viewsEl) viewsEl.textContent = totalViews.toLocaleString();
 
-                const sorted = PAGES_CONFIG.map(p => ({
-                    ...p,
-                    count: visits[p.id] || 0
-                })).sort((a, b) => b.count - a.count);
+                // Sort by recency if recorded, filling remainder by visit count
+                let sorted = [];
+                if (recents && recents.length > 0) {
+                    const recentIds = recents.map(r => (typeof r === 'object' ? r.id : r));
+                    const recentPages = [];
+                    recentIds.forEach(id => {
+                        const found = PAGES_CONFIG.find(p => p.id === id);
+                        if (found && !recentPages.some(p => p.id === found.id)) {
+                            recentPages.push({ ...found, count: visits[found.id] || 0 });
+                        }
+                    });
+                    const remaining = PAGES_CONFIG
+                        .filter(p => !recentPages.some(r => r.id === p.id))
+                        .map(p => ({ ...p, count: visits[p.id] || 0 }))
+                        .sort((a, b) => b.count - a.count);
+                    sorted = [...recentPages, ...remaining].slice(0, 6);
+                } else {
+                    sorted = PAGES_CONFIG.map(p => ({
+                        ...p,
+                        count: visits[p.id] || 0
+                    })).sort((a, b) => b.count - a.count).slice(0, 6);
+                }
 
                 listEl.innerHTML = sorted.map(p => `
                     <a href="${p.url}" class="page-btn flex items-center justify-between p-4 rounded-2xl border border-white/5 hover:border-purple-500/40 bg-black/40 hover:bg-white/[0.03] transition-all group">

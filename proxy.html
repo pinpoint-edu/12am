@@ -195,24 +195,93 @@
 
     .proxy-hero {
       text-align: center;
-      margin-bottom: 2rem;
+      margin-bottom: 2.25rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
-    .proxy-logo {
-      height: 48px;
+    .proxy-brand-hero {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 0.5rem;
+      user-select: none;
+      line-height: 1;
+    }
+
+    .proxy-logo-wrap {
+      width: 44px;
+      height: 44px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .proxy-logo-img {
+      height: 34px;
       width: auto;
       object-fit: contain;
-      margin: 0 auto 1.25rem;
       display: block;
-      opacity: 0.95;
+      transition: filter 0.3s ease;
     }
 
-    .proxy-title {
-      font-size: 2.25rem;
+    .proxy-brand-title {
+      font-size: 42px;
       font-weight: 500;
+      line-height: 1;
       letter-spacing: -0.03em;
-      margin: 0 0 0.5rem;
       color: var(--text-main);
+      font-family: 'Geist', sans-serif;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .proxy-toolbar-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+      padding: 4px 10px 4px 4px;
+      margin-right: 2px;
+      border-radius: 12px;
+      transition: background 0.2s ease;
+      line-height: 1;
+    }
+
+    .proxy-toolbar-brand:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .proxy-logo-wrap-sm {
+      width: 24px;
+      height: 24px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .proxy-logo-wrap-sm .proxy-logo-img {
+      height: 18px;
+    }
+
+    .proxy-brand-title-sm {
+      font-size: 17px;
+      font-weight: 500;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      color: var(--text-main);
+      font-family: 'Geist', sans-serif;
+      display: inline-flex;
+      align-items: center;
     }
 
     .proxy-subtitle {
@@ -303,6 +372,13 @@
   <div class="proxy-layout">
     <!-- Browser Squircle Toolbar -->
     <div class="proxy-toolbar">
+      <div class="proxy-toolbar-brand" onclick="showStartScreen()" title="web">
+        <div class="proxy-logo-wrap-sm">
+          <img src="images/logo-white.png" alt="12AM Logo" class="proxy-logo-img navbar-logo" id="proxy-toolbar-logo">
+        </div>
+        <span class="proxy-brand-title-sm">web</span>
+      </div>
+
       <button class="proxy-squircle-btn" id="btnBack" onclick="goBack()" title="Back" disabled>
         <span class="material-symbols-sharp">arrow_back</span>
       </button>
@@ -337,8 +413,12 @@
       <!-- Start screen -->
       <div class="proxy-start-screen" id="startScreen">
         <div class="proxy-hero">
-          <img src="images/logo-white.png" alt="12AM" class="proxy-logo">
-          <h1 class="proxy-title">12AM Web</h1>
+          <div class="proxy-brand-hero">
+            <div class="proxy-logo-wrap">
+              <img src="images/logo-white.png" alt="12AM Logo" class="proxy-logo-img navbar-logo" id="proxy-page-logo">
+            </div>
+            <span class="proxy-brand-title">web</span>
+          </div>
           <p class="proxy-subtitle">Private, unblocked web browsing.</p>
         </div>
 
@@ -468,6 +548,27 @@
         icon.textContent = document.fullscreenElement ? 'fullscreen_exit' : 'fullscreen';
       }
     });
+
+    function applyThemeLogo() {
+      const logos = [document.getElementById('proxy-page-logo'), document.getElementById('proxy-toolbar-logo')];
+      const t = typeof window.getCurrentTheme === 'function' ? window.getCurrentTheme() : null;
+      if (!t) return;
+      const noFilterThemes = ['Dark', 'Light', 'Christmas'];
+      logos.forEach(logo => {
+        if (!logo) return;
+        if (noFilterThemes.includes(t.name)) {
+          logo.style.filter = '';
+          logo.style.transform = '';
+        } else {
+          const tint = t['accent-primary'] || '#8b5cf6';
+          logo.style.filter = `drop-shadow(100px 0 0 ${tint})`;
+          logo.style.transform = 'translateX(-100px)';
+        }
+      });
+    }
+
+    window.addEventListener('12am:theme-changed', applyThemeLogo);
+    document.addEventListener('DOMContentLoaded', applyThemeLogo);
 
     // Check if URL passed in search params
     const initialUrl = new URLSearchParams(window.location.search).get('url');

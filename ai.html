@@ -450,31 +450,49 @@
       sendBtn.disabled = true;
 
       const botBubble = appendMessage('assistant', 'Thinking...');
+      const GROQ_MODELS = ['qwen/qwen3.8-27b', 'allam-2-7b', 'openai/gpt-oss-120b'];
 
       try {
-        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${getApiKey()}`
-          },
-          body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
-            messages: [
-              { role: 'system', content: 'You are 12AM AI, an intelligent, concise, helpful academic and coding assistant on the 12AM gaming website.' },
-              ...messages
-            ],
-            temperature: 0.7,
-            max_tokens: 1500
-          })
-        });
+        let lastError = null;
+        let reply = null;
 
-        if (!res.ok) {
-          throw new Error(`API Error (${res.status}): ${await res.text()}`);
+        for (const modelName of GROQ_MODELS) {
+          try {
+            const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getApiKey()}`
+              },
+              body: JSON.stringify({
+                model: modelName,
+                messages: [
+                  { role: 'system', content: 'You are 12AM AI, an intelligent, concise, helpful academic and coding assistant on the 12AM gaming website.' },
+                  ...messages
+                ],
+                temperature: 0.7,
+                max_tokens: 1500
+              })
+            });
+
+            if (!res.ok) {
+              const errText = await res.text();
+              lastError = new Error(`API Error (${res.status}): ${errText}`);
+              continue; // try next model if 404 or decommissioned
+            }
+
+            const data = await res.json();
+            reply = data?.choices?.[0]?.message?.content;
+            if (reply) break;
+          } catch (modelErr) {
+            lastError = modelErr;
+          }
         }
 
-        const data = await res.json();
-        const reply = data.choices[0].message.content;
+        if (!reply) {
+          throw lastError || new Error('No response from AI model service.');
+        }
+
         messages.push({ role: 'assistant', content: reply });
 
         if (typeof marked !== 'undefined') {

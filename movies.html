@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>12AM — Movies, Series &amp; Anime</title>
+    <title>12AM — Media</title>
     <meta name="description" content="Stream high-definition movies, TV series, and anime with instant Vidy proxy streaming on 12AM.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -86,9 +86,11 @@
         }
 
         .cinema-wrapper {
-            max-width: 1350px;
+            max-width: 1440px;
+            width: 100%;
             margin: 0 auto;
             padding: 1.5rem 1.5rem 5rem;
+            box-sizing: border-box;
         }
 
         /* Top Controls: 12AM Logo + Squircles */
@@ -106,20 +108,23 @@
             align-items: center;
             gap: 12px;
             text-decoration: none;
+            user-select: none;
+            line-height: 1;
         }
 
         .movies-logo-wrap {
-            width: 38px;
-            height: 38px;
+            width: 36px;
+            height: 36px;
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
+            flex-shrink: 0;
         }
 
         .movies-logo-img {
-            height: 30px;
+            height: 28px;
             width: auto;
             object-fit: contain;
             display: block;
@@ -127,10 +132,14 @@
         }
 
         .movies-brand-title {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 500;
+            line-height: 1;
             letter-spacing: -0.03em;
             color: var(--text-main);
+            font-family: 'Geist', sans-serif;
+            display: inline-flex;
+            align-items: center;
         }
 
         /* Squircles Tabs & Controls */
@@ -341,6 +350,8 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
             gap: 1.35rem;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         @media (max-width: 640px) {
@@ -659,13 +670,13 @@
 </head>
 <body>
     <div class="cinema-wrapper">
-        <!-- Topbar: 12AM Logo + "Movies" Left | Squircles & Search Right -->
+        <!-- Topbar: 12AM Logo + "media" Left | Squircles & Search Right -->
         <div class="top-cinema-bar">
             <div class="movies-brand">
                 <div class="movies-logo-wrap">
                     <img src="images/logo-white.png" alt="12AM Logo" class="movies-logo-img navbar-logo" id="movies-page-logo">
                 </div>
-                <span class="movies-brand-title">Movies</span>
+                <span class="movies-brand-title">media</span>
             </div>
 
             <!-- Squircles on Right Side -->
@@ -691,7 +702,7 @@
 
                 <div class="search-cinema-box">
                     <span class="material-symbols-sharp search-cinema-icon">search</span>
-                    <input type="text" id="cinemaSearchInput" class="search-cinema-input" placeholder="Search movies, series, anime... (/)" autocomplete="off">
+                    <input type="text" id="cinemaSearchInput" class="search-cinema-input" placeholder="Search movies, series, animes..." autocomplete="off">
                 </div>
             </div>
         </div>
@@ -722,7 +733,7 @@
         <!-- Media Grid Section -->
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-bold tracking-tight text-[var(--text-main)]" id="gridHeading">Trending Worldwide</h2>
-            <span class="text-xs text-[var(--text-muted)] font-mono" id="resultsCount">Loading...</span>
+            <span class="text-xs text-[var(--text-muted)] font-mono" id="resultsCount" style="display: none;"></span>
         </div>
 
         <div class="media-grid" id="cinemaGrid"></div>
@@ -930,20 +941,28 @@
             `;
         }
 
-        // Load Movies
+        // Load Movies (Multi-page for full-width expansive catalog)
         async function loadMovies() {
-            const data = await fetchTMDB('/movie/popular');
-            if (!data || !data.results) return;
-            const items = data.results.map(i => ({ ...i, media_type: 'movie' }));
+            const [p1, p2] = await Promise.all([
+                fetchTMDB('/movie/popular', { page: 1 }),
+                fetchTMDB('/movie/popular', { page: 2 })
+            ]);
+            const results = [...(p1?.results || []), ...(p2?.results || [])];
+            if (results.length === 0) return;
+            const items = results.map(i => ({ ...i, media_type: 'movie' }));
             if (items.length > 0) renderSpotlight(items[0]);
             renderGrid(items, 'Popular Movies');
         }
 
-        // Load TV Series
+        // Load TV Series (Multi-page for full-width expansive catalog)
         async function loadTV() {
-            const data = await fetchTMDB('/tv/popular');
-            if (!data || !data.results) return;
-            const items = data.results.map(i => ({ ...i, media_type: 'tv' }));
+            const [p1, p2] = await Promise.all([
+                fetchTMDB('/tv/popular', { page: 1 }),
+                fetchTMDB('/tv/popular', { page: 2 })
+            ]);
+            const results = [...(p1?.results || []), ...(p2?.results || [])];
+            if (results.length === 0) return;
+            const items = results.map(i => ({ ...i, media_type: 'tv' }));
             if (items.length > 0) renderSpotlight(items[0]);
             renderGrid(items, 'Popular TV Series');
         }
@@ -951,13 +970,23 @@
         // Fetch Anime Data (TMDB Discover Animation ja + AniList Fallback)
         async function fetchAnimeData() {
             try {
-                const data = await fetchTMDB('/discover/tv', {
-                    with_genres: '16',
-                    with_original_language: 'ja',
-                    sort_by: 'popularity.desc'
-                });
-                if (data && data.results && data.results.length > 0) {
-                    return data.results.map(a => ({
+                const [p1, p2] = await Promise.all([
+                    fetchTMDB('/discover/tv', {
+                        with_genres: '16',
+                        with_original_language: 'ja',
+                        sort_by: 'popularity.desc',
+                        page: 1
+                    }),
+                    fetchTMDB('/discover/tv', {
+                        with_genres: '16',
+                        with_original_language: 'ja',
+                        sort_by: 'popularity.desc',
+                        page: 2
+                    })
+                ]);
+                const results = [...(p1?.results || []), ...(p2?.results || [])];
+                if (results.length > 0) {
+                    return results.map(a => ({
                         ...a,
                         title: a.name || a.original_name,
                         name: a.name || a.original_name,
@@ -1111,7 +1140,7 @@
             `;
         }
 
-        // Render Media Grid
+        // Render Media Grid (Full width catalog, title count indicator removed)
         function renderGrid(items, heading) {
             const grid = document.getElementById('cinemaGrid');
             grid.className = 'media-grid';
@@ -1123,8 +1152,8 @@
                 headingEl.textContent = heading;
             }
             if (countEl) {
-                countEl.style.display = 'block';
-                countEl.textContent = `${items.length} titles available`;
+                countEl.style.display = 'none';
+                countEl.textContent = '';
             }
 
             grid.innerHTML = items.map(item => createMediaCardHTML(item)).join('');
