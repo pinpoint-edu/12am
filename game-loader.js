@@ -180,6 +180,18 @@ async function fetchGameHtml(file) {
         }
       } catch (e) {}
     }
+
+    // Try via our local proxy on school Chromebooks
+    try {
+      const proxyRes = await fetch(`/api/proxy?url=${encodeURIComponent(file)}`);
+      if (proxyRes.ok) {
+        const text = await proxyRes.text();
+        if (!text.includes('404: Not Found') && text.length > 50) {
+          return { html: text, resolvedUrl: file };
+        }
+      }
+    } catch (e) {}
+
     throw new Error('Could not fetch game from ' + file);
   }
 
@@ -235,6 +247,24 @@ async function fetchGameHtml(file) {
     } catch (e) {
       continue;
     }
+  }
+
+  // 3. Fallback to our internal serverless proxy for school Chromebooks
+  const proxyFallbacks = [
+    `/api/proxy?url=${encodeURIComponent('https://raw.githubusercontent.com/pinpoint-edu/assets/main/' + fetchFile)}`,
+    `/api/proxy?url=${encodeURIComponent('https://raw.githubusercontent.com/pinpoint-edu/pinpoint-mini/main/' + fetchFile)}`,
+    `/api/web?mode=raw&url=${encodeURIComponent('https://raw.githubusercontent.com/pinpoint-edu/assets/main/' + fetchFile)}`
+  ];
+  for (const pUrl of proxyFallbacks) {
+    try {
+      const pRes = await fetch(pUrl);
+      if (pRes.ok) {
+        const text = await pRes.text();
+        if (!text.includes('404: Not Found') && text.length > 50) {
+          return { html: text, resolvedUrl: pUrl };
+        }
+      }
+    } catch (e) {}
   }
 
   throw new Error('Could not fetch game from any CDN mirror.');

@@ -1,4 +1,18 @@
 {
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/music-api/:endpoint",
+      "destination": "/api/music-api?endpoint=:endpoint"
+    },
+    {
+      "source": "/music-api/lyrics/:id",
+      "destination": "/api/music-api?endpoint=lyrics&id=:id"
+    },
+    {
+      "source": "/tglsc-proxy/:path*",
+      "destination": "/api/proxy?url=https://glseries.net/:path*"
+    }
+  ]
 }

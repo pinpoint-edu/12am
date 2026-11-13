@@ -1,6 +1,6 @@
 // yolk-app.js - Modern minimalist music player with YouTube Music, playlist management, and synced lyrics
 
-const API_BASE = 'https://yolkaudio.broshan.com.np/api/music-api';
+const API_BASE = (typeof window !== 'undefined' && window.location.protocol.startsWith('http')) ? '/api/music-api' : 'https://yolkaudio.broshan.com.np/api/music-api';
 
 // State Management
 let favorites = JSON.parse(localStorage.getItem('yolk_favorites') || '[]');
@@ -907,7 +907,7 @@ const YolkOfflineDB = {
             }
 
             const prefFormat = getSupportedAudioFormat();
-            const downloadUrl = `https://yolkaudio.broshan.com.np/api/music-api?endpoint=download&id=${encodeURIComponent(videoId)}&format=${prefFormat}&v=2`;
+            const downloadUrl = `${API_BASE}?endpoint=download&id=${encodeURIComponent(videoId)}&format=${prefFormat}&v=2`;
 
             currentDownloadAbortController = new AbortController();
             // Fetch binary audio blob directly from server stream proxy
@@ -969,7 +969,7 @@ const YolkOfflineDB = {
                 const artistName = track.artist_name || track.artist || '';
                 const albumName = track.album_name || track.album || '';
                 const durSec = track.duration ? (track.duration > 1000 ? track.duration / 1000 : track.duration) : 0;
-                const lyrUrl = `https://yolkaudio.broshan.com.np/api/music-api?endpoint=lyrics&id=${encodeURIComponent(videoId)}&title=${encodeURIComponent(trackName)}&artist=${encodeURIComponent(artistName)}&duration=${Math.round(durSec)}&album=${encodeURIComponent(albumName)}`;
+                const lyrUrl = `${API_BASE}?endpoint=lyrics&id=${encodeURIComponent(videoId)}&title=${encodeURIComponent(trackName)}&artist=${encodeURIComponent(artistName)}&duration=${Math.round(durSec)}&album=${encodeURIComponent(albumName)}`;
                 const lyrRes = await fetch(lyrUrl);
                 if (lyrRes.ok) {
                     const lyrData = await lyrRes.json();
@@ -3615,7 +3615,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!vid) vid = await getYoutubeId(nextTrack);
             if (vid) {
                 const pref = getSupportedAudioFormat();
-                nextUrl = `https://yolkaudio.broshan.com.np/api/music-api?endpoint=stream&id=${encodeURIComponent(vid)}&format=${pref}&v=2`;
+                nextUrl = `${API_BASE}?endpoint=stream&id=${encodeURIComponent(vid)}&format=${pref}&v=2`;
             }
         }
 
@@ -3871,7 +3871,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (videoId) {
                 const prefFormat = getSupportedAudioFormat();
-                const streamUrl = `https://yolkaudio.broshan.com.np/api/music-api?endpoint=stream&id=${encodeURIComponent(videoId)}&format=${prefFormat}&v=2`;
+                const streamUrl = `${API_BASE}?endpoint=stream&id=${encodeURIComponent(videoId)}&format=${prefFormat}&v=2`;
                 preloadedNextAudio.removeAttribute('src');
                 preloadedNextAudio.src = streamUrl;
                 preloadedNextAudio.load();
@@ -3967,7 +3967,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentAudio._activeFormat = prefFormat;
             currentAudio._activeVideoId = syncVideoId;
             currentAudio._recovering = false;
-            const streamUrl = `https://yolkaudio.broshan.com.np/api/music-api?endpoint=stream&id=${encodeURIComponent(syncVideoId)}&format=${prefFormat}&v=2`;
+            const streamUrl = `${API_BASE}?endpoint=stream&id=${encodeURIComponent(syncVideoId)}&format=${prefFormat}&v=2`;
             loadDirectAudioPlayer(streamUrl);
             preloadNextQueueTrack();
             return;
@@ -3980,7 +3980,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentAudio._activeFormat = prefFormat;
             currentAudio._activeVideoId = videoId;
             currentAudio._recovering = false;
-            const streamUrl = `https://yolkaudio.broshan.com.np/api/music-api?endpoint=stream&id=${encodeURIComponent(videoId)}&format=${prefFormat}&v=2`;
+            const streamUrl = `${API_BASE}?endpoint=stream&id=${encodeURIComponent(videoId)}&format=${prefFormat}&v=2`;
             loadDirectAudioPlayer(streamUrl);
             preloadNextQueueTrack();
             return;
@@ -5817,7 +5817,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (imgUrl.startsWith('data:') || imgUrl.startsWith('blob:')) return imgUrl;
         const baseSrc = getProxyUrl(imgUrl, size);
         if (baseSrc.startsWith('http://') || baseSrc.startsWith('https://')) {
-            return `https://yolkaudio.broshan.com.np/api/music-api?endpoint=proxy-image&url=${encodeURIComponent(baseSrc)}`;
+            return `${API_BASE}?endpoint=proxy-image&url=${encodeURIComponent(baseSrc)}`;
         }
         return baseSrc;
     }
@@ -5955,7 +5955,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (_) {
                 if (!isLocal && !retriedWithProxy && !img.src.includes('proxy-image')) {
                     retriedWithProxy = true;
-                    img.src = `https://yolkaudio.broshan.com.np/api/music-api?endpoint=proxy-image&url=${encodeURIComponent(baseSrc)}`;
+                    img.src = `${API_BASE}?endpoint=proxy-image&url=${encodeURIComponent(baseSrc)}`;
                     return;
                 }
                 callback(null);
@@ -5964,7 +5964,7 @@ document.addEventListener('DOMContentLoaded', () => {
         img.onerror = () => {
             if (!isLocal && !retriedWithProxy && !img.src.includes('proxy-image')) {
                 retriedWithProxy = true;
-                img.src = `https://yolkaudio.broshan.com.np/api/music-api?endpoint=proxy-image&url=${encodeURIComponent(baseSrc)}`;
+                img.src = `${API_BASE}?endpoint=proxy-image&url=${encodeURIComponent(baseSrc)}`;
                 return;
             }
             callback(null);
@@ -7829,7 +7829,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 1. Fetch from artist endpoint
             try {
-                const res = await fetch(`https://yolkaudio.broshan.com.np/api/music-api?endpoint=artist&name=${encodeURIComponent(artistName)}`);
+                const res = await fetch(`${API_BASE}?endpoint=artist&name=${encodeURIComponent(artistName)}`);
                 if (res.ok) {
                     const data = await res.json();
                     if (data) {
@@ -7859,7 +7859,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 2. Fallback to search if no tracks found
             if (tracks.length === 0) {
                 try {
-                    const res = await fetch(`https://yolkaudio.broshan.com.np/api/music-api?endpoint=search&q=${encodeURIComponent(artistName)}&limit=50`);
+                    const res = await fetch(`${API_BASE}?endpoint=search&q=${encodeURIComponent(artistName)}&limit=50`);
                     if (res.ok) {
                         const data = await res.json();
                         const rawTracks = (data.tracks || []).filter(t => (t.artist_name || t.artist || '').trim() !== 'YT Music Artist');

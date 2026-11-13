@@ -437,7 +437,7 @@
   </div>
 
   <script>
-    const PROXY_GATEWAY = "https://classroom-docs.googleus-cloud1.workers.dev/browse?url=";
+    const PROXY_GATEWAY = "/api/web?mode=browse&embed=1&url=";
     const viewport = document.getElementById('proxyViewport');
     const startScreen = document.getElementById('startScreen');
     const omnibox = document.getElementById('omniboxInput');
@@ -456,7 +456,7 @@
     }
 
     function getProxiedUrl(targetUrl) {
-      return PROXY_GATEWAY + encodeURIComponent(targetUrl) + "&embed=1";
+      return PROXY_GATEWAY + encodeURIComponent(targetUrl);
     }
 
     function handleCenterSearch(e) {

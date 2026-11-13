@@ -378,8 +378,7 @@
             { id: 'general', name: 'General', icon: 'fa-solid fa-sliders' },
             { id: 'privacy', name: 'Privacy & Security', icon: 'fa-solid fa-shield-halved' },
             { id: 'personalization', name: 'Personalization', icon: 'fa-solid fa-palette' },
-            { id: 'data', name: 'Data Management', icon: 'fa-solid fa-database' },
-            { id: 'about', name: 'About 12AM', icon: 'fa-solid fa-circle-info' }
+            { id: 'data', name: 'Data Management', icon: 'fa-solid fa-database' }
         ];
 
         let activeTab = 'general';
@@ -631,22 +630,15 @@
         const t = theme || (typeof window.getCurrentTheme === 'function' ? window.getCurrentTheme() : null);
         if (!t) return;
         const isLight = lightThemeNames.includes(t.name);
-        const noFilterThemes = ['Dark', 'Light', 'Christmas'];
-        const isNoFilter = noFilterThemes.includes(t.name);
-        const tintColor = t['accent-primary'] || t['tab-active-text'] || '#f59e0b';
+        const tintColor = isLight ? '#000000' : (t.name === 'AMOLED' ? '#ffffff' : (t['accent-primary'] || '#f59e0b'));
         const prefix = window.location.pathname.includes('/logged-in/') ? '../' : '';
 
         logos.forEach(logo => {
             if (!logo) return;
-            if (isNoFilter) {
-                logo.src = `${prefix}${isLight ? 'images/logo-black.png' : 'images/logo-white.png'}`;
-                logo.style.filter = '';
-                logo.style.transform = '';
-            } else {
-                logo.src = `${prefix}images/logo-white.png`;
-                logo.style.filter = `drop-shadow(100px 0 0 ${tintColor})`;
-                logo.style.transform = 'translateX(-100px)';
-            }
+            logo.src = `${prefix}images/logo-white.png`;
+            logo.style.transition = 'filter 0.2s ease';
+            logo.style.transform = 'translateX(-100px)';
+            logo.style.filter = `drop-shadow(100px 0 0 ${tintColor})`;
         });
     };
 

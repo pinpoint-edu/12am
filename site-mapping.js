@@ -1,4 +1,7 @@
 export const siteMapping = {
+  "12am-eight.vercel.app": ["https://12am.vercel.app", "https://pinpoint-mini.vercel.app", "https://strongdog2.vercel.app"],
+  "12am.vercel.app": ["https://12am-eight.vercel.app", "https://pinpoint-mini.vercel.app"],
+  "localhost": ["http://localhost:3000", "http://127.0.0.1:8080"],
   "jman1593.github.io": ["https://jman1593.github.io/strongdog2", "https://jman1593.github.io/strongdog3"],
   "jman1593.github.io/strongdog2": ["https://jman1593.github.io", "https://jman1593.github.io/strongdog3"],
   "jman1593.github.io/strongdog3": ["https://jman1593.github.io", "https://jman1593.github.io/strongdog2"],

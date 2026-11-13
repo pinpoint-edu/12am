@@ -1254,9 +1254,11 @@
       // Clean StrongdogXP / GAMES nested container to embedded game
       url = normalizeGameUrl(url);
 
-      // Proxy TGLSC games through the worker gateway
+      // Proxy TGLSC & GN-Math games through our own proxy (no cloudflare workers)
       if (category === 'TGLSC' || url.includes('glseries.net')) {
-        url = `https://classroom-docs.googleus-cloud1.workers.dev/browse?url=${encodeURIComponent(url)}&embed=1`;
+        url = `/api/web?mode=browse&embed=1&url=${encodeURIComponent(url)}`;
+      } else if (category === 'GN-Math' && url.startsWith('http')) {
+        url = `/api/web?mode=browse&embed=1&url=${encodeURIComponent(url)}`;
       }
 
       currentGameUrl = url;

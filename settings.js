@@ -43,8 +43,7 @@
             'privacy': { title: 'Privacy & Security', icon: 'fa-shield-halved' },
             'social': { title: 'Social Permissions', icon: 'fa-user-group' },
             'personalization': { title: 'Personalization', icon: 'fa-palette' },
-            'data': { title: 'Data Management', icon: 'fa-database' },
-            'about': { title: 'About 12AM', icon: 'fa-circle-info' },
+            'data': { title: 'Data Management', icon: 'fa-database' }
         };
         
         // Constants for providers (NEW)
@@ -1180,6 +1179,14 @@
                                     <canvas id="wheelCanvas1" width="130" height="130" class="cursor-crosshair rounded-full touch-none shadow-inner"></canvas>
                                     <div id="wheelCursor1" class="pointer-events-none absolute w-4 h-4 rounded-full border-2 border-white shadow-md -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"></div>
                                 </div>
+                                <!-- Brightness Slider 1 -->
+                                <div class="w-full flex flex-col gap-1 mt-1">
+                                    <div class="flex justify-between items-center text-[10px] text-[var(--text-muted)]">
+                                        <span>Brightness</span>
+                                        <span id="brightnessVal1" class="font-mono">50%</span>
+                                    </div>
+                                    <input type="range" id="brightnessSlider1" min="5" max="95" value="50" class="w-full h-1.5 bg-black/50 rounded-lg appearance-none cursor-pointer accent-[var(--accent-color)]">
+                                </div>
                                 <div class="w-full flex items-center justify-between text-xs text-[var(--text-muted)] pt-2 border-t border-[var(--border-main)]">
                                     <span>Buttons &amp; Highlights</span>
                                     <div id="previewSwatch1" class="w-5 h-5 rounded-lg border border-white/10" style="background-color: #ff8800;"></div>
@@ -1201,14 +1208,22 @@
                                     <canvas id="wheelCanvas2" width="130" height="130" class="cursor-crosshair rounded-full touch-none shadow-inner"></canvas>
                                     <div id="wheelCursor2" class="pointer-events-none absolute w-4 h-4 rounded-full border-2 border-white shadow-md -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"></div>
                                 </div>
+                                <!-- Brightness Slider 2 -->
+                                <div class="w-full flex flex-col gap-1 mt-1">
+                                    <div class="flex justify-between items-center text-[10px] text-[var(--text-muted)]">
+                                        <span>Brightness</span>
+                                        <span id="brightnessVal2" class="font-mono">5%</span>
+                                    </div>
+                                    <input type="range" id="brightnessSlider2" min="2" max="95" value="5" class="w-full h-1.5 bg-black/50 rounded-lg appearance-none cursor-pointer accent-[var(--accent-color)]">
+                                </div>
                                 <div class="w-full flex items-center justify-between text-xs text-[var(--text-muted)] pt-2 border-t border-[var(--border-main)]">
                                     <span>Custom Background</span>
                                     <div id="previewSwatch2" class="w-5 h-5 rounded-lg border border-white/10" style="background-color: #0a0a0f;"></div>
                                 </div>
 
-                                <!-- Disabled Overlay with Big Enable Button -->
-                                <div id="overlayColor2" class="absolute inset-0 bg-[var(--bg-page)]/95 backdrop-blur-sm flex flex-col items-center justify-center p-4 z-10 rounded-2xl text-center">
-                                    <button type="button" id="enableColor2Btn" class="px-4 py-2.5 rounded-xl bg-[var(--accent-color)]/20 hover:bg-[var(--accent-color)]/30 border border-[var(--accent-color)] text-[var(--text-main)] font-medium text-xs flex items-center gap-2 cursor-pointer transition-all shadow-md active:scale-95">
+                                <!-- Disabled Overlay with Dark solid Enable Button -->
+                                <div id="overlayColor2" class="absolute inset-0 bg-[#07070a]/95 backdrop-blur-sm flex flex-col items-center justify-center p-4 z-10 rounded-2xl text-center">
+                                    <button type="button" id="enableColor2Btn" class="px-4 py-2.5 rounded-xl bg-[#121218] hover:bg-[#1a1a24] border border-white/15 text-white font-medium text-xs flex items-center gap-2 cursor-pointer transition-all shadow-md active:scale-95">
                                         <i class="fa-solid fa-plus text-[var(--accent-color)]"></i> Enable Background Tint
                                     </button>
                                     <span class="text-[11px] text-[var(--text-muted)] opacity-60 mt-2">Defaults to deep carbon black</span>
@@ -1230,14 +1245,22 @@
                                     <canvas id="wheelCanvas3" width="130" height="130" class="cursor-crosshair rounded-full touch-none shadow-inner"></canvas>
                                     <div id="wheelCursor3" class="pointer-events-none absolute w-4 h-4 rounded-full border-2 border-white shadow-md -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"></div>
                                 </div>
+                                <!-- Brightness Slider 3 -->
+                                <div class="w-full flex flex-col gap-1 mt-1">
+                                    <div class="flex justify-between items-center text-[10px] text-[var(--text-muted)]">
+                                        <span>Brightness</span>
+                                        <span id="brightnessVal3" class="font-mono">50%</span>
+                                    </div>
+                                    <input type="range" id="brightnessSlider3" min="5" max="95" value="50" class="w-full h-1.5 bg-black/50 rounded-lg appearance-none cursor-pointer accent-[var(--accent-color)]">
+                                </div>
                                 <div class="w-full flex items-center justify-between text-xs text-[var(--text-muted)] pt-2 border-t border-[var(--border-main)]">
                                     <span>Glow &amp; Highlights</span>
                                     <div id="previewSwatch3" class="w-5 h-5 rounded-lg border border-white/10" style="background-color: #ffd700;"></div>
                                 </div>
 
-                                <!-- Disabled Overlay with Big Enable Button -->
-                                <div id="overlayColor3" class="absolute inset-0 bg-[var(--bg-page)]/95 backdrop-blur-sm flex flex-col items-center justify-center p-4 z-10 rounded-2xl text-center">
-                                    <button type="button" id="enableColor3Btn" class="px-4 py-2.5 rounded-xl bg-[var(--accent-color)]/20 hover:bg-[var(--accent-color)]/30 border border-[var(--accent-color)] text-[var(--text-main)] font-medium text-xs flex items-center gap-2 cursor-pointer transition-all shadow-md active:scale-95">
+                                <!-- Disabled Overlay with Dark solid Enable Button -->
+                                <div id="overlayColor3" class="absolute inset-0 bg-[#07070a]/95 backdrop-blur-sm flex flex-col items-center justify-center p-4 z-10 rounded-2xl text-center">
+                                    <button type="button" id="enableColor3Btn" class="px-4 py-2.5 rounded-xl bg-[#121218] hover:bg-[#1a1a24] border border-white/15 text-white font-medium text-xs flex items-center gap-2 cursor-pointer transition-all shadow-md active:scale-95">
                                         <i class="fa-solid fa-plus text-[var(--accent-color)]"></i> Enable Secondary Glow
                                     </button>
                                     <span class="text-[11px] text-[var(--text-muted)] opacity-60 mt-2">Defaults to primary glow</span>
@@ -3083,44 +3106,51 @@
                         </div>
                     </div>
 
-                    <!-- 2. Username Editing -->
-                    <div class="settings-box p-6 mb-6">
-                        <h3 class="text-xl font-bold text-[var(--text-main)] mb-1">Username</h3>
-                        <p class="text-xs text-[var(--text-muted)] mb-4">Choose your display name and unique handle on 12AM.</p>
-                        <div class="flex flex-col sm:flex-row gap-3">
-                            <input type="text" id="settingsUsernameInput" value="${safeUsername}" placeholder="Enter username..." maxlength="24" class="input-text-style flex-1 font-mono">
-                            <button type="button" id="settingsSaveUsernameBtn" class="btn-toolbar-style btn-primary-override whitespace-nowrap">
-                                <i class="fa-solid fa-floppy-disk"></i>
-                                <span>Save Username</span>
-                            </button>
+                    <!-- 2 & 3. Username and Security PIN Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <!-- Username Editing -->
+                        <div class="settings-box p-6 flex flex-col justify-between">
+                            <div>
+                                <h3 class="text-xl font-bold text-[var(--text-main)] mb-1">Username</h3>
+                                <p class="text-xs text-[var(--text-muted)] mb-4">Choose your display name and unique handle on 12AM.</p>
+                                <div class="flex flex-col gap-3">
+                                    <input type="text" id="settingsUsernameInput" value="${safeUsername}" placeholder="Enter username..." maxlength="24" class="input-text-style font-mono">
+                                    <button type="button" id="settingsSaveUsernameBtn" class="btn-toolbar-style btn-primary-override self-start whitespace-nowrap">
+                                        <i class="fa-solid fa-floppy-disk"></i>
+                                        <span>Save Username</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="usernameMessage" class="general-message-area mt-3"></div>
                         </div>
-                        <div id="usernameMessage" class="general-message-area"></div>
-                    </div>
 
-                    <!-- 3. Security PIN (Requires Current PIN) -->
-                    <div class="settings-box p-6 mb-6">
-                        <h3 class="text-xl font-bold text-[var(--text-main)] mb-1">Security PIN</h3>
-                        <p class="text-xs text-[var(--text-muted)] mb-4">Update your 4 to 6-digit device unlock PIN. Your current PIN is required for verification.</p>
-                        
-                        <div class="flex flex-col gap-3 max-w-sm">
+                        <!-- Security PIN (Requires Current PIN) -->
+                        <div class="settings-box p-6 flex flex-col justify-between">
                             <div>
-                                <label class="text-xs text-[var(--text-muted)] mb-1 block">Current PIN</label>
-                                <input type="password" id="currentPinInput" placeholder="••••" maxlength="6" pattern="[0-9]{4,6}" inputmode="numeric" class="input-text-style font-mono tracking-widest text-base">
+                                <h3 class="text-xl font-bold text-[var(--text-main)] mb-1">Security PIN</h3>
+                                <p class="text-xs text-[var(--text-muted)] mb-4">Update your 4 to 6-digit device unlock PIN.</p>
+                                
+                                <div class="flex flex-col gap-3">
+                                    <div>
+                                        <label class="text-xs text-[var(--text-muted)] mb-1 block">Current PIN</label>
+                                        <input type="password" id="currentPinInput" placeholder="••••" maxlength="6" pattern="[0-9]{4,6}" inputmode="numeric" class="input-text-style font-mono tracking-widest text-base">
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-[var(--text-muted)] mb-1 block">New PIN (4–6 digits)</label>
+                                        <input type="password" id="newPinInput" placeholder="••••" maxlength="6" pattern="[0-9]{4,6}" inputmode="numeric" class="input-text-style font-mono tracking-widest text-base">
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-[var(--text-muted)] mb-1 block">Confirm New PIN</label>
+                                        <input type="password" id="confirmNewPinInput" placeholder="••••" maxlength="6" pattern="[0-9]{4,6}" inputmode="numeric" class="input-text-style font-mono tracking-widest text-base">
+                                    </div>
+                                    <button type="button" id="settingsUpdatePinBtn" class="btn-toolbar-style btn-primary-override mt-1 self-start">
+                                        <i class="fa-solid fa-key"></i>
+                                        <span>Update PIN</span>
+                                    </button>
+                                </div>
                             </div>
-                            <div>
-                                <label class="text-xs text-[var(--text-muted)] mb-1 block">New PIN (4–6 digits)</label>
-                                <input type="password" id="newPinInput" placeholder="••••" maxlength="6" pattern="[0-9]{4,6}" inputmode="numeric" class="input-text-style font-mono tracking-widest text-base">
-                            </div>
-                            <div>
-                                <label class="text-xs text-[var(--text-muted)] mb-1 block">Confirm New PIN</label>
-                                <input type="password" id="confirmNewPinInput" placeholder="••••" maxlength="6" pattern="[0-9]{4,6}" inputmode="numeric" class="input-text-style font-mono tracking-widest text-base">
-                            </div>
-                            <button type="button" id="settingsUpdatePinBtn" class="btn-toolbar-style btn-primary-override mt-2 self-start">
-                                <i class="fa-solid fa-key"></i>
-                                <span>Update PIN</span>
-                            </button>
+                            <div id="pinMessage" class="general-message-area mt-3"></div>
                         </div>
-                        <div id="pinMessage" class="general-message-area"></div>
                     </div>
                 </div>
             `;
@@ -3688,6 +3718,230 @@
             }
         }
 
+        /**
+         * Loads data and adds event listeners for the Privacy & Security tab.
+         * Handles Tab Disguise (Presets and Custom) and Panic Keys.
+         */
+        async function loadPrivacyTab() {
+            const panicKeyInputs = document.querySelectorAll('.panic-key-input');
+            const panicUrl1 = document.getElementById('panicUrl1');
+            const panicUrl2 = document.getElementById('panicUrl2');
+            const panicUrl3 = document.getElementById('panicUrl3');
+            const applyPanicKeyBtn = document.getElementById('applyPanicKeyBtn');
+            const panicKeyMessage = document.getElementById('panicKeyMessage');
+            
+            const modeSelect = document.getElementById('tabDisguiseMode');
+            const presetGroup = document.getElementById('tabDisguisePresetGroup');
+            const presetSelect = document.getElementById('tabDisguisePreset');
+            const customGroup = document.getElementById('tabDisguiseCustomGroup');
+            const customTitle = document.getElementById('customTabTitle');
+            const applyUrlChangerBtn = document.getElementById('applyUrlChangerBtn');
+            const urlChangerMessage = document.getElementById('urlChangerMessage');
+            
+            const faviconFetchInput = document.getElementById('faviconFetchInput');
+            const fetchFaviconBtn = document.getElementById('fetchFaviconBtn');
+            const previewContainer = document.getElementById('favicon-fetch-preview-container');
+            const previewImg = previewContainer ? previewContainer.querySelector('img') : null;
+
+            // Mode dropdown change listener
+            if (modeSelect) {
+                modeSelect.addEventListener('change', () => {
+                    const val = modeSelect.value;
+                    if (presetGroup) presetGroup.classList.toggle('hidden', val !== 'preset');
+                    if (customGroup) customGroup.classList.toggle('hidden', val !== 'custom');
+                });
+            }
+
+            // Load Panic Key Settings
+            try {
+                const settingsMap = await getPanicKeySettings();
+                const key1 = settingsMap.get('panicKey1');
+                const key2 = settingsMap.get('panicKey2');
+                const key3 = settingsMap.get('panicKey3');
+
+                if (key1 && document.getElementById('panicKey1') && panicUrl1) {
+                    document.getElementById('panicKey1').value = key1.key || '';
+                    panicUrl1.value = key1.url || '';
+                }
+                if (key2 && document.getElementById('panicKey2') && panicUrl2) {
+                    document.getElementById('panicKey2').value = key2.key || '';
+                    panicUrl2.value = key2.url || '';
+                }
+                if (key3 && document.getElementById('panicKey3') && panicUrl3) {
+                    document.getElementById('panicKey3').value = key3.key || '';
+                    panicUrl3.value = key3.url || '';
+                }
+            } catch (e) {
+                console.error("Error loading panic key settings:", e);
+            }
+
+            // Load URL Changer Settings
+            const savedUrlSettings = getSavedUrlChangerSetting();
+            if (savedUrlSettings && savedUrlSettings.type && modeSelect) {
+                modeSelect.value = savedUrlSettings.type;
+                if (presetGroup) presetGroup.classList.toggle('hidden', savedUrlSettings.type !== 'preset');
+                if (customGroup) customGroup.classList.toggle('hidden', savedUrlSettings.type !== 'custom');
+            }
+
+            if (savedUrlSettings.type === 'preset' && savedUrlSettings.id && presetSelect) {
+                presetSelect.value = savedUrlSettings.id;
+            } else if (savedUrlSettings.type === 'custom') {
+                if (customTitle) customTitle.value = savedUrlSettings.title || '';
+                if (savedUrlSettings.favicon && previewImg) {
+                    previewImg.src = savedUrlSettings.favicon;
+                    previewImg.style.display = 'block';
+                }
+            }
+
+            // Panic Key validation
+            const validKeyRegex = /^[a-z0-9`\-=\[\]\\;',\.\/]$/;
+            panicKeyInputs.forEach(input => {
+                input.addEventListener('keydown', e => {
+                    if (e.key.length > 1 && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Tab') {
+                        e.preventDefault();
+                        return;
+                    }
+                    const lowerKey = e.key.toLowerCase();
+                    if (lowerKey.length === 1 && !validKeyRegex.test(lowerKey)) {
+                        e.preventDefault();
+                        showMessage(panicKeyMessage, `Invalid key. Allowed: a-z, 0-9, \` - = [ ] \\ ; ' , . /`, 'warning');
+                    } else if (lowerKey.length === 1) {
+                        e.preventDefault();
+                        input.value = lowerKey;
+                        showMessage(panicKeyMessage, '', 'success');
+                    }
+                });
+            });
+
+            // Save Panic Keys
+            if (applyPanicKeyBtn) {
+                applyPanicKeyBtn.addEventListener('click', async () => {
+                    showMessage(panicKeyMessage, '', 'success');
+                    const keys = [
+                        document.getElementById('panicKey1')?.value || '',
+                        document.getElementById('panicKey2')?.value || '',
+                        document.getElementById('panicKey3')?.value || ''
+                    ];
+                    const urls = [
+                        panicUrl1?.value || '',
+                        panicUrl2?.value || '',
+                        panicUrl3?.value || ''
+                    ];
+
+                    const settingsToSave = [];
+                    let hasError = false;
+
+                    for (let i = 0; i < 3; i++) {
+                        const key = keys[i].trim();
+                        let url = urls[i].trim();
+                        const id = `panicKey${i + 1}`;
+
+                        if (!key && !url) {
+                            settingsToSave.push({ id, key: '', url: '' });
+                            continue;
+                        }
+
+                        if ((key && !url) || (!key && url)) {
+                            showMessage(panicKeyMessage, `Panic Key ${i+1} is incomplete. Fill both or leave both empty.`, 'error');
+                            hasError = true;
+                            break;
+                        }
+
+                        if (!url.startsWith('https://') && !url.startsWith('http://')) {
+                            url = 'https://' + url;
+                        }
+
+                        try {
+                            new URL(url);
+                        } catch (e) {
+                            showMessage(panicKeyMessage, `Panic Key ${i+1} must be a valid URL.`, 'error');
+                            hasError = true;
+                            break;
+                        }
+
+                        settingsToSave.push({ id, key, url });
+                    }
+
+                    if (hasError) return;
+
+                    const filledKeys = settingsToSave.map(s => s.key).filter(Boolean);
+                    if (new Set(filledKeys).size !== filledKeys.length) {
+                        showMessage(panicKeyMessage, 'Duplicate panic keys found. Each key must be unique.', 'error');
+                        return;
+                    }
+
+                    try {
+                        applyPanicKeyBtn.disabled = true;
+                        showMessage(panicKeyMessage, '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Saving...', 'warning');
+                        await savePanicKeySettings(settingsToSave);
+                        localStorage.setItem('12am_panic_keys', JSON.stringify(settingsToSave));
+                        showMessage(panicKeyMessage, 'Panic keys saved successfully!', 'success');
+                        setTimeout(() => location.reload(), 1000);
+                    } catch (e) {
+                        showMessage(panicKeyMessage, 'Failed to save panic keys.', 'error');
+                    } finally {
+                        applyPanicKeyBtn.disabled = false;
+                    }
+                });
+            }
+
+            // Favicon Fetcher
+            if (fetchFaviconBtn) {
+                fetchFaviconBtn.addEventListener('click', async () => {
+                    let domain = faviconFetchInput?.value.trim() || '';
+                    if (!domain) {
+                        showMessage(urlChangerMessage, 'Please enter a domain.', 'warning');
+                        return;
+                    }
+                    domain = domain.replace(/^https?:\/\//i, '').split('/')[0];
+                    const faviconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
+                    if (previewImg) {
+                        previewImg.src = faviconUrl;
+                        previewImg.style.display = 'block';
+                    }
+                    showMessage(urlChangerMessage, 'Favicon fetched!', 'success');
+                });
+            }
+
+            // Tab Disguise Apply
+            if (applyUrlChangerBtn) {
+                applyUrlChangerBtn.addEventListener('click', () => {
+                    const mode = modeSelect?.value || 'none';
+                    let settingsToSave = { type: 'none' };
+
+                    if (mode === 'preset') {
+                        const presetId = presetSelect?.value;
+                        if (!presetId) {
+                            showMessage(urlChangerMessage, 'Please select a preset.', 'error');
+                            return;
+                        }
+                        const foundPreset = urlChangerPresets.find(p => p.id === presetId);
+                        settingsToSave = { type: 'preset', id: presetId, title: foundPreset?.title, favicon: foundPreset?.favicon };
+                    } else if (mode === 'custom') {
+                        const title = customTitle?.value.trim() || '';
+                        const favicon = (previewImg && previewImg.src && previewImg.style.display !== 'none') ? previewImg.src : '';
+                        if (!title && !favicon) {
+                            showMessage(urlChangerMessage, 'Provide at least a custom title or favicon.', 'error');
+                            return;
+                        }
+                        settingsToSave = { type: 'custom', title: title, favicon: favicon };
+                    }
+
+                    if (saveUrlChangerSetting(settingsToSave)) {
+                        if (typeof window.applyTabDisguise === 'function') {
+                            window.applyTabDisguise(settingsToSave);
+                        } else if (settingsToSave.title) {
+                            document.title = settingsToSave.title;
+                        }
+                        showMessage(urlChangerMessage, 'Tab Disguise settings saved and applied!', 'success');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showMessage(urlChangerMessage, 'Failed to save tab settings.', 'error');
+                    }
+                });
+            }
+        }
+
 
         /**
          * Loads data and adds event listeners for the Personalization tab.
@@ -3794,17 +4048,24 @@
             renderThemesGrid();
 
             // Color Wheel Canvas Engine
-            function initCanvasColorWheel(canvasId, cursorId, labelId, swatchId, initialHex) {
+            function initCanvasColorWheel(canvasId, cursorId, labelId, swatchId, initialHex, sliderId, valId) {
                 const canvas = document.getElementById(canvasId);
                 const cursor = document.getElementById(cursorId);
                 const label = document.getElementById(labelId);
                 const swatch = document.getElementById(swatchId);
+                const slider = sliderId ? document.getElementById(sliderId) : null;
+                const valLabel = valId ? document.getElementById(valId) : null;
                 if (!canvas) return { getHex: () => initialHex, setHex: () => {} };
 
                 const ctx = canvas.getContext('2d');
                 const size = canvas.width;
                 const center = size / 2;
                 const radius = center - 4;
+
+                let currentHex = initialHex;
+                let currentHue = 30;
+                let currentSat = 100;
+                let currentBrightness = 50;
 
                 function drawWheel() {
                     ctx.clearRect(0, 0, size, size);
@@ -3824,14 +4085,12 @@
                 }
                 drawWheel();
 
-                let currentHex = initialHex;
-
                 function hslToHex(h, s, l) {
-                    h = h % 360;
-                    s /= 100;
-                    l /= 100;
+                    h = ((h % 360) + 360) % 360;
+                    s = Math.max(0, Math.min(100, s)) / 100;
+                    l = Math.max(0, Math.min(100, l)) / 100;
                     const c = (1 - Math.abs(2 * l - 1)) * s;
-                    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+                    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
                     const m = l - c / 2;
                     let r = 0, g = 0, b = 0;
                     if (0 <= h && h < 60) { r = c; g = x; }
@@ -3845,7 +4104,7 @@
                 }
 
                 function hexToHsl(hex) {
-                    let c = hex.replace('#', '');
+                    let c = (hex || '').replace('#', '');
                     if (c.length === 3) c = c.split('').map(x => x + x).join('');
                     const r = parseInt(c.substr(0, 2), 16) / 255;
                     const g = parseInt(c.substr(2, 2), 16) / 255;
@@ -3865,11 +4124,23 @@
                     return { h, s: s * 100, l: l * 100 };
                 }
 
+                function updateColor() {
+                    const hex = hslToHex(currentHue, currentSat, currentBrightness);
+                    currentHex = hex;
+                    if (label) label.textContent = hex;
+                    if (swatch) swatch.style.backgroundColor = hex;
+                }
+
                 function setFromHex(hex) {
                     currentHex = hex;
                     if (label) label.textContent = hex;
                     if (swatch) swatch.style.backgroundColor = hex;
                     const hsl = hexToHsl(hex);
+                    currentHue = hsl.h;
+                    currentSat = hsl.s;
+                    currentBrightness = Math.round(hsl.l);
+                    if (slider) slider.value = currentBrightness;
+                    if (valLabel) valLabel.textContent = `${currentBrightness}%`;
                     const rad = (hsl.h * Math.PI) / 180;
                     const dist = (hsl.s / 100) * radius;
                     const curX = center + dist * Math.cos(rad);
@@ -3888,18 +4159,23 @@
                     const y = clientY - rect.top - center;
                     const dist = Math.min(Math.hypot(x, y), radius);
                     const angle = (Math.atan2(y, x) * 180) / Math.PI;
-                    const hue = (angle + 360) % 360;
-                    const sat = (dist / radius) * 100;
-                    const hex = hslToHex(hue, sat, 50);
-                    currentHex = hex;
-                    if (label) label.textContent = hex;
-                    if (swatch) swatch.style.backgroundColor = hex;
+                    currentHue = (angle + 360) % 360;
+                    currentSat = (dist / radius) * 100;
+                    updateColor();
                     const curX = center + dist * Math.cos((angle * Math.PI) / 180);
                     const curY = center + dist * Math.sin((angle * Math.PI) / 180);
                     if (cursor) {
                         cursor.style.left = `${curX}px`;
                         cursor.style.top = `${curY}px`;
                     }
+                }
+
+                if (slider) {
+                    slider.addEventListener('input', () => {
+                        currentBrightness = parseInt(slider.value, 10);
+                        if (valLabel) valLabel.textContent = `${currentBrightness}%`;
+                        updateColor();
+                    });
                 }
 
                 let isDragging = false;
@@ -3918,10 +4194,10 @@
                 };
             }
 
-            // Initialize the 3 Color Wheels
-            const wheel1 = initCanvasColorWheel('wheelCanvas1', 'wheelCursor1', 'hexLabel1', 'previewSwatch1', '#ff8800');
-            const wheel2 = initCanvasColorWheel('wheelCanvas2', 'wheelCursor2', 'hexLabel2', 'previewSwatch2', '#0a0a0f');
-            const wheel3 = initCanvasColorWheel('wheelCanvas3', 'wheelCursor3', 'hexLabel3', 'previewSwatch3', '#ffd700');
+            // Initialize the 3 Color Wheels with brightness sliders
+            const wheel1 = initCanvasColorWheel('wheelCanvas1', 'wheelCursor1', 'hexLabel1', 'previewSwatch1', '#ff8800', 'brightnessSlider1', 'brightnessVal1');
+            const wheel2 = initCanvasColorWheel('wheelCanvas2', 'wheelCursor2', 'hexLabel2', 'previewSwatch2', '#0a0a0f', 'brightnessSlider2', 'brightnessVal2');
+            const wheel3 = initCanvasColorWheel('wheelCanvas3', 'wheelCursor3', 'hexLabel3', 'previewSwatch3', '#ffd700', 'brightnessSlider3', 'brightnessVal3');
 
             // Wire up Enable / Disable for Color 2 (Background Tint)
             let color2Enabled = false;
@@ -4068,9 +4344,6 @@
             else if (tabId === 'data') {
                 mainView.innerHTML = getDataManagementContent();
                 await loadDataTab();
-            }
-            else if (tabId === 'about') {
-                mainView.innerHTML = getAboutContent();
             } else {
                 const content = tabContent[tabId];
                 mainView.innerHTML = getComingSoonContent(content ? content.title : tabId);

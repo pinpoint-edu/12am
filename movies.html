@@ -1401,7 +1401,11 @@
             }
 
             iframe.removeAttribute('srcdoc');
-            iframe.src = streamUrl;
+            if (window.location.protocol.startsWith('http')) {
+                iframe.src = `/api/web?mode=browse&embed=1&url=${encodeURIComponent(streamUrl)}`;
+            } else {
+                iframe.src = streamUrl;
+            }
         }
 
         function reloadPlayer() {

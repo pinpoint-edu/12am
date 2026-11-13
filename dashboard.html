@@ -179,8 +179,8 @@
                 
                 <div class="mb-10 flex flex-col xl:flex-row justify-between items-start xl:items-end gap-8 border-b border-white/5 pb-8">
                     <div>
-                        <p id="clock-date" class="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-4 opacity-80">--------</p>
-                        <h2 id="clock-time" class="text-6xl md:text-8xl font-light tracking-tight mb-2" style="color: var(--text-main);">00:00<span class="text-2xl md:text-4xl ml-3 opacity-30 uppercase font-light">--</span></h2>
+                        <p id="clock-date" class="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--accent-color,#818cf8)] mb-4 opacity-80">--------</p>
+                        <h2 id="clock-time" class="text-6xl md:text-8xl font-light tracking-tight mb-2 select-none cursor-pointer transition-transform duration-200 hover:scale-[1.01] active:scale-[0.99]" style="color: var(--text-main); user-select: none; -webkit-user-select: none;" title="Click for fullscreen clock" onclick="openFullscreenClock()">00:00:00<span class="text-2xl md:text-4xl ml-3 opacity-30 uppercase font-light">--</span></h2>
                         <p class="text-xl md:text-2xl mt-4" style="color: var(--text-muted); opacity: 0.7;">Good day, <span id="user-name-display" class="font-medium text-white opacity-100">User</span>.</p>
                     </div>
 
@@ -223,26 +223,65 @@
         </section>
     </main>
 
+    <!-- Fullscreen Clock Overlay -->
+    <div id="fullscreen-clock-overlay" class="fixed inset-0 z-[999999] flex flex-col items-center justify-center select-none cursor-pointer p-6" style="display: none; background: var(--bg-page); user-select: none; -webkit-user-select: none;" onclick="closeFullscreenClock()">
+        <p id="fs-clock-date" class="text-xs md:text-sm font-black uppercase tracking-[0.4em] mb-4 opacity-80" style="color: var(--accent-color, #818cf8);">--------</p>
+        <h1 id="fs-clock-time" class="text-7xl sm:text-9xl md:text-[10rem] lg:text-[12rem] font-light tracking-tight leading-none text-center" style="color: var(--text-main);">00:00:00<span class="text-3xl md:text-5xl ml-4 opacity-30 uppercase font-light">--</span></h1>
+        <p class="text-xs text-[var(--text-muted)] opacity-40 mt-8 tracking-widest uppercase">Click anywhere or press Esc to exit</p>
+    </div>
+
     <script>
+        function openFullscreenClock() {
+            const overlay = document.getElementById('fullscreen-clock-overlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+                if (!document.fullscreenElement) {
+                    overlay.requestFullscreen().catch(() => {});
+                }
+            }
+        }
+
+        function closeFullscreenClock() {
+            const overlay = document.getElementById('fullscreen-clock-overlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+                if (document.fullscreenElement) {
+                    document.exitFullscreen().catch(() => {});
+                }
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeFullscreenClock();
+        });
+
         (function() {
-            // 1. Clock Engine
+            // 1. Clock Engine (includes seconds)
             function startClock() {
                 const timeEl = document.getElementById('clock-time');
                 const dateEl = document.getElementById('clock-date');
+                const fsTimeEl = document.getElementById('fs-clock-time');
+                const fsDateEl = document.getElementById('fs-clock-date');
 
                 function update() {
                     const now = new Date();
                     let hours = now.getHours();
                     const minutes = String(now.getMinutes()).padStart(2, '0');
+                    const seconds = String(now.getSeconds()).padStart(2, '0');
                     const ampm = hours >= 12 ? 'PM' : 'AM';
                     hours = hours % 12 || 12;
 
-                    if (timeEl) {
-                        timeEl.innerHTML = `${String(hours).padStart(2, '0')}:${minutes}<span class="text-2xl md:text-4xl ml-3 opacity-30 uppercase font-light">${ampm}</span>`;
-                    }
-                    if (dateEl) {
+                    const timeHTML = `${String(hours).padStart(2, '0')}:${minutes}:${seconds}<span class="text-2xl md:text-4xl ml-3 opacity-30 uppercase font-light">${ampm}</span>`;
+                    const fsTimeHTML = `${String(hours).padStart(2, '0')}:${minutes}:${seconds}<span class="text-3xl md:text-5xl ml-4 opacity-30 uppercase font-light">${ampm}</span>`;
+
+                    if (timeEl) timeEl.innerHTML = timeHTML;
+                    if (fsTimeEl) fsTimeEl.innerHTML = fsTimeHTML;
+
+                    if (dateEl || fsDateEl) {
                         const options = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
-                        dateEl.textContent = now.toLocaleDateString('en-US', options).toUpperCase();
+                        const dateStr = now.toLocaleDateString('en-US', options).toUpperCase();
+                        if (dateEl) dateEl.textContent = dateStr;
+                        if (fsDateEl) fsDateEl.textContent = dateStr;
                     }
                 }
                 update();
