@@ -573,33 +573,36 @@
         injectMinimalFooter();
     }
 
-    // Injected Minimal Footer: Positioned under the UI content, avoiding horizontal flex interference
+    // Injected Minimal Footer: Injected on top in bottom right, separate from page flow
     function injectMinimalFooter() {
         let footer = document.getElementById('minimal-footer-cluster');
         if (!footer) {
             footer = document.createElement('footer');
             footer.id = 'minimal-footer-cluster';
             footer.className = 'minimal-footer-cluster';
-            
-            // Append under content section so it never sits in a flex-row to the right of the UI
-            const isSoundboard = window.location.pathname.includes('soundboard');
-            if (isSoundboard) {
-                document.body.appendChild(footer);
-            } else {
-                const dashTarget = document.getElementById('dashboard-footer-container');
-                const target = dashTarget || document.querySelector('.max-w-\\[1200px\\]') || document.querySelector('section') || document.getElementById('page-content') || document.body;
-                target.appendChild(footer);
-            }
+            document.body.appendChild(footer);
         }
+
+        const isLegalPage = window.location.pathname.includes('legal') || getActivePageId() === 'legal';
         const prefix = window.location.pathname.includes('/logged-in/') ? '../' : '';
 
-        footer.innerHTML = `
-            <a href="${prefix}legal.html" class="minimal-footer-link" title="Terms &amp; Policies">
-                <i class="fa-solid fa-shield-halved mr-1.5" style="font-size: 11px; opacity: 0.8; color: var(--accent-color, #f59e0b);"></i>Terms &amp; Privacy Policy
-            </a>
-            <span class="minimal-footer-dot">•</span>
-            <span class="minimal-footer-copy">All rights reserved</span>
-        `;
+        if (isLegalPage) {
+            footer.innerHTML = `
+                <a href="#terms" class="minimal-footer-link" title="Terms &amp; Policies">
+                    <i class="fa-solid fa-scale-balanced mr-1.5" style="font-size: 11px; opacity: 0.85; color: var(--accent-color, #f59e0b);"></i>Terms &amp; Policies
+                </a>
+                <span class="minimal-footer-dot">•</span>
+                <span class="minimal-footer-copy">All rights reserved</span>
+            `;
+        } else {
+            footer.innerHTML = `
+                <a href="${prefix}legal.html" class="minimal-footer-link" title="Terms of Service & Privacy Policy">
+                    <i class="fa-solid fa-shield-halved mr-1.5" style="font-size: 11px; opacity: 0.85; color: var(--accent-color, #f59e0b);"></i>Terms &amp; Privacy Policy
+                </a>
+                <span class="minimal-footer-dot">•</span>
+                <span class="minimal-footer-copy">All rights reserved</span>
+            `;
+        }
     }
 
     window.__updateNavbarUser = function() {

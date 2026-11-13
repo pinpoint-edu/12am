@@ -515,50 +515,34 @@ body.sidebar-collapsed.sidebar-peek-open #settings-floating-dock {
    ========================================================================== */
 
 .minimal-footer-cluster {
-  position: relative !important;
-  margin-top: auto !important;
-  margin-left: auto !important;
-  margin-right: 28px !important;
-  margin-bottom: 24px !important;
-  align-self: flex-end !important;
+  position: fixed !important;
+  right: 24px !important;
+  bottom: 18px !important;
+  z-index: 9995 !important;
+  margin: 0 !important;
   display: inline-flex !important;
   align-items: center !important;
   gap: 8px !important;
-  padding: 6px 14px !important;
-  border-radius: 12px !important; /* squircle */
-  background: var(--bg-card, rgba(12, 12, 16, 0.75)) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border: 1px solid var(--border-main, rgba(255, 255, 255, 0.09)) !important;
+  padding: 7px 15px !important;
+  border-radius: 14px !important; /* squircle */
+  background: var(--bg-card, rgba(12, 12, 16, 0.85)) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid var(--border-main, rgba(255, 255, 255, 0.12)) !important;
   color: var(--text-muted, #a1a1aa) !important;
   font-size: 0.75rem !important;
+  font-family: 'Geist', sans-serif !important;
   font-weight: 500 !important;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7), 0 0 15px rgba(245, 158, 11, 0.08) !important;
   pointer-events: auto !important;
   user-select: none !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  z-index: 10 !important;
-}
-
-#dashboard-footer-container .minimal-footer-cluster {
-  margin: 0 !important;
-}
-
-/* Ensure unlock and auth overlays are always strictly above floating docks */
-#12am-auth-overlay,
-.auth-page-backdrop {
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: 100050 !important;
-  backdrop-filter: blur(32px) !important;
-  -webkit-backdrop-filter: blur(32px) !important;
-  background: rgba(3, 3, 6, 0.82) !important;
 }
 
 .minimal-footer-cluster:hover {
   border-color: var(--accent-color, rgba(245, 158, 11, 0.45)) !important;
   color: var(--text-main, #ffffff) !important;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.65) !important;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.8), 0 0 20px var(--accent-glow, rgba(245, 158, 11, 0.25)) !important;
   transform: translateY(-1px);
 }
 
@@ -610,6 +594,17 @@ body.sidebar-collapsed.sidebar-peek-open #settings-floating-dock {
 footer:not(.minimal-footer-cluster),
 .cinema-footer {
   display: none !important;
+}
+
+/* Ensure unlock and auth overlays are always strictly above floating docks */
+#12am-auth-overlay,
+.auth-page-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 100050 !important;
+  backdrop-filter: blur(32px) !important;
+  -webkit-backdrop-filter: blur(32px) !important;
+  background: rgba(3, 3, 6, 0.82) !important;
 }
 
 /* ==========================================================================
