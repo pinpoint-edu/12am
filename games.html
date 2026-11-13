@@ -1228,57 +1228,6 @@
         }
       });
     }
-      });
-
-      input.addEventListener('input', () => {
-        const query = input.value.toLowerCase().trim();
-        if (!query) {
-          dropdown.style.display = 'none';
-          dropdown.innerHTML = '';
-          return;
-        }
-
-        const matches = allSearchableGames
-          .filter(g => g.name.toLowerCase().includes(query))
-          .slice(0, 8);
-
-        if (matches.length === 0) {
-          dropdown.innerHTML = `<div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">No games found for "${query}"</div>`;
-          dropdown.style.display = 'block';
-          return;
-        }
-
-        dropdown.innerHTML = matches.map(g => {
-          let catColor = 'color-vault';
-          if (g.category === 'StrongdogXP') catColor = 'color-strongdog';
-          if (g.category === 'TGLSC') catColor = 'color-tglsc';
-
-          return `
-            <div class="search-item" onclick="launchGame('${encodeURIComponent(g.url)}', '${encodeURIComponent(g.name)}', ${g.isLocal || false}, '${g.category || ''}')">
-              <div class="search-item-info">
-                <div class="search-item-icon"><i class="fa-solid fa-gamepad ${catColor}"></i></div>
-                <div class="search-item-meta">
-                  <div class="search-item-title">${escapeHTML(g.name)}</div>
-                  <div class="search-item-badge ${catColor}">${g.category}</div>
-                </div>
-              </div>
-              <button class="btn-sharp btn-primary-sharp" style="padding: 5px 12px; font-size: 11px;">
-                <i class="fa-solid fa-play"></i>
-                <span>Play</span>
-              </button>
-            </div>
-          `;
-        }).join('');
-
-        dropdown.style.display = 'block';
-      });
-
-      document.addEventListener('click', (e) => {
-        if (!e.target.closest('.search-bar-wrap')) {
-          dropdown.style.display = 'none';
-        }
-      });
-    }
 
     // Launch Game in Fullscreen Player View
     let currentGameUrl = '';

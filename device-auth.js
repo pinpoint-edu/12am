@@ -419,6 +419,7 @@
                 `;
 
                 overlay.appendChild(card);
+                overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
                 document.body.appendChild(overlay);
 
                 const pinInput = document.getElementById('modalPinInput');
@@ -490,6 +491,7 @@
                 `;
 
                 overlay.appendChild(card);
+                overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
                 document.body.appendChild(overlay);
 
                 const regCloseBtn = document.getElementById('modalCloseBtn');

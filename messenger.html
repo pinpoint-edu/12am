@@ -438,10 +438,14 @@
             }
 
             if (authUser) {
+                const rawId = authUser.id || authUser.deviceToken || authUser.uid || '12AM' + (authUser.nickname || 'USER');
+                let cleanId = String(rawId).replace(/[^a-zA-Z0-9]/g, '');
+                if (cleanId.length < 8) cleanId = (cleanId + '12AMUSER').substring(0, 8);
+                const publicId = cleanId.substring(0, 8).toUpperCase();
                 currentUser = {
-                    id: authUser.id,
-                    username: authUser.nickname || `${authUser.firstName} ${authUser.lastName}`,
-                    publicId: (authUser.id.replace(/-/g, '').substring(0, 8)).toUpperCase()
+                    id: rawId,
+                    username: authUser.nickname || `${authUser.firstName || ''} ${authUser.lastName || ''}`.trim() || 'User',
+                    publicId: publicId
                 };
             } else {
                 // Persistent Guest Single Device Session

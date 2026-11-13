@@ -3570,7 +3570,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentAudio.volume = currentVolume;
                 showSpinner(false);
                 if (e.name !== 'AbortError') {
-                    console.warn('Audio playback notice:', e.message);
                     if (e.name === 'NotSupportedError' && !currentAudio._isHandlingError) {
                         currentAudio.dispatchEvent(new Event('error'));
                     }
@@ -4071,7 +4070,6 @@ document.addEventListener('DOMContentLoaded', () => {
             audioEl._isHandlingError = true;
             showSpinner(false);
 
-            audioEl._errorRetries = (audioEl._errorRetries || 0) + 1;
             const track = currentTrack;
             if (!track) {
                 audioEl._isHandlingError = false;
@@ -4080,24 +4078,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const videoId = getYoutubeIdSync(track) || (await getYoutubeId(track));
 
-            // Retry 1: try alternate format (webm vs mp4)
-            if (audioEl._errorRetries === 1 && videoId && !userPausedIntentionally) {
-                const currentFmt = audioEl._activeFormat || (audioEl.src.includes('format=webm') ? 'webm' : 'mp4');
-                const altFmt = currentFmt === 'mp4' ? 'webm' : 'mp4';
-                audioEl._activeFormat = altFmt;
-                const retryUrl = `https://yolkaudio.broshan.com.np/api/music-api?endpoint=stream&id=${encodeURIComponent(videoId)}&format=${altFmt}&_t=${Date.now()}`;
-                setTimeout(() => {
-                    audioEl._isHandlingError = false;
-                    loadDirectAudioPlayer(retryUrl, true);
-                }, 100);
-                return;
-            }
-
-            // Retry 2: direct stream is blocked/unavailable (502) -> fallback to YouTube Player embed
             audioEl._isHandlingError = false;
             audioEl._errorRetries = 0;
             if (videoId && !userPausedIntentionally) {
-                console.log('[Yolk] Audio stream unavailable (502). Falling back to YouTube embedded player for:', videoId);
+                try {
+                    audioEl.pause();
+                    audioEl.removeAttribute('src');
+                    audioEl.load();
+                } catch (_) {}
+                console.log('[Yolk] Audio stream unavailable. Falling back to YouTube embedded player for:', videoId);
                 playYouTube(videoId);
             } else {
                 showToast('Audio stream unavailable for this track');

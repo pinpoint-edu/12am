@@ -326,6 +326,10 @@ body.sidebar-collapsed #movies-container {
 }
 
 /* Offset settings content to clear both docks */
+body:has(#settings-floating-dock) #page-content {
+  padding-left: 0 !important;
+}
+
 body:has(#settings-floating-dock) #settings-container {
   padding-left: 175px !important;
   transition: padding-left 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
@@ -369,23 +373,25 @@ body.sidebar-collapsed:has(#settings-floating-dock) #settings-container {
   transform-origin: bottom left;
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(-10px) scale(0.96);
+  transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.22s ease !important;
 }
 
 .auth-menu-container.closed {
-  display: none !important;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateX(-10px) scale(0.96);
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transform: translateX(-10px) scale(0.96) !important;
 }
 
 .auth-menu-container.open {
-  display: flex !important;
-  animation: authMenuSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes authMenuSlideIn {
-  from { opacity: 0; transform: translateX(-10px) scale(0.96); }
-  to { opacity: 1; transform: translateX(0) scale(1); }
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  transform: translateX(0) scale(1) !important;
 }
 
 .auth-menu-header {

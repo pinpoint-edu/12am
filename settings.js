@@ -2870,7 +2870,7 @@
             let currentColor = devUser?.avatar_color || '#ffffff';
 
             mainView.innerHTML = `
-                <div class="w-full max-w-5xl">
+                <div class="w-full">
                     <h2 class="text-3xl font-bold text-[var(--text-main)] mb-6">General Settings</h2>
 
                     <!-- 1. Profile Picture Section (Unified with Mibi & Letter Creator) -->

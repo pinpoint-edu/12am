@@ -203,6 +203,8 @@
             const avatarHtml = renderNavAvatar(currentUser, 32, '12px', '11px');
             const menuAvatarHtml = renderNavAvatar(currentUser, 42, '16px', '14px');
 
+            const isCollapsed = localStorage.getItem('12am_sidebar_collapsed') === 'true';
+
             return `
                 <div class="sidebar-auth-wrapper" id="sidebarAuthWrapper">
                     <button type="button" class="sidebar-btn sidebar-avatar-btn auth-toggle-btn" id="sidebarAuthToggle" aria-label="Account Menu">
@@ -231,8 +233,8 @@
                             <span>Switch Account</span>
                         </button>
                         <button type="button" id="authCollapseDocksBtn" class="auth-menu-button auth-menu-collapse">
-                            <i class="fa-solid fa-angles-left"></i>
-                            <span>Collapse Docks</span>
+                            <i class="fa-solid ${isCollapsed ? 'fa-angles-right' : 'fa-angles-left'}"></i>
+                            <span>${isCollapsed ? 'Uncollapse Deck' : 'Collapse Docks'}</span>
                         </button>
                         <button type="button" onclick="window.logOut12AM()" class="auth-menu-button auth-menu-logout">
                             <i class="fa-solid fa-right-from-bracket"></i>
@@ -327,10 +329,12 @@
                 if (isCurrentlyCollapsed) {
                     document.body.classList.remove('sidebar-collapsed', 'sidebar-peek-open');
                     localStorage.removeItem('12am_sidebar_collapsed');
+                    collapseBtn.innerHTML = '<i class="fa-solid fa-angles-left"></i><span>Collapse Docks</span>';
                 } else {
                     document.body.classList.add('sidebar-collapsed');
                     document.body.classList.remove('sidebar-peek-open');
                     localStorage.setItem('12am_sidebar_collapsed', 'true');
+                    collapseBtn.innerHTML = '<i class="fa-solid fa-angles-right"></i><span>Uncollapse Deck</span>';
                 }
             };
         }
