@@ -277,7 +277,7 @@
         // In-Page Auth Popup Modal (Over the current page, zero redirects)
         showAuthModal: async function(onSuccess) {
             // If already open, do not duplicate
-            if (document.getElementById('12am-auth-overlay')) return;
+            if (document.getElementById('twelveam-auth-overlay')) return;
 
             const bound = await this.getBoundDeviceAccount();
 
@@ -287,10 +287,12 @@
                 styleEl.id = '12am-auth-styles';
                 styleEl.textContent = `
                     @keyframes twelveAmFadeIn { from { opacity: 0; transform: scale(0.96) translateY(6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-                    #12am-auth-overlay {
+                    #twelveam-auth-overlay {
                         position: fixed !important;
                         inset: 0 !important;
-                        z-index: 100050 !important;
+                        width: 100vw !important;
+                        height: 100vh !important;
+                        z-index: 2147483647 !important; /* Max safe 32-bit z-index */
                         background: rgba(3, 3, 6, 0.82) !important;
                         backdrop-filter: blur(32px) !important;
                         -webkit-backdrop-filter: blur(32px) !important;
@@ -298,9 +300,11 @@
                         align-items: center !important;
                         justify-content: center !important;
                         padding: 1.25rem !important;
+                        box-sizing: border-box !important;
                         font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif !important;
                     }
                     .auth-modal-card {
+                        z-index: 1 !important;
                         background: var(--bg-card, #0c0c11);
                         border: 1px solid var(--navbar-border, rgba(255, 140, 0, 0.28));
                         border-radius: 26px;
@@ -379,7 +383,7 @@
             }
 
             const overlay = document.createElement('div');
-            overlay.id = '12am-auth-overlay';
+            overlay.id = 'twelveam-auth-overlay';
 
             const card = document.createElement('div');
             card.className = 'auth-modal-card';
@@ -420,7 +424,7 @@
 
                 overlay.appendChild(card);
                 overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
-                document.body.appendChild(overlay);
+                (document.documentElement || document.body).appendChild(overlay);
 
                 const pinInput = document.getElementById('modalPinInput');
                 if (pinInput) pinInput.focus();
@@ -492,7 +496,7 @@
 
                 overlay.appendChild(card);
                 overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
-                document.body.appendChild(overlay);
+                (document.documentElement || document.body).appendChild(overlay);
 
                 const regCloseBtn = document.getElementById('modalCloseBtn');
                 if (regCloseBtn) regCloseBtn.onclick = () => overlay.remove();

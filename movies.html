@@ -81,14 +81,14 @@
             overflow-x: hidden;
             margin: 0;
             padding: 0;
-            padding-top: 3.75rem;
+            padding-top: 5.5rem;
             -webkit-font-smoothing: antialiased;
         }
 
         .cinema-wrapper {
             max-width: 1350px;
             margin: 0 auto;
-            padding: 0 1.5rem 5rem;
+            padding: 1.5rem 1.5rem 5rem;
         }
 
         /* Top Controls: 12AM Logo + Squircles */
@@ -792,6 +792,32 @@
         let currentEpisode = 1;
         let tvSeasonsData = [];
 
+        // Safe cinema items registry to avoid escaping / JSON serialization issues in onclick attributes
+        window._cinemaItems = window._cinemaItems || new Map();
+        function openCinemaItem(id) {
+            const item = window._cinemaItems.get(String(id));
+            if (item) {
+                openPlayer(item);
+            }
+        }
+
+        // Format ratings strictly to nearest tenth (e.g., 8.8, 8.0)
+        function formatRating(val, fallback = '8.0') {
+            const num = parseFloat(val);
+            if (isNaN(num) || num <= 0) return fallback;
+            return num.toFixed(1);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         function getThemeAccentHex() {
             let hex = '8b5cf6';
             if (typeof window.getCurrentTheme === 'function') {
@@ -922,8 +948,30 @@
             renderGrid(items, 'Popular TV Series');
         }
 
-        // Fetch Anime Data (via AniList GraphQL API)
+        // Fetch Anime Data (TMDB Discover Animation ja + AniList Fallback)
         async function fetchAnimeData() {
+            try {
+                const data = await fetchTMDB('/discover/tv', {
+                    with_genres: '16',
+                    with_original_language: 'ja',
+                    sort_by: 'popularity.desc'
+                });
+                if (data && data.results && data.results.length > 0) {
+                    return data.results.map(a => ({
+                        ...a,
+                        title: a.name || a.original_name,
+                        name: a.name || a.original_name,
+                        vote_average: formatRating(a.vote_average, '8.4'),
+                        release_date: (a.first_air_date || '2026').slice(0, 4),
+                        media_type: 'anime',
+                        isAnime: true
+                    }));
+                }
+            } catch(e) {
+                console.warn('TMDB Anime Error:', e);
+            }
+
+            // AniList Fallback
             const query = `
             query {
                 Page(page: 1, perPage: 24) {
@@ -958,11 +1006,12 @@
                     name: a.title.english || a.title.romaji,
                     poster_path: a.coverImage.extraLarge || a.coverImage.large,
                     backdrop_path: a.bannerImage || a.coverImage.extraLarge,
-                    vote_average: a.averageScore ? (a.averageScore / 10).toFixed(1) : '8.6',
+                    vote_average: a.averageScore ? formatRating(a.averageScore / 10, '8.6') : '8.6',
                     release_date: 'Anime',
                     overview: a.description || 'Stream high-definition anime on 12AM Vidy nodes.',
                     media_type: 'anime',
                     isAnime: true,
+                    isAniListOnly: true,
                     totalEpisodes: a.episodes || 12
                 }));
             } catch(e) {
@@ -993,6 +1042,7 @@
 
         // Spotlight
         function renderSpotlight(item) {
+            if (!item) return;
             const backdrop = document.getElementById('spotlightBackdrop');
             const titleEl = document.getElementById('spotlightTitle');
             const ratingVal = document.getElementById('spotlightRatingVal');
@@ -1001,11 +1051,11 @@
             const descEl = document.getElementById('spotlightDesc');
             const playBtn = document.getElementById('spotlightPlayBtn');
 
-            const isAnime = item.isAnime || item.media_type === 'anime';
-            const isMovie = !isAnime && (item.media_type === 'movie' || Boolean(item.title));
+            const isAnime = Boolean(item.isAnime || item.media_type === 'anime');
+            const isMovie = !isAnime && (item.media_type === 'movie' || Boolean(item.title && !item.first_air_date && !item.name));
             const title = item.title || item.name || 'Untitled';
             const year = isAnime ? 'Anime' : (item.release_date || item.first_air_date || '2026').slice(0, 4);
-            const rating = item.vote_average ? item.vote_average.toString() : '8.4';
+            const rating = formatRating(item.vote_average, '8.5');
 
             if (item.backdrop_path) {
                 backdrop.src = item.backdrop_path.startsWith('http') ? item.backdrop_path : `${IMG_ORIGINAL}${item.backdrop_path}`;
@@ -1023,21 +1073,23 @@
         }
 
         function createMediaCardHTML(item) {
-            const isAnime = item.isAnime || item.media_type === 'anime';
-            const isMovie = !isAnime && (item.media_type === 'movie' || Boolean(item.title));
-            const title = item.title || item.name || 'Untitled';
+            if (!item || !item.id) return '';
+            window._cinemaItems.set(String(item.id), item);
+
+            const isAnime = Boolean(item.isAnime || item.media_type === 'anime');
+            const isMovie = !isAnime && (item.media_type === 'movie' || Boolean(item.title && !item.first_air_date && !item.name));
+            const rawTitle = item.title || item.name || 'Untitled';
+            const title = escapeHtml(rawTitle);
             const year = isAnime ? 'Anime' : (item.release_date || item.first_air_date || '2026').slice(0, 4);
-            const rating = item.vote_average ? item.vote_average.toString() : '7.8';
+            const rating = formatRating(item.vote_average, '8.0');
             
             let poster = 'images/logo-white.png';
             if (item.poster_path) {
                 poster = item.poster_path.startsWith('http') ? item.poster_path : `${IMG_W500}${item.poster_path}`;
             }
 
-            const itemPayload = JSON.stringify(item).replace(/'/g, "&apos;");
-
             return `
-                <div class="media-card" onclick='openPlayer(${itemPayload})'>
+                <div class="media-card" onclick="openCinemaItem('${item.id}')">
                     <div class="media-poster-wrap">
                         <img src="${poster}" alt="${title}" class="media-poster" loading="lazy">
                         <span class="media-badge-rating">
@@ -1112,6 +1164,28 @@
         }
 
         async function searchAnime(query) {
+            try {
+                const data = await fetchTMDB('/search/tv', { query });
+                if (data && data.results && data.results.length > 0) {
+                    const filtered = data.results.filter(i => 
+                        (i.genre_ids && i.genre_ids.includes(16)) || 
+                        i.original_language === 'ja'
+                    );
+                    const list = filtered.length > 0 ? filtered : data.results;
+                    return list.map(a => ({
+                        ...a,
+                        title: a.name || a.original_name,
+                        name: a.name || a.original_name,
+                        vote_average: formatRating(a.vote_average, '8.2'),
+                        release_date: (a.first_air_date || '2026').slice(0, 4),
+                        media_type: 'anime',
+                        isAnime: true
+                    }));
+                }
+            } catch(e) {
+                console.warn('TMDB Anime Search Error:', e);
+            }
+
             const gql = `
             query ($search: String) {
                 Page(page: 1, perPage: 24) {
@@ -1146,11 +1220,12 @@
                     name: a.title.english || a.title.romaji,
                     poster_path: a.coverImage.extraLarge || a.coverImage.large,
                     backdrop_path: a.bannerImage || a.coverImage.extraLarge,
-                    vote_average: a.averageScore ? (a.averageScore / 10).toFixed(1) : '8.0',
+                    vote_average: a.averageScore ? formatRating(a.averageScore / 10, '8.0') : '8.0',
                     release_date: 'Anime',
                     overview: a.description || 'Watch anime on 12AM Vidy nodes.',
                     media_type: 'anime',
                     isAnime: true,
+                    isAniListOnly: true,
                     totalEpisodes: a.episodes || 12
                 }));
             } catch(e) {
@@ -1165,16 +1240,15 @@
             const titleEl = document.getElementById('playerTitle');
             const tvSelectors = document.getElementById('tvSelectors');
 
-            const isAnime = item.isAnime || item.media_type === 'anime';
-            const isMovie = !isAnime && (item.media_type === 'movie' || Boolean(item.title));
-            const title = item.title || item.name;
+            const isAnime = Boolean(item.isAnime || item.media_type === 'anime');
+            const isMovie = !isAnime && (item.media_type === 'movie' || Boolean(item.title && !item.first_air_date && !item.name));
+            const title = item.title || item.name || 'Untitled';
             titleEl.textContent = title;
 
             modal.style.display = 'flex';
             document.body.style.overflow = 'hidden';
 
-            if (isAnime) {
-                // Vidy has internal episode picker for anime
+            if (isAnime && item.isAniListOnly) {
                 tvSelectors.style.display = 'none';
                 updatePlayerSource();
             } else if (!isMovie) {
@@ -1242,47 +1316,46 @@
             if (!currentItem) return;
             const iframe = document.getElementById('streamIframe');
             const server = document.getElementById('serverSelect').value;
-            const isAnime = currentItem.isAnime || currentItem.media_type === 'anime';
-            const isMovie = !isAnime && (currentItem.media_type === 'movie' || Boolean(currentItem.title));
+            const isAnime = Boolean(currentItem.isAnime || currentItem.media_type === 'anime');
+            const isMovie = !isAnime && (currentItem.media_type === 'movie' || Boolean(currentItem.title && !currentItem.first_air_date && !currentItem.name));
             const id = currentItem.id;
             const color = getThemeAccentHex();
+            const season = currentSeason || 1;
+            const episode = currentEpisode || 1;
 
             let streamUrl = '';
 
             if (server === 'vidy') {
-                if (isAnime) {
-                    // Vidy Anime Route
-                    streamUrl = `https://www.vidy.st/anime/${id}/${currentEpisode || 1}?color=${color}&nextEpisode=true&episodeSelector=true`;
+                if (isAnime && currentItem.isAniListOnly) {
+                    streamUrl = `https://www.vidy.st/anime/${id}/${episode}?color=${color}&nextEpisode=true&episodeSelector=true`;
                 } else if (isMovie) {
-                    // Vidy Movie Route
                     streamUrl = `https://www.vidy.st/movie/${id}?color=${color}&autoplay=true`;
                 } else {
-                    // Vidy TV Series Route
-                    streamUrl = `https://www.vidy.st/tv/${id}/${currentSeason || 1}/${currentEpisode || 1}?color=${color}&nextEpisode=true&episodeSelector=true&autoplayNextEpisode=true`;
+                    streamUrl = `https://www.vidy.st/tv/${id}/${season}/${episode}?color=${color}&nextEpisode=true&episodeSelector=true&autoplayNextEpisode=true`;
                 }
             } else if (server === 'vidlink') {
-                if (isAnime) {
-                    streamUrl = `https://www.vidy.st/anime/${id}/${currentEpisode || 1}?color=${color}&nextEpisode=true&episodeSelector=true`;
+                if (isAnime && currentItem.isAniListOnly) {
+                    streamUrl = `https://www.vidy.st/anime/${id}/${episode}?color=${color}&nextEpisode=true&episodeSelector=true`;
                 } else if (isMovie) {
                     streamUrl = `https://vidlink.pro/movie/${id}?primaryColor=${color}&autoplay=true`;
                 } else {
-                    streamUrl = `https://vidlink.pro/tv/${id}/${currentSeason || 1}/${currentEpisode || 1}?primaryColor=${color}&autoplay=true`;
+                    streamUrl = `https://vidlink.pro/tv/${id}/${season}/${episode}?primaryColor=${color}&autoplay=true`;
                 }
             } else if (server === 'vidsrc') {
-                if (isAnime) {
-                    streamUrl = `https://www.vidy.st/anime/${id}/${currentEpisode || 1}?color=${color}&nextEpisode=true&episodeSelector=true`;
+                if (isAnime && currentItem.isAniListOnly) {
+                    streamUrl = `https://www.vidy.st/anime/${id}/${episode}?color=${color}&nextEpisode=true&episodeSelector=true`;
                 } else if (isMovie) {
                     streamUrl = `https://vidsrc.su/embed/movie/${id}`;
                 } else {
-                    streamUrl = `https://vidsrc.su/embed/tv/${id}/${currentSeason || 1}/${currentEpisode || 1}`;
+                    streamUrl = `https://vidsrc.su/embed/tv/${id}/${season}/${episode}`;
                 }
             } else {
-                if (isAnime) {
-                    streamUrl = `https://www.vidy.st/anime/${id}/${currentEpisode || 1}?color=${color}&nextEpisode=true&episodeSelector=true`;
+                if (isAnime && currentItem.isAniListOnly) {
+                    streamUrl = `https://www.vidy.st/anime/${id}/${episode}?color=${color}&nextEpisode=true&episodeSelector=true`;
                 } else if (isMovie) {
                     streamUrl = `https://embed.su/embed/movie/${id}`;
                 } else {
-                    streamUrl = `https://embed.su/embed/tv/${id}/${currentSeason || 1}/${currentEpisode || 1}`;
+                    streamUrl = `https://embed.su/embed/tv/${id}/${season}/${episode}`;
                 }
             }
 

@@ -597,11 +597,11 @@ footer:not(.minimal-footer-cluster),
 }
 
 /* Ensure unlock and auth overlays are always strictly above floating docks */
-#12am-auth-overlay,
+#twelveam-auth-overlay,
 .auth-page-backdrop {
   position: fixed !important;
   inset: 0 !important;
-  z-index: 100050 !important;
+  z-index: 2147483647 !important;
   backdrop-filter: blur(32px) !important;
   -webkit-backdrop-filter: blur(32px) !important;
   background: rgba(3, 3, 6, 0.82) !important;
