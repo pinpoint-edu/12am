@@ -13,6 +13,15 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
+  <!-- KaTeX for LaTeX Math Rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <!-- Highlight.js for Code & JSON syntax highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
   <!-- 12AM Core Theme & Navigation -->
   <link rel="stylesheet" href="navigation.css">
   <script src="theme.js"></script>
@@ -207,40 +216,175 @@
     }
 
     .message-bubble {
-      max-width: 82%;
-      padding: 1rem 1.4rem;
-      border-radius: 22px;
-      font-size: 0.92rem;
+      max-width: 84%;
+      padding: 0.55rem 0.9rem;
+      border-radius: 16px;
+      font-size: 0.88rem;
       font-weight: 400;
-      line-height: 1.6;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .message-bubble > *:first-child {
+      margin-top: 0;
+    }
+
+    .message-bubble > *:last-child {
+      margin-bottom: 0;
+    }
+
+    .message-bubble p {
+      margin: 0.35rem 0;
+    }
+
+    .message-bubble h1,
+    .message-bubble h2,
+    .message-bubble h3,
+    .message-bubble h4 {
+      font-weight: 500;
+      color: var(--text-main);
+      margin: 0.6rem 0 0.25rem 0;
+      line-height: 1.3;
+    }
+
+    .message-bubble h1 { font-size: 1.15rem; }
+    .message-bubble h2 { font-size: 1.05rem; }
+    .message-bubble h3 { font-size: 0.95rem; }
+    .message-bubble h4 { font-size: 0.88rem; }
+
+    .message-bubble strong,
+    .message-bubble b {
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .message-bubble em,
+    .message-bubble i {
+      font-style: italic;
+    }
+
+    .message-bubble u,
+    .message-bubble ins {
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .message-bubble ul,
+    .message-bubble ol {
+      margin: 0.35rem 0;
+      padding-left: 1.3rem;
+    }
+
+    .message-bubble li {
+      margin: 0.2rem 0;
+    }
+
+    .message-bubble blockquote {
+      border-left: 3px solid var(--accent-color);
+      padding: 0.25rem 0 0.25rem 0.75rem;
+      margin: 0.4rem 0;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 6px;
+    }
+
+    .message-bubble table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 0.5rem 0;
+      font-size: 0.82rem;
+      overflow-x: auto;
+      display: block;
+    }
+
+    .message-bubble th,
+    .message-bubble td {
+      border: 1px solid var(--border-main);
+      padding: 6px 10px;
+      text-align: left;
+    }
+
+    .message-bubble th {
+      background: var(--bg-page);
+      font-weight: 500;
+      color: var(--text-main);
+    }
+
+    .message-bubble hr {
+      border: none;
+      border-top: 1px solid var(--border-main);
+      margin: 0.6rem 0;
     }
 
     .message-row.user .message-bubble {
       background: var(--btn-bg);
       border: 1px solid var(--accent-color);
       color: var(--text-main);
-      border-bottom-right-radius: 8px;
+      border-bottom-right-radius: 6px;
     }
 
     .message-row.bot .message-bubble {
       background: var(--bg-card);
       border: 1px solid var(--border-main);
       color: var(--text-main);
-      border-bottom-left-radius: 8px;
+      border-bottom-left-radius: 6px;
     }
 
     .message-bubble pre {
-      background: #000000;
+      position: relative;
+      background: #0d0f12;
       border: 1px solid var(--border-main);
-      border-radius: 16px;
-      padding: 12px 16px;
+      border-radius: 12px;
+      padding: 10px 14px;
+      padding-top: 30px;
       overflow-x: auto;
-      margin: 10px 0;
+      margin: 0.5rem 0;
+      font-size: 0.82rem;
     }
 
     .message-bubble code {
-      font-family: monospace;
-      font-size: 0.85rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.82rem;
+    }
+
+    .message-bubble :not(pre) > code {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 2px 6px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--accent-color);
+    }
+
+    .code-copy-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      padding: 3px 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-main);
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .code-copy-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.16);
+      border-color: var(--accent-color);
+    }
+
+    /* KaTeX overrides */
+    .katex-display {
+      margin: 0.5rem 0 !important;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 4px 0;
     }
 
     /* Input Bar */
@@ -314,7 +458,7 @@
     <div class="ai-toolbar">
       <div class="ai-model-pill">
         <span class="dot"></span>
-        <span id="modelLabel">Llama 3.3 70B Versatile</span>
+        <span id="modelLabel">Qwen 2.5 27B / Fast Multi-Model</span>
       </div>
       <div class="ai-actions-row">
         <button class="ai-btn-small" onclick="clearChat()" title="Clear Chat History">
@@ -403,6 +547,72 @@
       `;
     }
 
+    if (typeof marked !== 'undefined') {
+      marked.setOptions({
+        breaks: true,
+        gfm: true
+      });
+    }
+
+    function renderBubbleContent(bubble, text) {
+      if (typeof marked !== 'undefined') {
+        bubble.innerHTML = marked.parse(text);
+      } else {
+        bubble.textContent = text;
+      }
+
+      // Syntax highlighting for code & json blocks
+      if (typeof hljs !== 'undefined') {
+        bubble.querySelectorAll('pre code').forEach((block) => {
+          try {
+            hljs.highlightElement(block);
+          } catch (e) {
+            console.warn('Highlight.js error:', e);
+          }
+        });
+      }
+
+      // LaTeX math formulas rendering (KaTeX)
+      if (window.renderMathInElement) {
+        try {
+          renderMathInElement(bubble, {
+            delimiters: [
+              { left: '$$', right: '$$', display: true },
+              { left: '$', right: '$', display: false },
+              { left: '\\[', right: '\\]', display: true },
+              { left: '\\(', right: '\\)', display: false }
+            ],
+            ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            throwOnError: false
+          });
+        } catch (e) {
+          console.warn('KaTeX render error:', e);
+        }
+      }
+
+      // Add copy button to code blocks
+      bubble.querySelectorAll('pre').forEach(pre => {
+        if (pre.querySelector('.code-copy-btn')) return;
+        const btn = document.createElement('button');
+        btn.className = 'code-copy-btn';
+        btn.type = 'button';
+        btn.innerHTML = '<i class="fa-regular fa-copy"></i> <span>Copy</span>';
+        btn.onclick = () => {
+          const code = pre.querySelector('code');
+          const textToCopy = code ? code.innerText : pre.innerText;
+          navigator.clipboard.writeText(textToCopy).then(() => {
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> <span>Copied</span>';
+            setTimeout(() => {
+              btn.innerHTML = '<i class="fa-regular fa-copy"></i> <span>Copy</span>';
+            }, 2000);
+          }).catch(() => {
+            btn.innerHTML = '<span>Failed</span>';
+          });
+        };
+        pre.appendChild(btn);
+      });
+    }
+
     function appendMessage(role, content) {
       const welcome = document.getElementById('welcomeCard');
       if (welcome) welcome.remove();
@@ -418,8 +628,8 @@
       const bubble = document.createElement('div');
       bubble.className = 'message-bubble';
       
-      if (role === 'assistant' && typeof marked !== 'undefined') {
-        bubble.innerHTML = marked.parse(content);
+      if (role === 'assistant') {
+        renderBubbleContent(bubble, content);
       } else {
         bubble.textContent = content;
       }
@@ -467,7 +677,10 @@
               body: JSON.stringify({
                 model: modelName,
                 messages: [
-                  { role: 'system', content: 'You are 12AM AI, an intelligent, concise, helpful academic and coding assistant on the 12AM gaming website.' },
+                  { 
+                    role: 'system', 
+                    content: 'You are 12AM AI, an intelligent, concise, highly capable academic, math, and coding assistant on 12AM. You format answers cleanly using Markdown (titles with #/##/###, bold with **, italics with *, underlining with <u>...</u>, bullet lists, tables, and blockquotes). For mathematical formulas or calculations, always use LaTeX notation ($...$ for inline and $$...$$ for block equations). For code or JSON, always use fenced code blocks with language identifiers (e.g. ```python, ```javascript, ```json).' 
+                  },
                   ...messages
                 ],
                 temperature: 0.7,
@@ -494,12 +707,7 @@
         }
 
         messages.push({ role: 'assistant', content: reply });
-
-        if (typeof marked !== 'undefined') {
-          botBubble.innerHTML = marked.parse(reply);
-        } else {
-          botBubble.textContent = reply;
-        }
+        renderBubbleContent(botBubble, reply);
       } catch (err) {
         botBubble.innerHTML = `<span style="color:#ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> Error: ${err.message}</span>`;
       } finally {

@@ -756,10 +756,10 @@
                     <select id="episodeSelect" class="select-dark" onchange="handleEpisodeChange()"></select>
                 </div>
 
-                <!-- Server Selector: Vidy Primary -->
+                <!-- Server Selector -->
                 <select id="serverSelect" class="select-dark" onchange="changeServer()">
-                    <option value="vidy" selected>Server 1 (Vidy Player)</option>
-                    <option value="vidlink">Server 2 (VidLink HD)</option>
+                    <option value="vidlink" selected>Server 1 (VidLink HD)</option>
+                    <option value="vidy">Server 2 (Vidy Player)</option>
                     <option value="vidsrc">Server 3 (VidSrc Fast)</option>
                     <option value="embedsu">Server 4 (EmbedSu)</option>
                 </select>
@@ -777,7 +777,7 @@
         </div>
 
         <div class="player-frame-area">
-            <iframe id="streamIframe" allowfullscreen="true" allow="encrypted-media; autoplay *; fullscreen *; clipboard-write; picture-in-picture"></iframe>
+            <iframe id="streamIframe" allow="encrypted-media; autoplay *; fullscreen *; clipboard-write; picture-in-picture"></iframe>
         </div>
     </div>
 
@@ -1233,12 +1233,13 @@
             }
         }
 
-        // --- STREAMING PLAYER LOGIC (Vidy Proxy API) ---
+        // --- STREAMING PLAYER LOGIC (Multi-Server Streaming API) ---
         async function openPlayer(item) {
             currentItem = item;
             const modal = document.getElementById('playerModal');
             const titleEl = document.getElementById('playerTitle');
             const tvSelectors = document.getElementById('tvSelectors');
+            const serverSelect = document.getElementById('serverSelect');
 
             const isAnime = Boolean(item.isAnime || item.media_type === 'anime');
             const isMovie = !isAnime && (item.media_type === 'movie' || Boolean(item.title && !item.first_air_date && !item.name));
@@ -1266,6 +1267,18 @@
                     epSelect.appendChild(opt);
                 }
                 tvSelectors.style.display = 'flex';
+
+                // Look up TMDB ID asynchronously for anime so servers 3 and 4 work too
+                if (!item.tmdbId) {
+                    fetchTMDB('/search/tv', { query: item.title }).then(res => {
+                        if (res?.results?.[0]?.id) {
+                            item.tmdbId = res.results[0].id;
+                        }
+                    }).catch(() => {});
+                }
+
+                // Default to VidLink for anime since Vidy's anime backend has upstream Cloudflare blocks
+                if (serverSelect) serverSelect.value = 'vidlink';
                 updatePlayerSource();
             } else if (!isMovie) {
                 tvSelectors.style.display = 'flex';
@@ -1336,13 +1349,23 @@
             const isMovie = !isAnime && (currentItem.media_type === 'movie' || Boolean(currentItem.title && !currentItem.first_air_date && !currentItem.name));
             const id = currentItem.id;
             const anilistId = currentItem.anilistId || id;
+            const malId = currentItem.idMal || anilistId;
+            const tmdbId = currentItem.tmdbId;
             const color = getThemeAccentHex();
             const season = currentSeason || 1;
             const episode = currentEpisode || 1;
 
             let streamUrl = '';
 
-            if (server === 'vidy') {
+            if (server === 'vidlink') {
+                if (isAnime) {
+                    streamUrl = `https://vidlink.pro/anime/${malId}/${episode}/sub?fallback=true&primaryColor=${color}&autoplay=true`;
+                } else if (isMovie) {
+                    streamUrl = `https://vidlink.pro/movie/${id}?primaryColor=${color}&autoplay=true`;
+                } else {
+                    streamUrl = `https://vidlink.pro/tv/${id}/${season}/${episode}?primaryColor=${color}&autoplay=true`;
+                }
+            } else if (server === 'vidy') {
                 if (isAnime) {
                     // Official Vidy Anime route according to Vidy docs: /anime/{anilistId}/{episode}
                     streamUrl = `https://www.vidy.st/anime/${anilistId}/${episode}?color=${color}&nextEpisode=true&episodeSelector=true`;
@@ -1351,22 +1374,13 @@
                 } else {
                     streamUrl = `https://www.vidy.st/tv/${id}/${season}/${episode}?color=${color}&nextEpisode=true&episodeSelector=true&autoplayNextEpisode=true`;
                 }
-            } else if (server === 'vidlink') {
-                if (isAnime) {
-                    // VidLink Anime Route using MAL ID
-                    if (currentItem.idMal) {
-                        streamUrl = `https://vidlink.pro/anime/${currentItem.idMal}/${episode}/sub?fallback=true&primaryColor=${color}&autoplay=true`;
-                    } else {
-                        streamUrl = `https://www.vidy.st/anime/${anilistId}/${episode}?color=${color}&nextEpisode=true&episodeSelector=true`;
-                    }
-                } else if (isMovie) {
-                    streamUrl = `https://vidlink.pro/movie/${id}?primaryColor=${color}&autoplay=true`;
-                } else {
-                    streamUrl = `https://vidlink.pro/tv/${id}/${season}/${episode}?primaryColor=${color}&autoplay=true`;
-                }
             } else if (server === 'vidsrc') {
                 if (isAnime) {
-                    streamUrl = `https://www.vidy.st/anime/${anilistId}/${episode}?color=${color}&nextEpisode=true&episodeSelector=true`;
+                    if (tmdbId) {
+                        streamUrl = `https://vidsrc.su/embed/tv/${tmdbId}/${season}/${episode}`;
+                    } else {
+                        streamUrl = `https://vidlink.pro/anime/${malId}/${episode}/sub?fallback=true&primaryColor=${color}&autoplay=true`;
+                    }
                 } else if (isMovie) {
                     streamUrl = `https://vidsrc.su/embed/movie/${id}`;
                 } else {
@@ -1374,7 +1388,11 @@
                 }
             } else {
                 if (isAnime) {
-                    streamUrl = `https://www.vidy.st/anime/${anilistId}/${episode}?color=${color}&nextEpisode=true&episodeSelector=true`;
+                    if (tmdbId) {
+                        streamUrl = `https://embed.su/embed/tv/${tmdbId}/${season}/${episode}`;
+                    } else {
+                        streamUrl = `https://vidlink.pro/anime/${malId}/${episode}/sub?fallback=true&primaryColor=${color}&autoplay=true`;
+                    }
                 } else if (isMovie) {
                     streamUrl = `https://embed.su/embed/movie/${id}`;
                 } else {
