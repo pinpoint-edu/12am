@@ -393,6 +393,11 @@ function rewriteHtml(html, finalUrl, webEndpoint, hostOrigin, isEmbed = false) {
     return /disable-devtool|sbx\\.js|tagivi\\.com|llvpn\\.com|acscdn\\.com|churromisos\\.com|histats\\.com|alchemmauls\\.com|intelligenceadx\\.com|f59d610a61063c7ef3ccdc1fd40d2ae6|youtube\\.com\\/embed\\/xyFrwWFOfhg/i.test(u);
   }
 
+  function isUnityTelemetryUrl(u) {
+    if (!u || typeof u !== "string") return false;
+    return /(?:cloud\\.unity3d\\.com|events\\.mz\\.unity3d\\.com|\\bunity3d\\.com\\/v1\\/events)/i.test(u);
+  }
+
   function toAbs(u) {
     if (!u || typeof u !== "string") return u;
     var t = u.trim();
@@ -427,10 +432,14 @@ function rewriteHtml(html, finalUrl, webEndpoint, hostOrigin, isEmbed = false) {
     if (isWrapped(u)) return u;
     if (isBlockedAdUrl(u)) return "data:application/javascript,";
     var abs = toAbs(u);
+    if (typeof abs === "string" && isUnityTelemetryUrl(abs)) return "data:application/json,%7B%7D";
     if (typeof abs === "string" && /^https?:\\/\\//i.test(abs) && !isWrapped(abs)) {
       var fallback = "";
       try {
         var parsedAbs = new URL(abs);
+        if (parsedAbs.hostname.toLowerCase().indexOf("glseries.net") !== -1 && /\\/main\\.min\\.js$/i.test(parsedAbs.pathname)) {
+          return "data:application/javascript,//";
+        }
         if (parsedAbs.origin === TARGET_ORIGIN && TARGET_DIR !== TARGET_ORIGIN + "/") {
           var filePart = parsedAbs.pathname.replace(/^\\/+/, "");
           var altUrl = parsedAbs.href.indexOf(TARGET_DIR) === 0
@@ -472,6 +481,19 @@ function rewriteHtml(html, finalUrl, webEndpoint, hostOrigin, isEmbed = false) {
   }
 
   try {
+    if (window.WebGL2RenderingContext && WebGL2RenderingContext.prototype && WebGL2RenderingContext.prototype.getInternalformatParameter) {
+      var origGetInternalformat = WebGL2RenderingContext.prototype.getInternalformatParameter;
+      WebGL2RenderingContext.prototype.getInternalformatParameter = markNative(function(target, internalformat, pname) {
+        var fmt = Number(internalformat);
+        if (fmt === 0x1902 || fmt === 0x1906 || fmt === 0x1907 || fmt === 0x1908 || fmt === 0x1909 || fmt === 0x190A || fmt === 0x84F9 || (fmt >= 0x83F0 && fmt <= 0x93DC)) {
+          return new Int32Array(0);
+        }
+        return origGetInternalformat.apply(this, arguments);
+      }, "getInternalformatParameter");
+    }
+  } catch(e){}
+
+  try {
     window.parent.postMessage({ type: "TB_WEB_URL_CHANGE", url: TARGET_URL, title: document.title || TARGET_URL }, "*");
     window.addEventListener("DOMContentLoaded", function() {
       window.parent.postMessage({ type: "TB_WEB_URL_CHANGE", url: TARGET_URL, title: document.title || TARGET_URL }, "*");
@@ -482,6 +504,11 @@ function rewriteHtml(html, finalUrl, webEndpoint, hostOrigin, isEmbed = false) {
     var origFetch = window.fetch;
     window.fetch = markNative(function(input, init) {
       try {
+        var rawUrl = typeof input === "string" ? input : (input && input.url ? input.url : "");
+        var absUrl = rawUrl ? toAbs(String(rawUrl)) : "";
+        if (absUrl && isUnityTelemetryUrl(absUrl)) {
+          return Promise.resolve(new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } }));
+        }
         if (typeof input === "string") input = wrapRaw(input);
         else if (typeof URL !== "undefined" && input instanceof URL) input = wrapRaw(input.href);
         else if (input && typeof input.url === "string") input = new Request(wrapRaw(input.url), input);
@@ -492,11 +519,28 @@ function rewriteHtml(html, finalUrl, webEndpoint, hostOrigin, isEmbed = false) {
 
   if (window.XMLHttpRequest) {
     var origOpen = XMLHttpRequest.prototype.open;
+    var origSend = XMLHttpRequest.prototype.send;
     XMLHttpRequest.prototype.open = markNative(function(method, url) {
       var args = Array.prototype.slice.call(arguments);
-      try { args[1] = wrapRaw(String(url)); } catch(e){}
+      this._tbFakeJson = false;
+      try {
+        var absUrl = toAbs(String(url));
+        if (isUnityTelemetryUrl(absUrl)) {
+          this._tbFakeJson = true;
+          args[0] = "GET";
+          args[1] = "data:application/json,%7B%7D";
+        } else {
+          args[1] = wrapRaw(String(url));
+        }
+      } catch(e){}
       return origOpen.apply(this, args);
     }, "open");
+    XMLHttpRequest.prototype.send = markNative(function() {
+      if (this._tbFakeJson) {
+        return origSend.call(this, null);
+      }
+      return origSend.apply(this, arguments);
+    }, "send");
   }
 
   if (window.EventSource) {
@@ -733,6 +777,17 @@ export default async function handler(req, res) {
     return res.status(403).json({ error: "Restricted host" });
   }
 
+  const lowerHost = parsed.hostname.toLowerCase();
+  if (
+    lowerHost === "cdp.cloud.unity3d.com" ||
+    lowerHost.endsWith(".cloud.unity3d.com") ||
+    lowerHost === "events.mz.unity3d.com" ||
+    (lowerHost.endsWith(".unity3d.com") && parsed.pathname.includes("/v1/events"))
+  ) {
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    return res.status(200).send("{}");
+  }
+
   const proto = req.headers["x-forwarded-proto"] || "https";
   const host = req.headers["x-forwarded-host"] || req.headers.host || "ohio-notes.broshan.com.np";
   const hostOrigin = `${proto}://${host}`;
@@ -799,6 +854,11 @@ export default async function handler(req, res) {
           }
         }
       } catch (e) {}
+    }
+
+    if (upstream.status === 404 && (parsed.hostname.toLowerCase() === "glseries.net" || parsed.hostname.toLowerCase().endsWith(".glseries.net")) && /\/main\.min\.js$/i.test(parsed.pathname)) {
+      res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+      return res.status(200).send("/* no-op */");
     }
 
     const finalUrl = upstream.url || target;

@@ -3,12 +3,44 @@
   "trailingSlash": false,
   "rewrites": [
     {
-      "source": "/music-api/:endpoint",
-      "destination": "/api/music-api?endpoint=:endpoint"
+      "source": "/share",
+      "destination": "/api/music-api?endpoint=share-page"
+    },
+    {
+      "source": "/music-api/stream/:id",
+      "destination": "/api/music-api?endpoint=stream&id=:id"
+    },
+    {
+      "source": "/music-api/album/:id",
+      "destination": "/api/music-api?endpoint=album&id=:id"
+    },
+    {
+      "source": "/music-api/artist/:id",
+      "destination": "/api/music-api?endpoint=artist&id=:id"
+    },
+    {
+      "source": "/music-api/playlist/:id",
+      "destination": "/api/music-api?endpoint=playlist&id=:id"
     },
     {
       "source": "/music-api/lyrics/:id",
       "destination": "/api/music-api?endpoint=lyrics&id=:id"
+    },
+    {
+      "source": "/music-api/cobalt",
+      "destination": "/api/music-api?endpoint=cobalt"
+    },
+    {
+      "source": "/music-api/:endpoint",
+      "destination": "/api/music-api?endpoint=:endpoint"
+    },
+    {
+      "source": "/api/apple-music",
+      "destination": "/api/apple-music"
+    },
+    {
+      "source": "/api/cobalt",
+      "destination": "/api/music-api?endpoint=cobalt"
     },
     {
       "source": "/tglsc-proxy/:path*",

@@ -1,6 +1,6 @@
 // yolk-app.js - Modern minimalist music player with YouTube Music, playlist management, and synced lyrics
 
-const API_BASE = (typeof window !== 'undefined' && window.location.protocol.startsWith('http')) ? '/api/music-api' : 'https://yolkaudio.broshan.com.np/api/music-api';
+const API_BASE = (typeof window !== 'undefined' && window.location.protocol.startsWith('http')) ? '/api/music-api' : 'https://yolk-music.vercel.app/api/music-api';
 
 // State Management
 let favorites = JSON.parse(localStorage.getItem('yolk_favorites') || '[]');
@@ -12,10 +12,10 @@ let playlists = JSON.parse(localStorage.getItem('yolk_playlists') || '[]').map(p
 });
 let currentAudio = document.getElementById('yolk-audio-player') || new Audio();
 currentAudio.preload = 'auto';
-currentAudio.crossOrigin = 'anonymous';
+currentAudio.removeAttribute('crossorigin');
 let preloadedNextAudio = new Audio();
 preloadedNextAudio.preload = 'auto';
-preloadedNextAudio.crossOrigin = 'anonymous';
+preloadedNextAudio.removeAttribute('crossorigin');
 let preloadedNextTrackUid = null;
 let activeSource = 'audio'; // 'audio' or 'youtube'
 let ytPlayer = null;
@@ -2446,7 +2446,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function performSearch(query, clear) {
         isLoadingMore = true;
         if (clear) {
-            searchResults.innerHTML = '<div class="text-[11px] font-semibold text-zinc-400 uppercase tracking-widest text-left w-full mb-1 pl-5">Searching…</div>';
+            searchResults.innerHTML = '<div class="text-[11px] font-semibold text-zinc-400 uppercase tracking-widest text-left w-full mb-1 pl-5">Searching YouTube Music…</div>';
             if (query && query.trim().length >= 2) {
                 saveRecentSearch(query.trim());
             }
@@ -2501,7 +2501,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const hasAnyResults = (tracks && tracks.length > 0) || (albums && albums.length > 0) || (artists && artists.length > 0) || (playlists && playlists.length > 0);
 
         if (!hasAnyResults) {
-            searchResults.innerHTML = '<div class="text-xs text-zinc-400 pl-5 py-4">No results found.</div>';
+            searchResults.innerHTML = '<div class="text-xs text-zinc-400 pl-5 py-4">No results found on YouTube Music.</div>';
             return;
         }
 
@@ -3529,12 +3529,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         currentAudio.pause();
         currentAudio.muted = false;
-
-        if (streamUrl.startsWith('blob:') || streamUrl.startsWith('data:')) {
-            currentAudio.removeAttribute('crossorigin');
-        } else {
-            currentAudio.crossOrigin = 'anonymous';
-        }
+        currentAudio.removeAttribute('crossorigin');
 
         if (currentAudio.src !== streamUrl) {
             currentAudio.src = streamUrl;
@@ -3624,12 +3619,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (nextUrl.startsWith('blob:') || nextUrl.startsWith('data:')) {
-            preloadedNextAudio.removeAttribute('crossorigin');
-        } else {
-            preloadedNextAudio.crossOrigin = 'anonymous';
-        }
-
+        preloadedNextAudio.removeAttribute('crossorigin');
         preloadedNextAudio.src = nextUrl;
         preloadedNextAudio.volume = 0;
         preloadedNextAudio.currentTime = 0;
@@ -3872,10 +3862,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (videoId) {
                 const prefFormat = getSupportedAudioFormat();
                 const streamUrl = `${API_BASE}?endpoint=stream&id=${encodeURIComponent(videoId)}&format=${prefFormat}&v=2`;
+                preloadedNextAudio.removeAttribute('crossorigin');
                 preloadedNextAudio.removeAttribute('src');
                 preloadedNextAudio.src = streamUrl;
                 preloadedNextAudio.load();
-                fetch(streamUrl, { headers: { 'Range': 'bytes=0-32768' } }).catch(() => {});
                 preloadedNextTrackUid = uid;
             }
         } catch (_) {}
@@ -4070,6 +4060,7 @@ document.addEventListener('DOMContentLoaded', () => {
             audioEl._isHandlingError = true;
             showSpinner(false);
 
+            audioEl._errorRetries = (audioEl._errorRetries || 0) + 1;
             const track = currentTrack;
             if (!track) {
                 audioEl._isHandlingError = false;
@@ -4077,6 +4068,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const videoId = getYoutubeIdSync(track) || (await getYoutubeId(track));
+
+            // Retry 1: try alternate format (webm vs mp4) as in v3.7
+            if (audioEl._errorRetries === 1 && videoId && !userPausedIntentionally) {
+                const currentFmt = audioEl._activeFormat || (audioEl.src.includes('format=webm') ? 'webm' : 'mp4');
+                const altFmt = currentFmt === 'mp4' ? 'webm' : 'mp4';
+                audioEl._activeFormat = altFmt;
+                const retryUrl = `${API_BASE}?endpoint=stream&id=${encodeURIComponent(videoId)}&format=${altFmt}&_t=${Date.now()}`;
+                setTimeout(() => {
+                    audioEl._isHandlingError = false;
+                    loadDirectAudioPlayer(retryUrl, true);
+                }, 100);
+                return;
+            }
 
             audioEl._isHandlingError = false;
             audioEl._errorRetries = 0;
@@ -8791,6 +8795,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let visualizerStyle = 'bars';
 
     function ensureWebAudioEqualizer(forceInit = false) {
+        // Avoid createMediaElementSource so native <audio> plays cross-origin 302 streams (googlevideo.com) with sound;
+        // computeLiveVisualizerBins uses its built-in reactive visualizer fallback automatically.
+        return;
         // Prevent Web Audio interception on mobile devices (iOS / Android):
         // In Safari iOS and Android browsers, connecting an HTMLAudioElement to an AudioContext
         // via createMediaElementSource forces audio processing onto the Web Audio render graph,
