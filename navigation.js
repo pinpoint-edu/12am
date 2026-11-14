@@ -928,13 +928,12 @@
 
             return `
                 <div class="sidebar-music-wrapper ${hasTrack ? '' : 'is-empty'} ${isPlaying ? 'is-playing' : ''}" id="sidebarMusicWrapper">
-                    <button type="button" class="sidebar-btn sidebar-music-cover-btn" id="sidebarMusicToggle" aria-label="Music Mini Player">
+                    <button type="button" class="sidebar-btn sidebar-music-cover-btn" id="sidebarMusicToggle" aria-label="Open Now Playing">
                         <div class="sidebar-music-cover-frame">
                             <img id="sidebarMusicCoverImg" class="sidebar-music-cover-img" src="${escapeHtml(cover)}" alt="Album Cover" style="display:${cover ? 'block' : 'none'};" onerror="if(!this.dataset.proxied && this.src && !this.src.includes('proxy-image')){this.dataset.proxied='1';this.src='${prefix}api/music-api?endpoint=proxy-image&url='+encodeURIComponent(this.src);return;}this.style.display='none'; var fb=this.nextElementSibling; if(fb) fb.style.display='inline-flex';">
                             <i id="sidebarMusicFallbackIcon" class="fa-solid fa-music" style="font-size:15px; color:#ffffff; display:${cover ? 'none' : 'inline-flex'}; align-items:center; justify-content:center;"></i>
                         </div>
                         <span class="sidebar-music-playing-dot" aria-hidden="true"></span>
-                        <span class="sidebar-tooltip" id="sidebarMusicTooltip">${escapeHtml(hasTrack ? `${title} — ${artist}` : 'Music Player')}</span>
                     </button>
                     <div class="music-mini-menu-container closed" id="music-mini-menu-container" role="dialog" aria-label="Music Player Controls">
                         <div class="music-mini-controls-row">
@@ -949,9 +948,6 @@
                             </button>
                             <button type="button" class="music-mini-ctrl-btn" id="dockMusicNextBtn" title="Next Song" aria-label="Next Song">
                                 <i class="fa-solid fa-forward-step"></i>
-                            </button>
-                            <button type="button" class="music-mini-ctrl-btn music-mini-redirect-btn" id="dockMusicRedirectBtn" title="Fast Redirect to Music" aria-label="Fast Redirect to Music">
-                                <i class="fa-solid fa-up-right-from-square"></i>
                             </button>
                         </div>
                     </div>
@@ -1019,7 +1015,6 @@
             const prevBtn = document.getElementById('dockMusicPrevBtn');
             const playBtn = document.getElementById('dockMusicPlayPauseBtn');
             const nextBtn = document.getElementById('dockMusicNextBtn');
-            const redirectBtn = document.getElementById('dockMusicRedirectBtn');
 
             const closeMusicMenu = () => {
                 if (menuEl) {
@@ -1076,9 +1071,8 @@
             }
 
             if (toggleBtn && menuEl) {
-                toggleBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    const isOpen = menuEl.classList.contains('open');
+                const openMusicMenu = () => {
+                    clearTimeout(musicHoverTimer);
                     const authMenu = document.getElementById('auth-menu-container');
                     const authToggleEl = document.getElementById('sidebarAuthToggle');
                     const moreMenu = document.getElementById('more-menu-container');
@@ -1087,17 +1081,32 @@
                     if (authToggleEl) authToggleEl.classList.remove('active');
                     if (moreMenu) { moreMenu.classList.remove('open'); moreMenu.classList.add('closed'); }
                     if (moreToggleEl) moreToggleEl.classList.remove('active');
-                    if (isOpen) {
-                        closeMusicMenu();
-                    } else {
-                        refreshDockMusicWidgetUI();
-                        menuEl.classList.remove('closed');
-                        menuEl.classList.add('open');
-                        toggleBtn.classList.add('active');
-                    }
+                    refreshDockMusicWidgetUI();
+                    menuEl.classList.remove('closed');
+                    menuEl.classList.add('open');
+                    toggleBtn.classList.add('active');
                 };
+
+                toggleBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    closeMusicMenu();
+                    if (activeId === 'music' && window.__twelveAmMusicController) {
+                        window.__twelveAmMusicController.openNowPlaying();
+                        return;
+                    }
+                    window.__12amHandingOffToMusic = true;
+                    const bgEl = document.getElementById('12am-bg-audio-player');
+                    const wasBgPlaying = Boolean(bgEl && !bgEl.paused && !bgEl.ended);
+                    try {
+                        if (wasBgPlaying) sessionStorage.setItem('12am_music_autoplay_handoff', '1');
+                        else sessionStorage.removeItem('12am_music_autoplay_handoff');
+                    } catch (_) {}
+                    if (window.__saveBgAudioState) window.__saveBgAudioState();
+                    if (bgEl && !bgEl.paused) { try { bgEl.pause(); } catch (_) {} }
+                    launchMusicAppWithTransition(`${prefix}music.html#now-playing`, true);
+                };
+                toggleBtn.addEventListener('mouseenter', openMusicMenu);
                 toggleBtn.addEventListener('mouseleave', closeMusicIfHoverAway);
-                toggleBtn.addEventListener('mouseenter', () => clearTimeout(musicHoverTimer));
             }
 
             const authToggle = document.getElementById('sidebarAuthToggle');
@@ -1217,27 +1226,6 @@
                     } else if (window.__skipBgMusicTrack) {
                         window.__skipBgMusicTrack(-1);
                     }
-                };
-            }
-
-            if (redirectBtn) {
-                redirectBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    closeMusicMenu();
-                    if (activeId === 'music' && window.__twelveAmMusicController) {
-                        window.__twelveAmMusicController.openNowPlaying();
-                        return;
-                    }
-                    window.__12amHandingOffToMusic = true;
-                    const bgEl = document.getElementById('12am-bg-audio-player');
-                    const wasBgPlaying = Boolean(bgEl && !bgEl.paused && !bgEl.ended);
-                    try {
-                        if (wasBgPlaying) sessionStorage.setItem('12am_music_autoplay_handoff', '1');
-                        else sessionStorage.removeItem('12am_music_autoplay_handoff');
-                    } catch (_) {}
-                    if (window.__saveBgAudioState) window.__saveBgAudioState();
-                    if (bgEl && !bgEl.paused) { try { bgEl.pause(); } catch (_) {} }
-                    launchMusicAppWithTransition(`${prefix}music.html#now-playing`, true);
                 };
             }
 

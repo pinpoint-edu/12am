@@ -907,6 +907,7 @@
             : (tn === 'galaxy') ? 'galaxy'
             : (tn === 'birthday') ? 'birthday'
             : (tn === "new year's" || tn === 'new year') ? 'fireworks'
+            : (tn === "valentine's day" || tn === 'valentines day' || tn === 'valentine') ? 'hearts'
             : '';
 
         if (!fxType) {
@@ -963,7 +964,8 @@
 
         const cv = document.createElement('canvas');
         cv.id = fxType === 'snow' ? 'snowCanvas' : 'themeBgCanvas';
-        cv.style.cssText = `position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:-1;opacity:${fxType === 'snow' ? '0.55' : '0.85'};`;
+        const cvOpacity = fxType === 'snow' ? '0.55' : (fxType === 'hearts' ? '0.26' : '0.85');
+        cv.style.cssText = `position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:-1;opacity:${cvOpacity};`;
         document.body.prepend(cv);
         __snowState.canvas = cv;
 
@@ -1056,6 +1058,50 @@
                         ctx.moveTo(s.x, s.y - len); ctx.lineTo(s.x, s.y + len);
                         ctx.stroke();
                     }
+                }
+                __snowState.raf = requestAnimationFrame(frame);
+            };
+            frame();
+        } else if (fxType === 'hearts') {
+            const heartColors = ['#ff4d88', '#fb7185', '#f43f5e', '#ff85b3'];
+            const count = Math.min(24, Math.max(10, Math.floor(window.innerWidth / 85)));
+            const hearts = Array.from({ length: count }, () => ({
+                x: Math.random() * cv.width,
+                y: Math.random() * cv.height,
+                size: 28 + Math.random() * 8,
+                vy: 0.55 + Math.random() * 0.75,
+                vx: (Math.random() - 0.5) * 0.35,
+                rot: (Math.random() - 0.5) * 0.35,
+                alpha: 0.55 + Math.random() * 0.4,
+                color: heartColors[Math.floor(Math.random() * heartColors.length)]
+            }));
+            const drawHeart = (x, y, s, rot, color, alpha) => {
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(rot);
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = color;
+                const r = s * 0.5;
+                ctx.beginPath();
+                ctx.moveTo(0, r * 0.65);
+                ctx.bezierCurveTo(-r * 1.15, -r * 0.1, -r * 0.95, -r * 1.05, 0, -r * 0.42);
+                ctx.bezierCurveTo(r * 0.95, -r * 1.05, r * 1.15, -r * 0.1, 0, r * 0.65);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            };
+            const frame = () => {
+                ctx.clearRect(0, 0, cv.width, cv.height);
+                for (const h of hearts) {
+                    drawHeart(h.x, h.y, h.size, h.rot, h.color, h.alpha);
+                    h.y += h.vy;
+                    h.x += h.vx;
+                    if (h.y > cv.height + h.size) {
+                        h.y = -h.size;
+                        h.x = Math.random() * cv.width;
+                    }
+                    if (h.x > cv.width + h.size) h.x = -h.size;
+                    if (h.x < -h.size) h.x = cv.width + h.size;
                 }
                 __snowState.raf = requestAnimationFrame(frame);
             };
