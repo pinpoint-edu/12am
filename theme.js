@@ -1065,6 +1065,9 @@
         } else if (fxType === 'hearts') {
             const heartColors = ['#ff4d88', '#fb7185', '#f43f5e', '#ff85b3'];
             const count = Math.min(24, Math.max(10, Math.floor(window.innerWidth / 85)));
+            const materialHeartPath = (typeof Path2D === 'function')
+                ? new Path2D('M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z')
+                : null;
             const hearts = Array.from({ length: count }, () => ({
                 x: Math.random() * cv.width,
                 y: Math.random() * cv.height,
@@ -1081,13 +1084,20 @@
                 ctx.rotate(rot);
                 ctx.globalAlpha = alpha;
                 ctx.fillStyle = color;
-                const r = s * 0.5;
-                ctx.beginPath();
-                ctx.moveTo(0, r * 0.65);
-                ctx.bezierCurveTo(-r * 1.15, -r * 0.1, -r * 0.95, -r * 1.05, 0, -r * 0.42);
-                ctx.bezierCurveTo(r * 0.95, -r * 1.05, r * 1.15, -r * 0.1, 0, r * 0.65);
-                ctx.closePath();
-                ctx.fill();
+                if (materialHeartPath) {
+                    const scale = s / 24;
+                    ctx.scale(scale, scale);
+                    ctx.translate(-12, -12);
+                    ctx.fill(materialHeartPath);
+                } else {
+                    const r = s * 0.5;
+                    ctx.beginPath();
+                    ctx.moveTo(0, r * 0.65);
+                    ctx.bezierCurveTo(-r * 1.15, -r * 0.1, -r * 0.95, -r * 1.05, 0, -r * 0.42);
+                    ctx.bezierCurveTo(r * 0.95, -r * 1.05, r * 1.15, -r * 0.1, 0, r * 0.65);
+                    ctx.closePath();
+                    ctx.fill();
+                }
                 ctx.restore();
             };
             const frame = () => {
@@ -1113,7 +1123,7 @@
     let themeTransitionRaf = null;
     let lastAppliedCoverTintKey = '';
     const SONG_COVER_TINT_KEY = '12am_song_cover_tint';
-    const MUSIC_STATE_KEY = '12am_music_state';
+    const MUSIC_STATE_KEY = '12am_music_playback_state';
     const coverPaletteCache = new Map();
 
     function applyTheme(theme, save = true, isInternalFrame = false) {
@@ -1563,20 +1573,23 @@
                             buckets.set(key, { rSum: r, gSum: g, bSum: b, count: 1 });
                         }
                     }
-                    const candidates = Array.from(buckets.values()).map(bkt => {
+                    const allCandidates = Array.from(buckets.values()).map(bkt => {
                         const r = Math.round(bkt.rSum / bkt.count);
                         const g = Math.round(bkt.gSum / bkt.count);
                         const b = Math.round(bkt.bSum / bkt.count);
                         const hsl = rgbToHslSimple(r, g, b);
-                        const score = (hsl.s * 3.0) + (1 - Math.abs(hsl.l - 0.5)) * 1.4 + Math.log(bkt.count + 1) * 0.35;
+                        const score = (hsl.s * 3.5) + (1 - Math.abs(hsl.l - 0.5)) * 1.5 + Math.log(bkt.count + 1) * 0.3;
                         return { r, g, b, hsl, score };
                     }).sort((a, b) => b.score - a.score);
+
+                    const vibrant = allCandidates.filter(c => c.hsl.s >= 0.14 && c.hsl.l >= 0.08 && c.hsl.l <= 0.92);
+                    const candidates = vibrant.length ? vibrant : allCandidates;
 
                     if (!candidates.length) { callback(null); return; }
                     const c1 = candidates[0];
                     let c2 = candidates[1] || c1;
                     let bestDist = -1;
-                    for (const cand of candidates.slice(1, 12)) {
+                    for (const cand of candidates.slice(1, 14)) {
                         const d = Math.hypot(cand.r - c1.r, cand.g - c1.g, cand.b - c1.b);
                         if (d > bestDist) { bestDist = d; c2 = cand; }
                     }
@@ -1588,7 +1601,8 @@
                     callback(palette);
                 } catch (_) {
                     if (allowProxyRetry && !isLocal) {
-                        tryLoad(`/api/proxy?url=${encodeURIComponent(imgUrl)}`, false);
+                        const prefix = window.location.pathname.includes('/logged-in/') ? '../' : '';
+                        tryLoad(`${prefix}api/music-api?endpoint=proxy-image&url=${encodeURIComponent(imgUrl)}`, false);
                     } else {
                         callback(null);
                     }
@@ -1596,7 +1610,8 @@
             };
             img.onerror = () => {
                 if (allowProxyRetry && !isLocal) {
-                    tryLoad(`/api/proxy?url=${encodeURIComponent(imgUrl)}`, false);
+                    const prefix = window.location.pathname.includes('/logged-in/') ? '../' : '';
+                    tryLoad(`${prefix}api/music-api?endpoint=proxy-image&url=${encodeURIComponent(imgUrl)}`, false);
                 } else {
                     callback(null);
                 }
@@ -1612,31 +1627,34 @@
         const pHsl = palette.primary.hsl;
         const sHsl = palette.secondary.hsl;
 
-        const accentRgb = hslToRgbSimple(pHsl.h, Math.max(0.55, Math.min(0.95, pHsl.s * 1.15)), isLight ? 0.45 : 0.60);
-        const secRgb = hslToRgbSimple(sHsl.h, Math.max(0.45, Math.min(0.9, sHsl.s * 1.1)), isLight ? 0.48 : 0.58);
-        const surfaceTintRgb = hslToRgbSimple(pHsl.h, Math.min(0.75, Math.max(0.25, pHsl.s)), isLight ? 0.92 : 0.14);
+        const sat = Math.max(0.68, Math.min(0.95, pHsl.s * 1.25));
+        const accentRgb = hslToRgbSimple(pHsl.h, Math.max(0.75, sat), isLight ? 0.44 : 0.62);
+        const secRgb = hslToRgbSimple(sHsl.h, Math.max(0.62, Math.min(0.92, sHsl.s * 1.2)), isLight ? 0.48 : 0.60);
+        const bgPrimaryTint = hslToRgbSimple(pHsl.h, sat * 0.78, isLight ? 0.88 : 0.16);
+        const bgSecondaryTint = hslToRgbSimple(pHsl.h, sat * 0.82, isLight ? 0.93 : 0.23);
+        const btnTint = hslToRgbSimple(pHsl.h, sat * 0.82, isLight ? 0.86 : 0.26);
+        const borderTint = hslToRgbSimple(pHsl.h, sat * 0.75, isLight ? 0.72 : 0.42);
 
         const accentStr = formatRgba(accentRgb);
         const secStr = formatRgba(secRgb);
-        const surfaceTintStr = formatRgba(surfaceTintRgb);
 
         return {
             ...baseTheme,
-            'bg-primary': mixCssColor(baseTheme['bg-primary'] || (isLight ? '#f8fafc' : '#060608'), surfaceTintStr, isLight ? 0.42 : 0.38),
-            'bg-secondary': mixCssColor(baseTheme['bg-secondary'] || (isLight ? '#ffffff' : '#0e0e13'), surfaceTintStr, isLight ? 0.48 : 0.45),
-            'text-secondary': mixCssColor(baseTheme['text-secondary'] || (isLight ? '#475569' : '#c8c8d4'), accentStr, 0.35),
+            'bg-primary': mixCssColor(baseTheme['bg-primary'] || (isLight ? '#f8fafc' : '#060608'), formatRgba(bgPrimaryTint), isLight ? 0.82 : 0.85),
+            'bg-secondary': mixCssColor(baseTheme['bg-secondary'] || (isLight ? '#ffffff' : '#0e0e13'), formatRgba(bgSecondaryTint), isLight ? 0.85 : 0.88),
+            'text-secondary': mixCssColor(baseTheme['text-secondary'] || (isLight ? '#475569' : '#c8c8d4'), accentStr, 0.55),
             'accent-primary': accentStr,
-            'accent-secondary': formatRgba({ ...accentRgb, a: 0.48 }),
-            'accent-glow': formatRgba({ ...secRgb, a: 0.38 }),
-            'navbar-bg': mixCssColor(baseTheme['navbar-bg'] || (isLight ? 'rgba(255,255,255,0.9)' : 'rgba(12,12,16,0.88)'), surfaceTintStr, 0.42),
-            'navbar-border': formatRgba({ ...accentRgb, a: 0.34 }),
-            'tab-active-bg': formatRgba({ ...accentRgb, a: isLight ? 0.16 : 0.22 }),
-            'tab-active-text': isLight ? formatRgba(hslToRgbSimple(pHsl.h, Math.max(0.6, pHsl.s), 0.34)) : '#ffffff',
+            'accent-secondary': formatRgba({ ...accentRgb, a: 0.58 }),
+            'accent-glow': formatRgba({ ...secRgb, a: 0.52 }),
+            'navbar-bg': mixCssColor(baseTheme['navbar-bg'] || (isLight ? 'rgba(255,255,255,0.9)' : 'rgba(12,12,16,0.9)'), formatRgba({ ...bgSecondaryTint, a: 0.92 }), 0.88),
+            'navbar-border': formatRgba({ ...accentRgb, a: 0.48 }),
+            'tab-active-bg': formatRgba({ ...accentRgb, a: isLight ? 0.24 : 0.30 }),
+            'tab-active-text': isLight ? formatRgba(hslToRgbSimple(pHsl.h, Math.max(0.7, sat), 0.30)) : '#ffffff',
             'tab-active-border': accentStr,
-            'tab-hover-bg': formatRgba({ ...accentRgb, a: 0.14 }),
-            'button-bg': mixCssColor(baseTheme['button-bg'] || (isLight ? '#f1f5f9' : '#14141c'), surfaceTintStr, 0.42),
-            'button-text': isLight ? formatRgba(hslToRgbSimple(pHsl.h, Math.max(0.6, pHsl.s), 0.36)) : accentStr,
-            'border-primary': mixCssColor(baseTheme['border-primary'] || (isLight ? '#cbd5e1' : '#27272a'), accentStr, 0.35),
+            'tab-hover-bg': formatRgba({ ...accentRgb, a: 0.22 }),
+            'button-bg': mixCssColor(baseTheme['button-bg'] || (isLight ? '#f1f5f9' : '#14141c'), formatRgba(btnTint), 0.88),
+            'button-text': isLight ? formatRgba(hslToRgbSimple(pHsl.h, Math.max(0.7, sat), 0.34)) : accentStr,
+            'border-primary': mixCssColor(baseTheme['border-primary'] || (isLight ? '#cbd5e1' : '#27272a'), formatRgba(borderTint), 0.85),
             'avatar-gradient': `linear-gradient(135deg, ${accentStr} 0%, ${secStr} 100%)`
         };
     }

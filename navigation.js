@@ -932,6 +932,19 @@
                         <div class="sidebar-music-cover-frame">
                             <img id="sidebarMusicCoverImg" class="sidebar-music-cover-img" src="${escapeHtml(cover)}" alt="Album Cover" style="display:${cover ? 'block' : 'none'};" onerror="if(!this.dataset.proxied && this.src && !this.src.includes('proxy-image')){this.dataset.proxied='1';this.src='${prefix}api/music-api?endpoint=proxy-image&url='+encodeURIComponent(this.src);return;}this.style.display='none'; var fb=this.nextElementSibling; if(fb) fb.style.display='inline-flex';">
                             <i id="sidebarMusicFallbackIcon" class="fa-solid fa-music" style="font-size:15px; color:#ffffff; display:${cover ? 'none' : 'inline-flex'}; align-items:center; justify-content:center;"></i>
+                            <span class="sidebar-music-cover-hover-overlay" aria-hidden="true">
+                                <svg viewBox="0 0 38 38" width="38" height="38" style="display:block;width:100%;height:100%;">
+                                    <defs>
+                                        <mask id="dock-cover-redirect-cutout">
+                                            <rect width="38" height="38" fill="#ffffff"/>
+                                            <g transform="translate(7, 7) scale(1)">
+                                                <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z" fill="#000000"/>
+                                            </g>
+                                        </mask>
+                                    </defs>
+                                    <rect width="38" height="38" fill="rgba(0, 0, 0, 0.72)" mask="url(#dock-cover-redirect-cutout)"/>
+                                </svg>
+                            </span>
                         </div>
                         <span class="sidebar-music-playing-dot" aria-hidden="true"></span>
                     </button>

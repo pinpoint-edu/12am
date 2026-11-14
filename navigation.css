@@ -975,6 +975,19 @@ body.dock-right.sidebar-collapsed .messenger-frame#app-container {
   display: block;
 }
 
+.sidebar-music-cover-hover-overlay {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+  border-radius: inherit;
+}
+
+.sidebar-music-cover-btn:hover .sidebar-music-cover-hover-overlay {
+  opacity: 1;
+}
+
 .sidebar-music-playing-dot {
   position: absolute;
   bottom: 2px;
