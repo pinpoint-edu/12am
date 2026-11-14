@@ -126,6 +126,38 @@
             gap: 2px;
             width: clamp(120px, 22vw, 220px);
             flex-shrink: 1;
+            transition: width 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .fs-clock-music-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            overflow: hidden;
+            max-width: 162px;
+            opacity: 1;
+            flex-shrink: 0;
+            transition: max-width 0.38s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, margin-left 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        #fs-clock-exit-hint {
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+        #fullscreen-clock-overlay.fs-clock-idle,
+        #fullscreen-clock-overlay.fs-clock-idle * {
+            cursor: none !important;
+        }
+        #fullscreen-clock-overlay.fs-clock-idle #fs-clock-exit-hint {
+            opacity: 0 !important;
+            transform: translateY(4px);
+            pointer-events: none;
+        }
+        #fullscreen-clock-overlay.fs-clock-idle .fs-clock-music-actions {
+            max-width: 0;
+            opacity: 0;
+            margin-left: -10px;
+            pointer-events: none;
+        }
+        #fullscreen-clock-overlay.fs-clock-idle .fs-clock-music-progress-col {
+            width: calc(clamp(120px, 22vw, 220px) + 164px);
         }
         .fs-clock-music-progress-wrap {
             width: 100%;
@@ -382,7 +414,7 @@
             <span class="opacity-40">&bull;</span>
             <span id="fs-clock-battery-time" class="opacity-80">Battery status unavailable</span>
         </div>
-        <p class="text-xs text-[var(--text-muted)] opacity-40 mt-8 tracking-widest uppercase">Click anywhere or press Esc to exit</p>
+        <p id="fs-clock-exit-hint" class="text-xs text-[var(--text-muted)] opacity-40 mt-8 tracking-widest uppercase">Click anywhere or press Esc to exit</p>
 
         <!-- Fullscreen Clock Music Bottom Bar -->
         <div id="fs-clock-music-bar" onclick="event.stopPropagation()" role="region" aria-label="Fullscreen Clock Music Controls">
@@ -416,18 +448,20 @@
                     <span id="fs-clock-music-dur">0:00</span>
                 </div>
             </div>
-            <button type="button" id="fs-clock-music-prev" class="fs-clock-music-btn" title="Previous Track" aria-label="Previous Track">
-                <i class="fa-solid fa-backward-step"></i>
-            </button>
-            <button type="button" id="fs-clock-music-play" class="fs-clock-music-btn" title="Play / Pause" aria-label="Play or Pause">
-                <i id="fs-clock-music-play-icon" class="fa-solid fa-play"></i>
-            </button>
-            <button type="button" id="fs-clock-music-next" class="fs-clock-music-btn" title="Next Track" aria-label="Next Track">
-                <i class="fa-solid fa-forward-step"></i>
-            </button>
-            <button type="button" id="fs-clock-music-close" class="fs-clock-music-btn" title="Close Song" aria-label="Close Song">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
+            <div class="fs-clock-music-actions">
+                <button type="button" id="fs-clock-music-prev" class="fs-clock-music-btn" title="Previous Track" aria-label="Previous Track">
+                    <i class="fa-solid fa-backward-step"></i>
+                </button>
+                <button type="button" id="fs-clock-music-play" class="fs-clock-music-btn" title="Play / Pause" aria-label="Play or Pause">
+                    <i id="fs-clock-music-play-icon" class="fa-solid fa-play"></i>
+                </button>
+                <button type="button" id="fs-clock-music-next" class="fs-clock-music-btn" title="Next Track" aria-label="Next Track">
+                    <i class="fa-solid fa-forward-step"></i>
+                </button>
+                <button type="button" id="fs-clock-music-close" class="fs-clock-music-btn" title="Close Song" aria-label="Close Song">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -693,6 +727,33 @@
             }
         })();
 
+        let __fsClockIdleTimer = null;
+
+        function resetFsClockIdleTimer() {
+            const overlay = document.getElementById('fullscreen-clock-overlay');
+            if (!overlay || overlay.style.display === 'none') return;
+            if (overlay.classList) overlay.classList.remove('fs-clock-idle');
+            if (typeof clearTimeout === 'function') clearTimeout(__fsClockIdleTimer);
+            if (typeof setTimeout === 'function') {
+                __fsClockIdleTimer = setTimeout(() => {
+                    if (overlay.style.display !== 'none' && overlay.classList) {
+                        overlay.classList.add('fs-clock-idle');
+                    }
+                }, 3000);
+            }
+        }
+
+        if (typeof document.addEventListener === 'function') {
+            ['mousemove', 'pointerdown', 'keydown'].forEach((evt) => {
+                document.addEventListener(evt, () => {
+                    const overlay = document.getElementById('fullscreen-clock-overlay');
+                    if (overlay && overlay.style.display !== 'none') {
+                        resetFsClockIdleTimer();
+                    }
+                }, { passive: true });
+            });
+        }
+
         function openFullscreenClock() {
             const overlay = document.getElementById('fullscreen-clock-overlay');
             if (overlay) {
@@ -702,6 +763,7 @@
                 }
                 refreshDashboardBatteryStatus();
                 syncFsClockMusicBar();
+                resetFsClockIdleTimer();
                 if (typeof clearInterval === 'function') clearInterval(__fsClockMusicTimer);
                 if (typeof setInterval === 'function') __fsClockMusicTimer = setInterval(syncFsClockMusicBar, 250);
             }
@@ -711,10 +773,13 @@
             const overlay = document.getElementById('fullscreen-clock-overlay');
             if (overlay) {
                 overlay.style.display = 'none';
+                if (overlay.classList) overlay.classList.remove('fs-clock-idle');
             }
             if (document.body && document.body.classList) {
                 document.body.classList.remove('clock-fullscreen-active');
             }
+            if (typeof clearTimeout === 'function') clearTimeout(__fsClockIdleTimer);
+            __fsClockIdleTimer = null;
             if (typeof clearInterval === 'function') clearInterval(__fsClockMusicTimer);
             __fsClockMusicTimer = null;
         }
