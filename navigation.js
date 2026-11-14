@@ -1143,12 +1143,13 @@
                     }
                     window.__12amHandingOffToMusic = true;
                     const bgEl = document.getElementById('12am-bg-audio-player');
-                    const wasBgPlaying = Boolean(bgEl && !bgEl.paused && !bgEl.ended);
+                    const savedState = readSavedMusicState();
+                    const wasBgPlaying = Boolean((bgEl && !bgEl.paused && !bgEl.ended) || (savedState && savedState.isPlaying));
                     try {
                         if (wasBgPlaying) sessionStorage.setItem('12am_music_autoplay_handoff', '1');
                         else sessionStorage.removeItem('12am_music_autoplay_handoff');
                     } catch (_) {}
-                    if (window.__saveBgAudioState) window.__saveBgAudioState();
+                    if (window.__saveBgAudioState) window.__saveBgAudioState(wasBgPlaying);
                     if (bgEl && !bgEl.paused) { try { bgEl.pause(); } catch (_) {} }
                     launchMusicAppWithTransition(`${prefix}music.html#now-playing`, true);
                 };
@@ -1205,12 +1206,13 @@
                     e.preventDefault();
                     window.__12amHandingOffToMusic = true;
                     const bgEl = document.getElementById('12am-bg-audio-player');
-                    const wasBgPlaying = Boolean(bgEl && !bgEl.paused && !bgEl.ended);
+                    const savedState = readSavedMusicState();
+                    const wasBgPlaying = Boolean((bgEl && !bgEl.paused && !bgEl.ended) || (savedState && savedState.isPlaying));
                     try {
                         if (wasBgPlaying) sessionStorage.setItem('12am_music_autoplay_handoff', '1');
                         else sessionStorage.removeItem('12am_music_autoplay_handoff');
                     } catch (_) {}
-                    if (window.__saveBgAudioState) window.__saveBgAudioState();
+                    if (window.__saveBgAudioState) window.__saveBgAudioState(wasBgPlaying);
                     if (bgEl && !bgEl.paused) { try { bgEl.pause(); } catch (_) {} }
                     launchMusicAppWithTransition(link.href || `${prefix}music.html`, false);
                 }, true);

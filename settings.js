@@ -4071,6 +4071,10 @@
                         const themeToApply = allAvail.find(t => t.name.toLowerCase() === themeName.toLowerCase());
                         
                         if (themeToApply) {
+                            const activeBase = window.getSelectedBaseTheme ? window.getSelectedBaseTheme() : (window.getCurrentTheme ? window.getCurrentTheme() : null);
+                            if (activeBase && activeBase.name && activeBase.name.toLowerCase() === themeToApply.name.toLowerCase() && !themeToApply.isCustom) {
+                                return;
+                            }
                             if (window.applyTheme) {
                                 window.applyTheme(themeToApply, true);
                             }

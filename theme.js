@@ -1029,33 +1029,60 @@
             };
             frame();
         } else if (fxType === 'galaxy') {
-            const starCount = Math.min(115, Math.max(55, Math.floor((window.innerWidth * window.innerHeight) / 14000)));
+            const starCount = Math.min(125, Math.max(60, Math.floor((window.innerWidth * window.innerHeight) / 13000)));
             const colors = ['255,255,255', '233,213,255', '186,230,253'];
             const stars = Array.from({ length: starCount }, (_, i) => ({
                 x: Math.random() * cv.width,
                 y: Math.random() * cv.height,
-                r: Math.random() * 1.3 + 0.5,
+                r: Math.random() * 1.45 + 0.55,
                 phase: Math.random() * Math.PI * 2,
-                speed: Math.random() * 0.025 + 0.008,
-                glint: i % 7 === 0,
+                speed: Math.random() * 0.028 + 0.009,
+                glint: i % 3 === 0,
                 rgb: colors[i % colors.length]
             }));
             const frame = () => {
                 ctx.clearRect(0, 0, cv.width, cv.height);
                 for (const s of stars) {
                     s.phase += s.speed;
-                    const alpha = 0.2 + 0.65 * (0.5 + 0.5 * Math.sin(s.phase));
+                    const wave = 0.5 + 0.5 * Math.sin(s.phase);
+                    const alpha = 0.22 + 0.72 * wave;
+
+                    // Soft glistening halo around each star
+                    const haloR = s.r * (s.glint ? (3.8 + wave * 2.2) : (2.4 + wave * 1.1));
+                    if (typeof ctx.createRadialGradient === 'function') {
+                        const grad = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, haloR);
+                        grad.addColorStop(0, `rgba(${s.rgb}, ${(alpha * (s.glint ? 0.55 : 0.35)).toFixed(3)})`);
+                        grad.addColorStop(0.45, `rgba(${s.rgb}, ${(alpha * 0.16).toFixed(3)})`);
+                        grad.addColorStop(1, `rgba(${s.rgb}, 0)`);
+                        ctx.fillStyle = grad;
+                    } else {
+                        ctx.fillStyle = `rgba(${s.rgb}, ${(alpha * 0.22).toFixed(3)})`;
+                    }
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, haloR, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Bright star core
                     ctx.beginPath();
                     ctx.fillStyle = `rgba(${s.rgb}, ${alpha.toFixed(3)})`;
                     ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
                     ctx.fill();
-                    if (s.glint && alpha > 0.65) {
-                        const len = s.r * 3.4;
-                        ctx.strokeStyle = `rgba(${s.rgb}, ${(alpha * 0.55).toFixed(3)})`;
-                        ctx.lineWidth = 0.8;
+
+                    if (s.glint && alpha > 0.45) {
+                        const len = s.r * (3.6 + wave * 2.2);
+                        const diag = len * 0.55;
+                        ctx.strokeStyle = `rgba(${s.rgb}, ${(alpha * 0.72).toFixed(3)})`;
+                        ctx.lineWidth = 0.9;
                         ctx.beginPath();
                         ctx.moveTo(s.x - len, s.y); ctx.lineTo(s.x + len, s.y);
                         ctx.moveTo(s.x, s.y - len); ctx.lineTo(s.x, s.y + len);
+                        ctx.stroke();
+
+                        ctx.strokeStyle = `rgba(${s.rgb}, ${(alpha * 0.38).toFixed(3)})`;
+                        ctx.lineWidth = 0.65;
+                        ctx.beginPath();
+                        ctx.moveTo(s.x - diag, s.y - diag); ctx.lineTo(s.x + diag, s.y + diag);
+                        ctx.moveTo(s.x - diag, s.y + diag); ctx.lineTo(s.x + diag, s.y - diag);
                         ctx.stroke();
                     }
                 }
@@ -1126,12 +1153,61 @@
     const MUSIC_STATE_KEY = '12am_music_playback_state';
     const coverPaletteCache = new Map();
 
+    function isThemeLight(t) {
+        if (!t || typeof t !== "object") return false;
+        const bgLum = getLuminance(t["bg-primary"]);
+        return lightThemeNames.includes(t.name) || bgLum > 0.65;
+    }
+
+    function isSongCoverTintCurrentlyActive() {
+        try {
+            if (localStorage.getItem(SONG_COVER_TINT_KEY) !== 'true') return false;
+            const raw = localStorage.getItem(MUSIC_STATE_KEY);
+            const ms = raw ? JSON.parse(raw) : null;
+            return Boolean(ms && ms.isPlaying && ms.track && resolveCoverUrlForTint(ms.track));
+        } catch (_) {
+            return false;
+        }
+    }
+
     function applyTheme(theme, save = true, isInternalFrame = false) {
         if (!theme || typeof theme !== "object") {
             theme = DEFAULT_THEME;
         }
 
         if (!isInternalFrame) {
+            const prevBase = selectedBaseTheme;
+            const sameThemeSelected = Boolean(
+                prevBase &&
+                prevBase.name &&
+                theme.name &&
+                prevBase.name.toLowerCase() === theme.name.toLowerCase() &&
+                !theme.isCustom
+            );
+            const tintActiveNow = Boolean(lastAppliedCoverTintKey) && isSongCoverTintCurrentlyActive();
+
+            if (tintActiveNow && prevBase) {
+                if (sameThemeSelected) {
+                    return;
+                }
+                const wasLight = isThemeLight(prevBase);
+                const willBeLight = isThemeLight(theme);
+                selectedBaseTheme = theme;
+                if (save) {
+                    try {
+                        localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(theme));
+                        localStorage.removeItem(LEGACY_STORAGE_KEY);
+                    } catch (e) {}
+                }
+                updateThemeBackgroundEffects(theme);
+                if (wasLight === willBeLight) {
+                    window.dispatchEvent(new CustomEvent("12am:theme-changed", { detail: currentTheme || theme }));
+                    return;
+                }
+                lastAppliedCoverTintKey = '';
+                syncSongCoverThemeTint();
+                return;
+            }
             selectedBaseTheme = theme;
         }
         currentTheme = theme;
@@ -1222,8 +1298,7 @@
                 html.theme-amoled-midnight .btn-home:hover,
                 html.theme-amoled-midnight .btn-home:hover *,
                 html.theme-amoled-midnight .btn-primary-override:hover,
-                html.theme-amoled-midnight .btn-primary-override:hover *,
-                html.theme-amoled-midnight .custom-checkbox:checked::after {
+                html.theme-amoled-midnight .btn-primary-override:hover * {
                     color: #000000 !important;
                 }
                 html.theme-amoled-midnight #now-playing-container #now-playing-play-pause svg,
@@ -1792,6 +1867,7 @@
     window.setThemeByName = setThemeByName;
     window.getThemes = () => allThemes;
     window.getCurrentTheme = () => currentTheme;
+    window.getSelectedBaseTheme = () => selectedBaseTheme || currentTheme;
     window.DEFAULT_THEME = DEFAULT_THEME;
     window.saveCustomTheme = saveCustomTheme;
     window.deleteCustomTheme = deleteCustomTheme;

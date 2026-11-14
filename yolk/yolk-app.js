@@ -3630,6 +3630,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (ytPlayer && typeof ytPlayer.stopVideo === 'function') {
             try { ytPlayer.stopVideo(); } catch (_) {}
         }
+        window.__yolkSwitchingSrc = true;
         currentAudio.pause();
         currentAudio.muted = false;
         currentAudio.removeAttribute('crossorigin');
@@ -3645,6 +3646,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         currentAudio.volume = currentVolume;
         const playPromise = currentAudio.play();
+        window.__yolkSwitchingSrc = false;
         if (playPromise !== undefined) {
             playPromise.then(() => {
                 currentAudio._errorRetries = 0;
@@ -3667,7 +3669,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }).catch(e => {
                 currentAudio.volume = currentVolume;
                 showSpinner(false);
-                if (e.name !== 'AbortError') {
+                if (e && e.name === 'NotAllowedError' && !userPausedIntentionally) {
+                    const resumeOnGesture = () => {
+                        if (currentAudio && currentAudio.paused && !userPausedIntentionally) {
+                            currentAudio.play().catch(() => {});
+                        }
+                    };
+                    document.addEventListener('pointerdown', resumeOnGesture, { once: true, capture: true });
+                    document.addEventListener('keydown', resumeOnGesture, { once: true, capture: true });
+                } else if (e.name !== 'AbortError') {
                     if (e.name === 'NotSupportedError' && !currentAudio._isHandlingError) {
                         currentAudio.dispatchEvent(new Event('error'));
                     }
@@ -10748,7 +10758,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         audioEl.addEventListener('pause', () => {
             if (audioEl !== currentAudio) return;
-            if (window.__yolkRestoringGlobalState) return;
+            if (window.__yolkRestoringGlobalState || window.__yolkSwitchingSrc) return;
             saveGlobalPlaybackState(false);
         });
 
@@ -10919,7 +10929,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const saved = JSON.parse(rawSaved);
             if (!saved || !saved.track || !(saved.track.title || saved.track.id || saved.track.youtube_id)) return;
 
-            const shouldAutoPlay = Boolean(saved.isPlaying);
+            const shouldAutoPlay = Boolean(saved.isPlaying || hasAutoplayHandoff);
 
             window.__yolkRestoringGlobalState = true;
             currentQueue = Array.isArray(saved.queue) && saved.queue.length ? saved.queue : [saved.track];
@@ -10945,6 +10955,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (shouldAutoPlay) {
                 userPausedIntentionally = false;
+                isPlaying = true;
+                if (typeof updatePlayPauseButtons === 'function') {
+                    updatePlayPauseButtons();
+                }
                 try {
                     localStorage.setItem(MUSIC_STATE_KEY, JSON.stringify({ ...saved, isPlaying: true, updatedAt: Date.now() }));
                 } catch (_) {}
@@ -10973,7 +10987,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         document.addEventListener('pointerdown', resumeOnGesture, { once: true, capture: true });
                         document.addEventListener('keydown', resumeOnGesture, { once: true, capture: true });
                     }
-                }, 800);
+                }, 4000);
             } else {
                 userPausedIntentionally = true;
                 isPlaying = false;
