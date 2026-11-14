@@ -181,17 +181,24 @@
          */
         export async function checkAdminStatus(uid) {
             if (!uid || !window.supabase) return false;
+            if (String(uid).startsWith('12AM_') || uid === 'local_user') return false;
+            try {
+                if (sessionStorage.getItem('12am_supabase_profiles_unavailable') === '1') return false;
+            } catch (_) {}
 
             try {
-                const { data } = await window.supabase
+                const { data, error } = await window.supabase
                     .from('profiles')
                     .select('is_admin')
                     .eq('id', uid)
                     .maybeSingle();
-                
+
+                if (error && (error.status === 404 || error.code === 'PGRST205')) {
+                    try { sessionStorage.setItem('12am_supabase_profiles_unavailable', '1'); } catch (_) {}
+                    return false;
+                }
                 return data?.is_admin === true;
             } catch (e) {
-                console.warn("Supabase admin check failed:", e);
                 return false;
             }
         }

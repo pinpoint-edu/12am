@@ -1697,6 +1697,17 @@
         themeTransitionRaf = requestAnimationFrame(step);
     }
 
+    function resolveCoverUrlForTint(track) {
+        if (!track) return '';
+        const raw = track.artwork_url || track.cover || track.artwork || track.thumbnail || track.image || '';
+        if (raw) {
+            return String(raw).replace('100x100bb', '300x300bb').replace('50x50bb', '300x300bb');
+        }
+        const ytId = track.youtube_id || track.videoId || (track.id && String(track.id).startsWith('ytm-') ? String(track.id).slice(4) : '');
+        if (ytId) return `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`;
+        return '';
+    }
+
     function syncSongCoverThemeTint() {
         const base = selectedBaseTheme || currentTheme || DEFAULT_THEME;
         let enabled = false;
@@ -1712,7 +1723,7 @@
 
         const track = musicState && musicState.track ? musicState.track : null;
         const isPlaying = Boolean(musicState && musicState.isPlaying && track);
-        const coverUrl = isPlaying ? (track.cover || track.artwork || track.thumbnail || track.image || '') : '';
+        const coverUrl = isPlaying ? resolveCoverUrlForTint(track) : '';
 
         if (!enabled || !isPlaying || !coverUrl) {
             if (lastAppliedCoverTintKey !== '') {

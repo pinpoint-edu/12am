@@ -123,7 +123,10 @@
          */
         async function getUserData(uid) {
             let profile = null;
-            if (window.supabase && uid) {
+            const isLocalUid = !uid || String(uid).startsWith('12AM_') || uid === 'local_user';
+            let profilesMissing = false;
+            try { profilesMissing = sessionStorage.getItem('12am_supabase_profiles_unavailable') === '1'; } catch (_) {}
+            if (window.supabase && !isLocalUid && !profilesMissing) {
                 try {
                     const { data, error } = await window.supabase
                         .from('profiles')
@@ -131,7 +134,9 @@
                         .eq('id', uid)
                         .maybeSingle();
                     
-                    if (!error && data) {
+                    if (error && (error.status === 404 || error.code === 'PGRST205')) {
+                        try { sessionStorage.setItem('12am_supabase_profiles_unavailable', '1'); } catch (_) {}
+                    } else if (!error && data) {
                         profile = data;
                     }
                 } catch (e) {
@@ -216,9 +221,17 @@
                     const mappedKey = mapping[key] || key;
                     supabaseUpdates[mappedKey] = value;
                 }
-                await window.supabase
-                    .from('profiles')
-                    .upsert({ id: actualUid, ...supabaseUpdates });
+                const isLocalUid = !actualUid || String(actualUid).startsWith('12AM_') || actualUid === 'local_user';
+                let profilesMissing = false;
+                try { profilesMissing = sessionStorage.getItem('12am_supabase_profiles_unavailable') === '1'; } catch (_) {}
+                if (!isLocalUid && !profilesMissing) {
+                    const { error } = await window.supabase
+                        .from('profiles')
+                        .upsert({ id: actualUid, ...supabaseUpdates });
+                    if (error && (error.status === 404 || error.code === 'PGRST205')) {
+                        try { sessionStorage.setItem('12am_supabase_profiles_unavailable', '1'); } catch (_) {}
+                    }
+                }
             } catch (e) {
                 console.warn("Supabase saveUserData warning:", e);
             }
