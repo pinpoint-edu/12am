@@ -2909,26 +2909,34 @@
                 if (meta) meta.setAttribute('content', theme['bg-primary'] || (isLight ? '#f8fafc' : '#070709'));
             }
 
-            function updateSearchDockYAxisAlignment() {
+            function setBodySearchDockClass(shouldHave) {
                 const body = document.body;
                 if (!body) return;
-                if (body.classList.contains('sidebar-collapsed')) {
-                    body.classList.remove('search-on-dock-yaxis');
+                const want = Boolean(shouldHave);
+                if (body.classList.contains('search-on-dock-yaxis') !== want) {
+                    if (want) {
+                        body.classList.add('search-on-dock-yaxis');
+                    } else {
+                        body.classList.remove('search-on-dock-yaxis');
+                    }
+                }
+            }
+
+            function updateSearchDockYAxisAlignment() {
+                const body = document.body;
+                if (!body || body.classList.contains('sidebar-collapsed')) {
+                    setBodySearchDockClass(false);
                     return;
                 }
                 const dock = document.getElementById('floating-sidebar');
                 const searchInput = document.getElementById('searchInput');
                 if (!dock || !searchInput) {
-                    body.classList.remove('search-on-dock-yaxis');
+                    setBodySearchDockClass(false);
                     return;
                 }
                 const dockRect = dock.getBoundingClientRect();
                 if (dockRect.height <= 0 || dockRect.width <= 0) {
-                    body.classList.remove('search-on-dock-yaxis');
-                    return;
-                }
-                if (!body.classList.contains('is-searching')) {
-                    body.classList.add('search-on-dock-yaxis');
+                    setBodySearchDockClass(false);
                     return;
                 }
                 const pageSearch = document.getElementById('page-search');
@@ -2938,7 +2946,7 @@
                 const inputHeight = searchInput.offsetHeight || 56;
                 const targetBottom = targetTop + inputHeight;
                 const onSameYAxis = targetBottom > dockRect.top - 6 && targetTop < dockRect.bottom + 6;
-                body.classList.toggle('search-on-dock-yaxis', onSameYAxis);
+                setBodySearchDockClass(onSameYAxis);
             }
 
             window.addEventListener('12am:theme-changed', (e) => {
@@ -2952,7 +2960,6 @@
             });
 
             window.addEventListener('resize', updateSearchDockYAxisAlignment, { passive: true });
-            window.addEventListener('scroll', updateSearchDockYAxisAlignment, { passive: true });
 
             document.addEventListener('DOMContentLoaded', () => {
                 if (window.getCurrentTheme) {
@@ -2965,11 +2972,10 @@
                     pageSearch.addEventListener('scroll', updateSearchDockYAxisAlignment, { passive: true });
                 }
 
-                if (document.body && typeof MutationObserver === 'function') {
-                    const obs = new MutationObserver(() => {
-                        updateSearchDockYAxisAlignment();
-                    });
-                    obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.addEventListener('focus', updateSearchDockYAxisAlignment, { passive: true });
+                    searchInput.addEventListener('input', updateSearchDockYAxisAlignment, { passive: true });
                 }
             });
         })();
