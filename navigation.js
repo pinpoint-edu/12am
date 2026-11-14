@@ -1065,6 +1065,7 @@
                 window.dispatchEvent(new CustomEvent('12am:music-state-updated', { detail: null }));
                 refreshDockMusicWidgetUI();
             };
+            window.__close12amDockMusic = closeMusicFromDock;
 
             let musicHoverTimer = null;
             const closeMusicIfHoverAway = () => {

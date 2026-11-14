@@ -55,6 +55,123 @@
             z-index: -1;
         }
 
+        /* Fullscreen Clock: bring theme background effects above overlay backdrop, below clock UI */
+        body.clock-fullscreen-active #dynamic-background {
+            z-index: 999991 !important;
+        }
+        body.clock-fullscreen-active #snowCanvas,
+        body.clock-fullscreen-active #themeBgCanvas,
+        body.clock-fullscreen-active #themeBgPattern,
+        body.clock-fullscreen-active #fireworksContainer {
+            z-index: 999992 !important;
+        }
+        body.clock-fullscreen-active #fullscreen-clock-overlay > * {
+            position: relative;
+            z-index: 999995;
+        }
+        body.clock-fullscreen-active #fs-clock-music-bar {
+            position: fixed;
+            left: 50%;
+            bottom: 28px;
+            transform: translateX(-50%);
+            z-index: 999999;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 18px;
+            background: var(--navbar-bg, var(--bg-card, rgba(14, 14, 18, 0.92)));
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--navbar-border, var(--border-main, rgba(255, 255, 255, 0.12)));
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+            max-width: calc(100vw - 32px);
+        }
+        .fs-clock-music-cover {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            overflow: hidden;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--btn-bg, rgba(255, 255, 255, 0.08));
+            border: 1px solid var(--border-main, rgba(255, 255, 255, 0.14));
+        }
+        .fs-clock-music-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .fs-clock-music-progress-wrap {
+            width: clamp(110px, 22vw, 220px);
+            height: 28px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            touch-action: none;
+            flex-shrink: 1;
+            padding: 0 2px;
+        }
+        .fs-clock-music-progress-track {
+            position: relative;
+            width: 100%;
+            height: 5px;
+            border-radius: 9999px;
+            background: var(--border-main, rgba(255, 255, 255, 0.18));
+            overflow: visible;
+        }
+        .fs-clock-music-progress-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 9999px;
+            background: var(--text-main, #ffffff);
+            position: relative;
+            transition: width 0.12s linear;
+        }
+        .fs-clock-music-progress-wrap.is-dragging .fs-clock-music-progress-fill {
+            transition: none;
+        }
+        .fs-clock-music-progress-thumb {
+            position: absolute;
+            right: -5px;
+            top: 50%;
+            transform: translateY(-50%) scale(0.85);
+            width: 11px;
+            height: 11px;
+            border-radius: 9999px;
+            background: var(--text-main, #ffffff);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+            opacity: 0;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+        }
+        .fs-clock-music-progress-wrap:hover .fs-clock-music-progress-thumb,
+        .fs-clock-music-progress-wrap.is-dragging .fs-clock-music-progress-thumb {
+            opacity: 1;
+            transform: translateY(-50%) scale(1);
+        }
+        .fs-clock-music-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 11px;
+            border: 1px solid var(--border-main, rgba(255, 255, 255, 0.12));
+            background: var(--bg-card, var(--btn-bg, rgba(255, 255, 255, 0.06)));
+            color: var(--text-main, #ffffff);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            font-size: 13px;
+            transition: transform 0.15s ease, background-color 0.15s ease;
+        }
+        .fs-clock-music-btn:hover {
+            transform: scale(1.06);
+            background: var(--tab-hover-bg, rgba(255, 255, 255, 0.14));
+        }
+
         /* ------------------------------------------------------------------ */
         /* CARDS & COMPONENTS                                                 */
         /* ------------------------------------------------------------------ */
@@ -224,7 +341,7 @@
     </main>
 
     <!-- Fullscreen Clock Overlay -->
-    <div id="fullscreen-clock-overlay" class="fixed inset-0 z-[999999] flex flex-col items-center justify-center select-none cursor-pointer p-6" style="display: none; background: var(--bg-page); user-select: none; -webkit-user-select: none;" onclick="closeFullscreenClock()">
+    <div id="fullscreen-clock-overlay" class="fixed inset-0 z-[999990] grid-bg flex flex-col items-center justify-center select-none cursor-pointer p-6" style="display: none; background-color: var(--bg-page); user-select: none; -webkit-user-select: none;" onclick="closeFullscreenClock()">
         <p id="fs-clock-date" class="text-xs md:text-sm font-black uppercase tracking-[0.4em] mb-4 opacity-80" style="color: var(--accent-color, #818cf8);">--------</p>
         <h1 id="fs-clock-time" class="text-7xl sm:text-9xl md:text-[10rem] lg:text-[12rem] font-light tracking-tight leading-none text-center" style="color: var(--text-main);">00:00:00<span class="text-3xl md:text-5xl ml-4 opacity-30 uppercase font-light">--</span></h1>
         <div id="fs-clock-battery" class="mt-6 inline-flex items-center gap-3 px-4 py-2 rounded-2xl text-xs md:text-sm tracking-wider uppercase" style="background: var(--bg-card); border: 1px solid var(--border-main); color: var(--text-main);">
@@ -234,6 +351,33 @@
             <span id="fs-clock-battery-time" class="opacity-80">Battery status unavailable</span>
         </div>
         <p class="text-xs text-[var(--text-muted)] opacity-40 mt-8 tracking-widest uppercase">Click anywhere or press Esc to exit</p>
+
+        <!-- Fullscreen Clock Music Bottom Bar -->
+        <div id="fs-clock-music-bar" onclick="event.stopPropagation()" role="region" aria-label="Fullscreen Clock Music Controls">
+            <div class="fs-clock-music-cover">
+                <img id="fs-clock-music-cover-img" src="" alt="Album Cover" style="display:none;" onerror="this.style.display='none'; var fb=this.nextElementSibling; if(fb) fb.style.display='inline-flex';">
+                <i id="fs-clock-music-cover-fallback" class="fa-solid fa-music" style="font-size:14px; color:var(--text-main, #ffffff); display:inline-flex;"></i>
+            </div>
+            <div id="fs-clock-music-progress" class="fs-clock-music-progress-wrap" title="Seek">
+                <div class="fs-clock-music-progress-track">
+                    <div id="fs-clock-music-progress-fill" class="fs-clock-music-progress-fill">
+                        <span class="fs-clock-music-progress-thumb"></span>
+                    </div>
+                </div>
+            </div>
+            <button type="button" id="fs-clock-music-prev" class="fs-clock-music-btn" title="Previous Track" aria-label="Previous Track">
+                <i class="fa-solid fa-backward-step"></i>
+            </button>
+            <button type="button" id="fs-clock-music-play" class="fs-clock-music-btn" title="Play / Pause" aria-label="Play or Pause">
+                <i id="fs-clock-music-play-icon" class="fa-solid fa-play"></i>
+            </button>
+            <button type="button" id="fs-clock-music-next" class="fs-clock-music-btn" title="Next Track" aria-label="Next Track">
+                <i class="fa-solid fa-forward-step"></i>
+            </button>
+            <button type="button" id="fs-clock-music-close" class="fs-clock-music-btn" title="Close Song" aria-label="Close Song">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
     </div>
 
     <script>
@@ -304,11 +448,162 @@
         }
         refreshDashboardBatteryStatus();
 
+        let __fsClockMusicTimer = null;
+        let __fsClockDragging = false;
+
+        function resolveFsClockCover(track) {
+            if (!track) return '';
+            const raw = track.artwork_url || track.cover || track.artwork || track.thumbnail || track.image || '';
+            if (raw) return String(raw).replace('100x100bb', '300x300bb').replace('50x50bb', '300x300bb');
+            const ytId = track.youtube_id || track.videoId || (track.id && String(track.id).startsWith('ytm-') ? String(track.id).slice(4) : '');
+            return ytId ? `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg` : '';
+        }
+
+        function syncFsClockMusicBar() {
+            const bar = document.getElementById('fs-clock-music-bar');
+            if (!bar) return;
+            let state = null;
+            try {
+                const raw = localStorage.getItem('12am_music_playback_state');
+                state = raw ? JSON.parse(raw) : null;
+            } catch (_) {}
+
+            const track = state && state.track ? state.track : null;
+            const hasTrack = Boolean(track && (track.title || track.id || track.youtube_id));
+            if (!hasTrack) {
+                bar.style.display = 'none';
+                return;
+            }
+
+            bar.style.display = 'flex';
+            const bgAudio = document.getElementById('12am-bg-audio-player');
+            const isPlaying = bgAudio && bgAudio.src ? (!bgAudio.paused && !bgAudio.ended) : Boolean(state.isPlaying);
+            const cur = (bgAudio && Number.isFinite(bgAudio.currentTime) && bgAudio.currentTime > 0) ? bgAudio.currentTime : (Number(state.currentTime) || 0);
+            const estTrackDur = (track.duration || 0) > 1000 ? track.duration / 1000 : (track.duration || 0);
+            const dur = (bgAudio && Number.isFinite(bgAudio.duration) && bgAudio.duration > 0) ? bgAudio.duration : (Number(state.duration) || estTrackDur || 0);
+
+            const cover = resolveFsClockCover(track);
+            const coverImg = document.getElementById('fs-clock-music-cover-img');
+            const coverFallback = document.getElementById('fs-clock-music-cover-fallback');
+            if (coverImg) {
+                if (cover) {
+                    if (coverImg.getAttribute('src') !== cover) coverImg.src = cover;
+                    coverImg.style.display = 'block';
+                    if (coverFallback) coverFallback.style.display = 'none';
+                } else {
+                    coverImg.style.display = 'none';
+                    if (coverFallback) coverFallback.style.display = 'inline-flex';
+                }
+            }
+
+            const playIcon = document.getElementById('fs-clock-music-play-icon');
+            if (playIcon) {
+                playIcon.className = `fa-solid ${isPlaying ? 'fa-pause' : 'fa-play'}`;
+            }
+
+            if (!__fsClockDragging) {
+                const fill = document.getElementById('fs-clock-music-progress-fill');
+                const pct = dur > 0 ? Math.max(0, Math.min(100, (cur / dur) * 100)) : 0;
+                if (fill) fill.style.width = `${pct}%`;
+            }
+        }
+
+        (function initFsClockMusicControls() {
+            const progressWrap = document.getElementById('fs-clock-music-progress');
+            const fill = document.getElementById('fs-clock-music-progress-fill');
+            const prevBtn = document.getElementById('fs-clock-music-prev');
+            const playBtn = document.getElementById('fs-clock-music-play');
+            const nextBtn = document.getElementById('fs-clock-music-next');
+            const closeBtn = document.getElementById('fs-clock-music-close');
+
+            const getRatioFromClientX = (clientX) => {
+                if (!progressWrap) return 0;
+                const rect = progressWrap.getBoundingClientRect();
+                if (!rect.width) return 0;
+                return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+            };
+
+            const seekToRatio = (ratio) => {
+                const bgAudio = document.getElementById('12am-bg-audio-player');
+                let state = null;
+                try {
+                    const raw = localStorage.getItem('12am_music_playback_state');
+                    state = raw ? JSON.parse(raw) : null;
+                } catch (_) {}
+                const track = state && state.track ? state.track : null;
+                const estTrackDur = track && (track.duration || 0) > 1000 ? track.duration / 1000 : ((track && track.duration) || 0);
+                const dur = (bgAudio && Number.isFinite(bgAudio.duration) && bgAudio.duration > 0)
+                    ? bgAudio.duration
+                    : ((state && Number(state.duration)) || estTrackDur || 0);
+                if (dur <= 0) return;
+                const targetSec = ratio * dur;
+                if (bgAudio && bgAudio.src) {
+                    try { bgAudio.currentTime = targetSec; } catch (_) {}
+                }
+                if (state) {
+                    try {
+                        state.currentTime = targetSec;
+                        state.updatedAt = Date.now();
+                        localStorage.setItem('12am_music_playback_state', JSON.stringify(state));
+                    } catch (_) {}
+                }
+                if (typeof window.__saveBgAudioState === 'function') {
+                    window.__saveBgAudioState();
+                }
+            };
+
+            if (progressWrap) {
+                progressWrap.addEventListener('pointerdown', (e) => {
+                    e.stopPropagation();
+                    __fsClockDragging = true;
+                    progressWrap.classList.add('is-dragging');
+                    const r = getRatioFromClientX(e.clientX);
+                    if (fill) fill.style.width = `${r * 100}%`;
+                    if (progressWrap.setPointerCapture) {
+                        try { progressWrap.setPointerCapture(e.pointerId); } catch (_) {}
+                    }
+                });
+                progressWrap.addEventListener('pointermove', (e) => {
+                    if (!__fsClockDragging) return;
+                    const r = getRatioFromClientX(e.clientX);
+                    if (fill) fill.style.width = `${r * 100}%`;
+                });
+                const finishDrag = (e) => {
+                    if (!__fsClockDragging) return;
+                    __fsClockDragging = false;
+                    progressWrap.classList.remove('is-dragging');
+                    const r = getRatioFromClientX(e.clientX);
+                    if (fill) fill.style.width = `${r * 100}%`;
+                    seekToRatio(r);
+                };
+                progressWrap.addEventListener('pointerup', finishDrag);
+                progressWrap.addEventListener('pointercancel', finishDrag);
+            }
+
+            if (prevBtn) prevBtn.addEventListener('click', (e) => { e.stopPropagation(); if (window.__skipBgMusicTrack) window.__skipBgMusicTrack(-1); setTimeout(syncFsClockMusicBar, 80); });
+            if (playBtn) playBtn.addEventListener('click', (e) => { e.stopPropagation(); if (window.__toggleBgMusicPlayPause) window.__toggleBgMusicPlayPause(); setTimeout(syncFsClockMusicBar, 60); });
+            if (nextBtn) nextBtn.addEventListener('click', (e) => { e.stopPropagation(); if (window.__skipBgMusicTrack) window.__skipBgMusicTrack(1); setTimeout(syncFsClockMusicBar, 80); });
+            if (closeBtn) closeBtn.addEventListener('click', (e) => { e.stopPropagation(); if (window.__close12amDockMusic) window.__close12amDockMusic(); syncFsClockMusicBar(); });
+
+            if (typeof window.addEventListener === 'function') {
+                window.addEventListener('12am:music-state-updated', syncFsClockMusicBar);
+                window.addEventListener('storage', (e) => {
+                    if (e.key === '12am_music_playback_state') syncFsClockMusicBar();
+                });
+            }
+        })();
+
         function openFullscreenClock() {
             const overlay = document.getElementById('fullscreen-clock-overlay');
             if (overlay) {
                 overlay.style.display = 'flex';
+                if (document.body && document.body.classList) {
+                    document.body.classList.add('clock-fullscreen-active');
+                }
                 refreshDashboardBatteryStatus();
+                syncFsClockMusicBar();
+                if (typeof clearInterval === 'function') clearInterval(__fsClockMusicTimer);
+                if (typeof setInterval === 'function') __fsClockMusicTimer = setInterval(syncFsClockMusicBar, 250);
             }
         }
 
@@ -317,6 +612,11 @@
             if (overlay) {
                 overlay.style.display = 'none';
             }
+            if (document.body && document.body.classList) {
+                document.body.classList.remove('clock-fullscreen-active');
+            }
+            if (typeof clearInterval === 'function') clearInterval(__fsClockMusicTimer);
+            __fsClockMusicTimer = null;
         }
 
         document.addEventListener('keydown', (e) => {
