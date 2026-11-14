@@ -17,9 +17,45 @@ function isBlockedHost(host) {
   return false;
 }
 
+function rewriteM3u8Proxy(manifest, baseUrl) {
+  const wrap = (raw) => {
+    try {
+      const abs = new URL(raw.trim(), baseUrl).href;
+      if (!/^https?:/i.test(abs)) return raw;
+      return `/api/proxy?url=${encodeURIComponent(abs)}`;
+    } catch {
+      return raw;
+    }
+  };
+  return manifest
+    .split(/\r?\n/)
+    .map((line) => {
+      const trimmed = line.trim();
+      if (!trimmed) return line;
+      if (trimmed.startsWith("#")) {
+        return line.replace(/URI="([^"]+)"/g, (_, u) => `URI="${wrap(u)}"`);
+      }
+      return wrap(trimmed);
+    })
+    .join("\n");
+}
+
+async function readReqBody(req) {
+  if (req.body !== undefined && req.body !== null) {
+    if (Buffer.isBuffer(req.body)) return req.body;
+    if (typeof req.body === 'string') return req.body;
+    return JSON.stringify(req.body);
+  }
+  const chunks = [];
+  for await (const chunk of req) {
+    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+  }
+  return chunks.length ? Buffer.concat(chunks) : undefined;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,HEAD,POST');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,HEAD,POST,PUT');
   res.setHeader('Access-Control-Allow-Headers', '*');
 
   if (req.method === 'OPTIONS') {
@@ -50,15 +86,24 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'Host not allowed' });
     }
 
-    const fetchOptions = {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Referer': parsedUrl.origin + '/',
-        'Accept': '*/*',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Connection': 'keep-alive'
-      }
+    const upstreamHeaders = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      'Referer': parsedUrl.origin + '/',
+      'Accept': req.headers.accept || '*/*',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Connection': 'keep-alive'
     };
+    if (req.headers.range) upstreamHeaders['Range'] = req.headers.range;
+    if (req.headers['content-type']) upstreamHeaders['Content-Type'] = req.headers['content-type'];
+
+    const fetchOptions = {
+      method: req.method || 'GET',
+      headers: upstreamHeaders
+    };
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      const body = await readReqBody(req);
+      if (body !== undefined) fetchOptions.body = body;
+    }
 
     let response = await fetch(decodedUrl, fetchOptions);
 
@@ -72,16 +117,72 @@ export default async function handler(req, res) {
       return res.status(response.status).send(`Failed to fetch: ${response.statusText}`);
     }
 
-    // Forward relevant headers
+    let buffer = Buffer.from(await response.arrayBuffer());
     let contentType = response.headers.get('content-type') || 'application/octet-stream';
     if (decodedUrl.toLowerCase().includes('.wasm')) {
       contentType = 'application/wasm';
     }
+
+    // Automatic Git LFS resolution (fixes wasm magic word error: expected 00 61 73 6d, found 76 65 72 73 'vers')
+    if (buffer.length < 1000 && buffer.toString('utf8').includes('git-lfs.github.com/spec/v1')) {
+      let lfsUrl = null;
+      const rawMatch = decodedUrl.match(/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/(.+)/i);
+      const ioMatch = decodedUrl.match(/([^/]+)\.github\.io\/([^/]+)\/(.+)/i);
+      if (rawMatch) {
+        lfsUrl = `https://media.githubusercontent.com/media/${rawMatch[1]}/${rawMatch[2]}/${rawMatch[3]}/${rawMatch[4]}`;
+      } else if (ioMatch) {
+        lfsUrl = `https://media.githubusercontent.com/media/${ioMatch[1]}/${ioMatch[2]}/master/${ioMatch[3]}`;
+      }
+      if (lfsUrl) {
+        try {
+          let lfsRes = await fetch(lfsUrl, fetchOptions);
+          if (!lfsRes.ok && ioMatch) {
+            lfsRes = await fetch(`https://media.githubusercontent.com/media/${ioMatch[1]}/${ioMatch[2]}/main/${ioMatch[3]}`, fetchOptions);
+          }
+          if (lfsRes.ok) {
+            buffer = Buffer.from(await lfsRes.arrayBuffer());
+            if (decodedUrl.toLowerCase().includes('.wasm')) {
+              contentType = 'application/wasm';
+            }
+          }
+        } catch(e) {}
+      }
+    }
+
+    // Detect HTML payloads served as text/plain (e.g., raw.githubusercontent.com .html files)
+    if (contentType.includes('text/plain')) {
+      const headTrim = buffer.slice(0, 512).toString('utf8').trim().toLowerCase();
+      if (
+        /\.(?:html?|xhtml)(?:$|[?#])/i.test(decodedUrl) ||
+        headTrim.startsWith('<!doctype html') ||
+        headTrim.startsWith('<html') ||
+        headTrim.startsWith('<head') ||
+        headTrim.startsWith('<body') ||
+        headTrim.startsWith('<base') ||
+        headTrim.startsWith('<script')
+      ) {
+        contentType = 'text/html; charset=utf-8';
+      }
+    }
+
+    const contentRange = response.headers.get('content-range');
+    const acceptRanges = response.headers.get('accept-ranges');
+    if (contentRange) res.setHeader('Content-Range', contentRange);
+    if (acceptRanges) res.setHeader('Accept-Ranges', acceptRanges);
+
+    const finalUrl = response.url || decodedUrl;
+    const isM3u8 = /\.m3u8(?:$|[?#])/i.test(finalUrl) || contentType.includes('mpegurl') || contentType.includes('m3u8');
+    if (isM3u8) {
+      res.setHeader('Content-Type', 'application/vnd.apple.mpegurl; charset=utf-8');
+      const rewritten = rewriteM3u8Proxy(buffer.toString('utf8'), finalUrl);
+      return res.status(response.status).send(rewritten);
+    }
+
     res.setHeader('Content-Type', contentType);
 
     // URL Rewriting for TGLSC and text-based content
-    if (contentType.includes('text/html') || contentType.includes('application/javascript') || contentType.includes('text/css')) {
-      let text = await response.text();
+    if (contentType.includes('text/html') || contentType.includes('javascript') || contentType.includes('text/css')) {
+      let text = buffer.toString('utf8');
       
       if (decodedUrl.includes('glseries.net')) {
         // Replace absolute URLs
@@ -98,42 +199,14 @@ export default async function handler(req, res) {
         });
       }
 
-      res.send(text);
+      return res.status(response.status).send(text);
     } else {
-      let buffer = Buffer.from(await response.arrayBuffer());
-
-      // Automatic Git LFS resolution (fixes wasm magic word error: expected 00 61 73 6d, found 76 65 72 73 'vers')
-      if (buffer.length < 1000 && buffer.toString('utf8').includes('git-lfs.github.com/spec/v1')) {
-        let lfsUrl = null;
-        const rawMatch = decodedUrl.match(/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/(.+)/i);
-        const ioMatch = decodedUrl.match(/([^/]+)\.github\.io\/([^/]+)\/(.+)/i);
-        if (rawMatch) {
-          lfsUrl = `https://media.githubusercontent.com/media/${rawMatch[1]}/${rawMatch[2]}/${rawMatch[3]}/${rawMatch[4]}`;
-        } else if (ioMatch) {
-          lfsUrl = `https://media.githubusercontent.com/media/${ioMatch[1]}/${ioMatch[2]}/master/${ioMatch[3]}`;
-        }
-        if (lfsUrl) {
-          try {
-            let lfsRes = await fetch(lfsUrl, fetchOptions);
-            if (!lfsRes.ok && ioMatch) {
-              lfsRes = await fetch(`https://media.githubusercontent.com/media/${ioMatch[1]}/${ioMatch[2]}/main/${ioMatch[3]}`, fetchOptions);
-            }
-            if (lfsRes.ok) {
-              buffer = Buffer.from(await lfsRes.arrayBuffer());
-              if (decodedUrl.toLowerCase().includes('.wasm')) {
-                res.setHeader('Content-Type', 'application/wasm');
-              }
-            }
-          } catch(e) {}
-        }
-      }
-
       // Optimization: Cache images and static assets
       if (contentType.startsWith('image/') || contentType.includes('font') || contentType.includes('audio') || contentType.includes('wasm')) {
         res.setHeader('Cache-Control', 'public, max-age=86400');
       }
 
-      res.send(buffer);
+      return res.status(response.status).send(buffer);
     }
   } catch (error) {
     console.error('Proxy error:', error);

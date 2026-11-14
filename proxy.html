@@ -444,6 +444,7 @@
 
     let historyStack = [];
     let historyIdx = -1;
+    let isExpectingIframeLoad = false;
 
     function normalizeUrl(raw) {
       let v = (raw || "").trim();
@@ -482,6 +483,7 @@
       startScreen.style.display = 'none';
 
       const proxied = getProxiedUrl(target);
+      isExpectingIframeLoad = true;
       viewport.src = proxied;
 
       historyStack = historyStack.slice(0, historyIdx + 1);
@@ -498,6 +500,7 @@
 
     function reloadPage() {
       if (viewport.src && viewport.src !== 'about:blank') {
+        isExpectingIframeLoad = true;
         viewport.src = viewport.src;
       }
     }
@@ -507,6 +510,7 @@
         historyIdx--;
         const target = historyStack[historyIdx];
         omnibox.value = target;
+        isExpectingIframeLoad = true;
         viewport.src = getProxiedUrl(target);
         updateNavButtons();
       }
@@ -517,10 +521,33 @@
         historyIdx++;
         const target = historyStack[historyIdx];
         omnibox.value = target;
+        isExpectingIframeLoad = true;
         viewport.src = getProxiedUrl(target);
         updateNavButtons();
       }
     }
+
+    window.addEventListener('message', (e) => {
+      if (!e || !e.data || e.data.type !== 'TB_WEB_URL_CHANGE') return;
+      if (viewport && viewport.contentWindow && e.source !== viewport.contentWindow) return;
+      const newUrl = e.data.url;
+      if (!newUrl || typeof newUrl !== 'string' || !/^https?:\/\//i.test(newUrl)) return;
+      omnibox.value = newUrl;
+      if (isExpectingIframeLoad) {
+        isExpectingIframeLoad = false;
+        if (historyIdx >= 0 && historyIdx < historyStack.length) {
+          historyStack[historyIdx] = newUrl;
+        }
+        updateNavButtons();
+        return;
+      }
+      if (historyIdx < 0 || historyStack[historyIdx] !== newUrl) {
+        historyStack = historyStack.slice(0, historyIdx + 1);
+        historyStack.push(newUrl);
+        historyIdx = historyStack.length - 1;
+        updateNavButtons();
+      }
+    });
 
     function updateNavButtons() {
       document.getElementById('btnBack').disabled = historyIdx <= 0;

@@ -876,8 +876,8 @@
 
         const cv = document.createElement('canvas');
         cv.id = 'snowCanvas';
-        cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:99999;';
-        document.body.appendChild(cv);
+        cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:-1;opacity:0.55;';
+        document.body.prepend(cv);
         __snowState.canvas = cv;
 
         const ctx = cv.getContext('2d');
@@ -888,10 +888,10 @@
         const flakes = Array.from({ length: count }, () => ({
             x: Math.random() * cv.width,
             y: Math.random() * cv.height,
-            r: Math.random() * 2.4 + 0.8,
-            v: Math.random() * 0.85 + 0.4,
+            r: Math.random() * 2.2 + 0.8,
+            v: Math.random() * 0.8 + 0.35,
             d: Math.random() * Math.PI * 2,
-            o: Math.random() * 0.55 + 0.35
+            o: Math.random() * 0.30 + 0.18
         }));
 
         const frame = () => {
@@ -904,7 +904,7 @@
                 if (f.x > cv.width + 5) f.x = -5;
                 if (f.x < -5) f.x = cv.width + 5;
                 ctx.beginPath();
-                ctx.fillStyle = `rgba(255, 255, 255, ${f.o})`;
+                ctx.fillStyle = `rgba(224, 242, 254, ${f.o})`;
                 ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
                 ctx.fill();
             }

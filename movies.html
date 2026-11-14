@@ -761,7 +761,8 @@
                     <option value="vidlink" selected>Server 1 (VidLink HD)</option>
                     <option value="vidy">Server 2 (Vidy Player)</option>
                     <option value="vidsrc">Server 3 (VidSrc Fast)</option>
-                    <option value="embedsu">Server 4 (EmbedSu)</option>
+                    <option value="multiembed">Server 4 (MultiEmbed)</option>
+                    <option value="autoembed">Server 5 (AutoEmbed)</option>
                 </select>
 
                 <button class="player-btn-squircle" onclick="reloadPlayer()" title="Reload Stream">
@@ -845,6 +846,31 @@
             return hex;
         }
 
+        async function fetchWithProxyFallback(url, options = {}) {
+            try {
+                const res = await fetch(url, options);
+                if (res.ok) return res;
+            } catch (e) {}
+            if (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http')) {
+                return await fetch(`/api/proxy?url=${encodeURIComponent(url)}`, options);
+            }
+            throw new Error(`Failed to fetch ${url}`);
+        }
+
+        function proxyFallbackImg(img) {
+            if (!img || img.dataset.proxied === '1') {
+                if (img) img.style.display = 'none';
+                return;
+            }
+            img.dataset.proxied = '1';
+            const src = img.getAttribute('src') || '';
+            if (/^https?:\/\//i.test(src) && typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http')) {
+                img.src = `/api/proxy?url=${encodeURIComponent(src)}`;
+            } else {
+                img.src = 'images/logo-white.png';
+            }
+        }
+
         // Fetch TMDB Helper
         async function fetchTMDB(endpoint, params = {}) {
             const queryParams = new URLSearchParams({
@@ -854,7 +880,8 @@
             });
             const url = `${TMDB_BASE}${endpoint}?${queryParams.toString()}`;
             try {
-                const res = await fetch(url);
+                const res = await fetchWithProxyFallback(url);
+                if (!res.ok) return null;
                 return await res.json();
             } catch(e) {
                 console.warn('TMDB Fetch Error:', e);
@@ -1000,12 +1027,12 @@
             }`;
             try {
                 const [r1, r2] = await Promise.all([
-                    fetch('https://graphql.anilist.co', {
+                    fetchWithProxyFallback('https://graphql.anilist.co', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ query, variables: { page: 1 } })
                     }),
-                    fetch('https://graphql.anilist.co', {
+                    fetchWithProxyFallback('https://graphql.anilist.co', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ query, variables: { page: 2 } })
@@ -1073,6 +1100,9 @@
             const year = isAnime ? 'Anime' : (item.release_date || item.first_air_date || '2026').slice(0, 4);
             const rating = formatRating(item.vote_average, '8.5');
 
+            backdrop.dataset.proxied = '';
+            backdrop.style.display = '';
+            backdrop.onerror = function() { proxyFallbackImg(this); };
             if (item.backdrop_path) {
                 backdrop.src = item.backdrop_path.startsWith('http') ? item.backdrop_path : `${IMG_ORIGINAL}${item.backdrop_path}`;
             } else if (item.poster_path) {
@@ -1107,7 +1137,7 @@
             return `
                 <div class="media-card" onclick="openCinemaItem('${item.id}')">
                     <div class="media-poster-wrap">
-                        <img src="${poster}" alt="${title}" class="media-poster" loading="lazy">
+                        <img src="${poster}" alt="${title}" class="media-poster" loading="lazy" onerror="proxyFallbackImg(this)">
                         <span class="media-badge-rating">
                             <span class="material-symbols-sharp text-[13px] text-yellow-400">star</span>
                             <span>${rating}</span>
@@ -1205,7 +1235,7 @@
                 }
             }`;
             try {
-                const res = await fetch('https://graphql.anilist.co', {
+                const res = await fetchWithProxyFallback('https://graphql.anilist.co', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ query: gql, variables: { search: query } })
@@ -1386,17 +1416,29 @@
                 } else {
                     streamUrl = `https://vidsrc.su/embed/tv/${id}/${season}/${episode}`;
                 }
-            } else {
+            } else if (server === 'multiembed') {
                 if (isAnime) {
                     if (tmdbId) {
-                        streamUrl = `https://embed.su/embed/tv/${tmdbId}/${season}/${episode}`;
+                        streamUrl = `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1&s=${season}&e=${episode}`;
                     } else {
                         streamUrl = `https://vidlink.pro/anime/${malId}/${episode}/sub?fallback=true&primaryColor=${color}&autoplay=true`;
                     }
                 } else if (isMovie) {
-                    streamUrl = `https://embed.su/embed/movie/${id}`;
+                    streamUrl = `https://multiembed.mov/?video_id=${id}&tmdb=1`;
                 } else {
-                    streamUrl = `https://embed.su/embed/tv/${id}/${season}/${episode}`;
+                    streamUrl = `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${season}&e=${episode}`;
+                }
+            } else {
+                if (isAnime) {
+                    if (tmdbId) {
+                        streamUrl = `https://autoembed.co/tv/tmdb/${tmdbId}-${season}-${episode}`;
+                    } else {
+                        streamUrl = `https://vidlink.pro/anime/${malId}/${episode}/sub?fallback=true&primaryColor=${color}&autoplay=true`;
+                    }
+                } else if (isMovie) {
+                    streamUrl = `https://autoembed.co/movie/tmdb/${id}`;
+                } else {
+                    streamUrl = `https://autoembed.co/tv/tmdb/${id}-${season}-${episode}`;
                 }
             }
 

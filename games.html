@@ -56,8 +56,8 @@
       position: fixed;
       inset: 0;
       pointer-events: none;
-      z-index: 0;
-      background: radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.08) 0%, transparent 60%);
+      z-index: -2;
+      background: radial-gradient(circle at 50% 0%, var(--accent-glow) 0%, transparent 60%);
     }
 
     .main-wrapper {
@@ -85,19 +85,19 @@
     .search-box {
       display: flex;
       align-items: center;
-      background: rgba(12, 12, 16, 0.88);
+      background: var(--bg-card);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--border-main);
       border-radius: 9999px;
       padding: 0.65rem 1.25rem;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 20px rgba(139, 92, 246, 0.15);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2), 0 0 20px var(--accent-glow);
       transition: all 0.25s ease;
     }
 
     .search-box:focus-within {
       border-color: var(--accent-color);
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 24px var(--accent-glow);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.25), 0 0 24px var(--accent-glow);
     }
 
     .search-box input {
@@ -133,10 +133,10 @@
       top: auto;
       left: 0;
       right: 0;
-      background: #0d0d11;
+      background: var(--bg-card);
       border: 1px solid var(--border-main);
       border-radius: 16px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
       max-height: 380px;
       overflow-y: auto;
       z-index: 1001;
@@ -156,7 +156,7 @@
     }
 
     .search-item:hover {
-      background: rgba(255, 255, 255, 0.04);
+      background: var(--btn-bg, var(--border-faint));
     }
 
     .search-item-info {
@@ -170,8 +170,8 @@
       width: 40px;
       height: 40px;
       border-radius: 10px;
-      object-cover: cover;
-      background: #141418;
+      object-fit: cover;
+      background: var(--bg-page);
       border: 1px solid var(--border-main);
       display: flex;
       align-items: center;
@@ -201,7 +201,7 @@
     }
 
     /* Category Specific Colors */
-    .color-vault { color: #8b5cf6 !important; }
+    .color-vault { color: var(--accent-color) !important; }
     .color-strongdog { color: #FFA500 !important; }
     .color-gnmath { color: #FB2651 !important; }
     .color-tglsc { color: #3B82F6 !important; }
@@ -220,14 +220,14 @@
       position: relative;
       display: inline-flex;
       align-items: center;
-      background: rgba(14, 14, 18, 0.75);
+      background: var(--bg-card);
       backdrop-filter: blur(24px) saturate(180%);
       -webkit-backdrop-filter: blur(24px) saturate(180%);
       border: 1px solid var(--border-main);
       border-radius: 20px;
       padding: 5px;
       gap: 4px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
       user-select: none;
     }
 
@@ -251,6 +251,10 @@
 
     .pill-tab-btn.active {
       color: #ffffff !important;
+    }
+
+    html.theme-amoled-midnight .pill-tab-btn.active {
+      color: #000000 !important;
     }
 
     .pill-tab-btn:hover:not(.active) {
@@ -286,7 +290,7 @@
       padding: 3px 10px;
       border-radius: 10px;
       border: 1px solid var(--border-faint);
-      background: rgba(255, 255, 255, 0.04);
+      background: var(--bg-card);
       color: var(--text-main);
     }
 
@@ -319,13 +323,13 @@
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
     }
 
     .game-card:hover {
       transform: scale(1.03);
       border-color: var(--accent-color);
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7), 0 0 20px var(--accent-glow);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28), 0 0 20px var(--accent-glow);
       z-index: 10;
     }
 
@@ -333,8 +337,8 @@
     .game-card.hero-card {
       grid-column: span 2;
       aspect-ratio: 16 / 7;
-      border-color: rgba(255, 255, 255, 0.15);
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.8));
+      border-color: var(--border-main);
+      background: var(--bg-card);
     }
 
     @media (max-width: 640px) {
@@ -365,8 +369,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: radial-gradient(circle at 50% 35%, rgba(139, 92, 246, 0.15), #08080c 80%);
-      color: rgba(255, 255, 255, 0.12);
+      background: var(--avatar-gradient, linear-gradient(135deg, var(--accent-color, #8b5cf6) 0%, #1e1b4b 100%));
+      color: rgba(255, 255, 255, 0.28);
       font-size: 52px;
       z-index: 0;
     }
@@ -375,7 +379,7 @@
     .card-gradient-overlay {
       position: absolute;
       inset: 0;
-      background: linear-gradient(to top, rgba(0, 0, 0, 0.96) 0%, rgba(0, 0, 0, 0.6) 50%, rgba(0, 0, 0, 0.05) 100%);
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.35) 50%, rgba(0, 0, 0, 0.0) 100%);
       z-index: 2;
       pointer-events: none;
     }
@@ -413,10 +417,10 @@
       font-weight: 500;
       padding: 2px 8px;
       border-radius: 8px;
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0, 0, 0, 0.65);
       backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: var(--text-muted);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #f1f5f9;
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
@@ -426,6 +430,10 @@
       color: #ffffff;
       border-color: transparent;
       box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    html.theme-amoled-midnight .card-tag.hero-tag {
+      color: #000000;
     }
 
     /* Slide-up Frosted Squircle Action Buttons on Hover */
@@ -542,11 +550,11 @@
     }
 
     .btn-primary-sharp {
-      background: #09090c;
+      background: var(--btn-bg, var(--bg-card));
       color: var(--accent-color, #8b5cf6);
       border: 1px solid var(--accent-color, #8b5cf6);
       font-weight: 500;
-      box-shadow: 0 2px 8px rgba(139, 92, 246, 0.15);
+      box-shadow: 0 2px 8px var(--accent-glow, rgba(139, 92, 246, 0.15));
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -559,7 +567,7 @@
     }
 
     .btn-primary-sharp:hover {
-      background: var(--btn-bg, rgba(139, 92, 246, 0.16));
+      background: var(--accent-color, #8b5cf6);
       color: #ffffff;
       border-color: var(--accent-color, #8b5cf6);
       box-shadow: 0 4px 14px var(--accent-glow, rgba(139, 92, 246, 0.35));
@@ -729,7 +737,7 @@
       width: 100%;
       margin-top: 4rem;
       border-top: 1px solid var(--border-main);
-      background: rgba(8, 8, 10, 0.85);
+      background: var(--bg-card);
       backdrop-filter: blur(16px);
       position: relative;
       z-index: 10;
@@ -764,7 +772,7 @@
       font-size: 0.95rem;
       font-weight: 500;
       letter-spacing: 0.06em;
-      color: #ffffff;
+      color: var(--text-main);
     }
 
     .footer-copy {
@@ -848,8 +856,8 @@
         <span class="player-title" id="currentPlayerTitle">Playing</span>
       </div>
       <div class="player-header-right">
-        <button class="player-btn-squircle" id="playerPinBtn" onclick="togglePinCurrentGame()" title="Pin Game">
-          <span class="material-symbols-sharp" id="playerPinIcon">push_pin</span>
+        <button class="player-btn-squircle" id="playerPinBtn" onclick="togglePinCurrentGame()" title="Add to Favorites">
+          <i class="fa-solid fa-star" id="playerPinIcon" style="font-size: 15px;"></i>
         </button>
         <button class="player-btn-squircle" onclick="reloadCurrentGame()" title="Reload Game">
           <span class="material-symbols-sharp">refresh</span>
@@ -938,8 +946,8 @@
           id: `gn-${g.id}`,
           name: g.name,
           category: 'GN-Math',
-          imgSrc: (g.cover || '').replace("{COVER_URL}", "https://raw.githubusercontent.com/freebuisness/covers/main").replace("{HTML_URL}", "https://raw.githubusercontent.com/freebuisness/html/main"),
-          url: (g.url || '').replace("{COVER_URL}", "https://raw.githubusercontent.com/freebuisness/covers/main").replace("{HTML_URL}", "https://raw.githubusercontent.com/freebuisness/html/main")
+          imgSrc: (g.cover || '').replace("{COVER_URL}", "https://cdn.jsdelivr.net/gh/freebuisness/covers@main").replace("{HTML_URL}", "https://raw.githubusercontent.com/freebuisness/html/main"),
+          url: (g.url || '').replace("{COVER_URL}", "https://cdn.jsdelivr.net/gh/freebuisness/covers@main").replace("{HTML_URL}", "https://raw.githubusercontent.com/freebuisness/html/main")
         }));
       } catch (e) {
         console.warn('Failed loading GN-Math games:', e);
@@ -1140,11 +1148,36 @@
       `;
     }
 
-    // Normalize game URL: Clean StrongdogXP and GAMES outer container URLs to direct /game/index.html
+    const STRONGDOG_GN_UNITY_MAP = {
+      'geometry dash lite': 27,
+      'a dance of fire and ice': 59,
+      'solar smash': 118,
+      'snow rider 3d': 119,
+      'ultrakill': 196,
+      'jelly drift': 543,
+      'yandere simulator': 554,
+      'slime rancher': 591,
+      'slime ranchers': 591,
+      'cell machine': 730
+    };
+
+    // Normalize game URL: Clean StrongdogXP and GAMES outer container URLs to direct /game/index.html or /game/base.html
     function normalizeGameUrl(url) {
       if (!url) return '';
+      let decoded = url;
+      try { decoded = decodeURIComponent(url); } catch (e) {}
+      const unityMatch = decoded.match(/pinpoint-edu\.github\.io\/strongdog[56]\/html\/([^/]+)\//i);
+      if (unityMatch) {
+        const gnId = STRONGDOG_GN_UNITY_MAP[unityMatch[1].trim().toLowerCase()];
+        if (gnId) {
+          return `https://raw.githubusercontent.com/freebuisness/html/main/${gnId}-fix2.html`;
+        }
+      }
       if (/pinpoint-edu\.github\.io\/(?:strongdog[0-9]*|GAMES)\/html\/[^/]+\/index\.html$/i.test(url)) {
         return url.replace(/\/index\.html$/i, '/game/index.html');
+      }
+      if (/pinpoint-edu\.github\.io\/(?:strongdog[0-9]*|GAMES)\/swf\/[^/]+\/base\.html$/i.test(url)) {
+        return url.replace(/\/base\.html$/i, '/game/base.html');
       }
       return url;
     }
@@ -1238,7 +1271,7 @@
       if (!pinBtn) return;
       const isPinned = Array.isArray(pinnedGames) ? pinnedGames.includes(currentGameTitle) : (pinnedGames && typeof pinnedGames.has === 'function' ? pinnedGames.has(currentGameTitle) : false);
       pinBtn.classList.toggle('pinned-active', isPinned);
-      pinBtn.title = isPinned ? 'Unpin Game' : 'Pin Game';
+      pinBtn.title = isPinned ? 'Remove from Favorites' : 'Add to Favorites';
     }
 
     function togglePinCurrentGame() {
@@ -1254,10 +1287,8 @@
       // Clean StrongdogXP / GAMES nested container to embedded game
       url = normalizeGameUrl(url);
 
-      // Proxy TGLSC & GN-Math games through our own proxy (no cloudflare workers)
+      // Proxy TGLSC games through our own proxy (no cloudflare workers)
       if (category === 'TGLSC' || url.includes('glseries.net')) {
-        url = `/api/web?mode=browse&embed=1&url=${encodeURIComponent(url)}`;
-      } else if (category === 'GN-Math' && url.startsWith('http')) {
         url = `/api/web?mode=browse&embed=1&url=${encodeURIComponent(url)}`;
       }
 
@@ -1285,7 +1316,7 @@
       player.style.display = 'flex';
       document.body.style.overflow = 'hidden';
 
-      if ((isLocal || url.includes('pinpoint-edu.github.io') || url.includes('raw.githubusercontent.com/pinpoint-edu')) && window.playGame) {
+      if ((isLocal || category === 'GN-Math' || category === 'StrongdogXP' || url.includes('pinpoint-edu.github.io') || url.includes('raw.githubusercontent.com') || url.includes('cdn.jsdelivr.net')) && window.playGame) {
         window.playGame(encodeURIComponent(url), encodeURIComponent(title));
         return;
       }

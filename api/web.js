@@ -57,13 +57,21 @@ function resolveUrl(rel, base) {
 
 function rewriteCss(cssText, targetUrl, webEndpoint, refParam) {
   const refSuffix = refParam ? `&ref=${encodeURIComponent(refParam)}` : "";
-  return cssText.replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/gi, (match, quote, rawUrl) => {
+  cssText = cssText.replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/gi, (match, quote, rawUrl) => {
     const t = rawUrl.trim();
-    if (t.startsWith("data:") || t.startsWith("blob:") || t.startsWith("#")) return match;
+    if (t.startsWith("data:") || t.startsWith("blob:") || t.startsWith("#") || t.startsWith(webEndpoint) || t.startsWith("/api/web")) return match;
     const abs = resolveUrl(t, targetUrl);
     if (!/^https?:\/\//i.test(abs)) return match;
     return `url("${webEndpoint}?mode=raw&url=${encodeURIComponent(abs)}${refSuffix}")`;
   });
+  cssText = cssText.replace(/(@import\s+)(['"])([^'"]+)\2/gi, (match, prefix, quote, rawUrl) => {
+    const t = rawUrl.trim();
+    if (t.startsWith("data:") || t.startsWith("blob:") || t.startsWith(webEndpoint) || t.startsWith("/api/web")) return match;
+    const abs = resolveUrl(t, targetUrl);
+    if (!/^https?:\/\//i.test(abs)) return match;
+    return `${prefix}${quote}${webEndpoint}?mode=raw&url=${encodeURIComponent(abs)}${refSuffix}${quote}`;
+  });
+  return cssText;
 }
 
 function rewriteM3u8(m3u8Text, finalUrl, webEndpoint, refParam) {
@@ -119,8 +127,9 @@ function rewriteJs(jsText, finalUrl, webEndpoint, refParam) {
   const refSuffix = `&ref=${encodeURIComponent(refVal)}`;
 
   jsText = jsText.replace(
-    /(\bfrom\s*|\bimport\s*\(\s*|\bimport\s*)(['"])(\.{1,2}\/[^'"]+|\/(?:assets|_next|static|chunks|js|embed)\/[^'"]+)\2/g,
+    /(\bfrom\s*|\bimport\s*\(\s*|\bimport\s*)(['"])(\.{1,2}\/[^'"\s]+|\/(?!api\/web\b)[^'"\s]+|https?:\/\/[^'"\s]+\.m?js(?:[?#][^'"\s]*)?)\2/g,
     (match, prefix, quote, spec) => {
+      if (spec.startsWith(webEndpoint) || spec.startsWith("/api/web?")) return match;
       const abs = resolveUrl(spec, finalUrl);
       if (!/^https?:\/\//i.test(abs)) return match;
       return `${prefix}${quote}${webEndpoint}?mode=raw&url=${encodeURIComponent(abs)}${refSuffix}${quote}`;
@@ -131,7 +140,15 @@ function rewriteJs(jsText, finalUrl, webEndpoint, refParam) {
 }
 
 function rewriteHtml(html, finalUrl, webEndpoint, hostOrigin, isEmbed = false) {
-  const baseDir = getBaseDir(finalUrl);
+  let effectiveBaseUrl = finalUrl;
+  const mBaseTag = html.match(/<base\b[^>]*\bhref\s*=\s*(['"])(.*?)\1[^>]*>/i);
+  if (mBaseTag && mBaseTag[2]) {
+    const resolvedBase = resolveUrl(mBaseTag[2], finalUrl);
+    if (/^https?:\/\//i.test(resolvedBase)) {
+      effectiveBaseUrl = resolvedBase;
+    }
+  }
+  const baseDir = getBaseDir(effectiveBaseUrl);
   let targetOrigin = finalUrl;
   try { targetOrigin = new URL(finalUrl).origin; } catch (e) {}
   const refSuffix = `&ref=${encodeURIComponent(targetOrigin + "/")}`;
@@ -152,10 +169,23 @@ function rewriteHtml(html, finalUrl, webEndpoint, hostOrigin, isEmbed = false) {
   html = html.replace(/"ad"\s*:\s*""/g, '"ad":"en,eng,english"');
   html = html.replace(/"autoStart"\s*:\s*false/g, '"autoStart":true');
 
+  html = html.replace(/(<meta\b[^>]*http-equiv\s*=\s*(['"]?)refresh\2[^>]*\bcontent\s*=\s*)(['"])([^'"]*)\3/gi, (match, prefix, q1, q2, val) => {
+    const updated = val.replace(/(\burl\s*=\s*)([^;'"\s]+)/i, (_, urlPrefix, targetRefreshUrl) => {
+      const abs = resolveUrl(targetRefreshUrl, effectiveBaseUrl);
+      if (!/^https?:\/\//i.test(abs)) return _;
+      return `${urlPrefix}${webEndpoint}?mode=browse&url=${encodeURIComponent(abs)}${refSuffix}${embedSuffix}`;
+    });
+    return `${prefix}${q2}${updated}${q2}`;
+  });
+
+  html = html.replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi, (match, open, css, close) => {
+    return `${open}${rewriteCss(css, effectiveBaseUrl, webEndpoint, targetOrigin + "/")}${close}`;
+  });
+
   html = html.replace(/(\baction\s*=\s*)(['"])([^'"]*)\2/gi, (match, prefix, quote, val) => {
     const t = val.trim();
     if (!t || t.startsWith("javascript:")) return match;
-    const abs = resolveUrl(t, finalUrl);
+    const abs = resolveUrl(t, effectiveBaseUrl);
     if (!/^https?:\/\//i.test(abs)) return match;
     return `${prefix}${quote}${webEndpoint}?mode=browse&url=${encodeURIComponent(abs)}${refSuffix}${embedSuffix}${quote}`;
   });
@@ -164,7 +194,7 @@ function rewriteHtml(html, finalUrl, webEndpoint, hostOrigin, isEmbed = false) {
     const parts = val.split(",").map((part) => {
       const segs = part.trim().split(/\s+/);
       if (!segs[0]) return part;
-      const abs = resolveUrl(segs[0], finalUrl);
+      const abs = resolveUrl(segs[0], effectiveBaseUrl);
       if (/^https?:\/\//i.test(abs)) {
         segs[0] = `${webEndpoint}?mode=raw&url=${encodeURIComponent(abs)}${refSuffix}`;
       }
@@ -174,7 +204,7 @@ function rewriteHtml(html, finalUrl, webEndpoint, hostOrigin, isEmbed = false) {
   });
 
   html = html.replace(/<(script|img|iframe|audio|video|source|embed|track)\b([^>]*?)\bsrc\s*=\s*(['"])([^'"]*)\3/gi, (match, tag, before, quote, val) => {
-    const abs = resolveUrl(val, finalUrl);
+    const abs = resolveUrl(val, effectiveBaseUrl);
     if (!/^https?:\/\//i.test(abs)) return match;
     if (/youtube\.com\/embed\/xyFrwWFOfhg/i.test(abs)) {
       return `<${tag}${before}src=${quote}about:blank${quote}`;
@@ -185,8 +215,20 @@ function rewriteHtml(html, finalUrl, webEndpoint, hostOrigin, isEmbed = false) {
     return `<${tag}${before}src=${quote}${webEndpoint}?mode=${mode}&url=${encodeURIComponent(abs)}${refSuffix}${extra}${quote}`;
   });
 
+  html = html.replace(/(<video\b[^>]*?)\bposter\s*=\s*(['"])([^'"]*)\2/gi, (match, before, quote, val) => {
+    const abs = resolveUrl(val, effectiveBaseUrl);
+    if (!/^https?:\/\//i.test(abs)) return match;
+    return `${before}poster=${quote}${webEndpoint}?mode=raw&url=${encodeURIComponent(abs)}${refSuffix}${quote}`;
+  });
+
+  html = html.replace(/(<object\b[^>]*?)\bdata\s*=\s*(['"])([^'"]*)\2/gi, (match, before, quote, val) => {
+    const abs = resolveUrl(val, effectiveBaseUrl);
+    if (!/^https?:\/\//i.test(abs)) return match;
+    return `${before}data=${quote}${webEndpoint}?mode=raw&url=${encodeURIComponent(abs)}${refSuffix}${quote}`;
+  });
+
   html = html.replace(/<link\b([^>]*?)\bhref\s*=\s*(['"])([^'"]*)\2/gi, (match, before, quote, val) => {
-    const abs = resolveUrl(val, finalUrl);
+    const abs = resolveUrl(val, effectiveBaseUrl);
     if (!/^https?:\/\//i.test(abs)) return match;
     return `<link${before}href=${quote}${webEndpoint}?mode=raw&url=${encodeURIComponent(abs)}${refSuffix}${quote}`;
   });
@@ -194,7 +236,7 @@ function rewriteHtml(html, finalUrl, webEndpoint, hostOrigin, isEmbed = false) {
   html = html.replace(/<a\b([^>]*?)\bhref\s*=\s*(['"])([^'"]*)\2/gi, (match, before, quote, val) => {
     const t = val.trim();
     if (!t || t.startsWith("#") || t.startsWith("javascript:") || t.startsWith("mailto:")) return match;
-    const abs = resolveUrl(t, finalUrl);
+    const abs = resolveUrl(t, effectiveBaseUrl);
     if (!/^https?:\/\//i.test(abs)) return match;
     return `<a${before}href=${quote}${webEndpoint}?mode=browse&url=${encodeURIComponent(abs)}${refSuffix}${embedSuffix}${quote}`;
   });
@@ -300,11 +342,42 @@ function rewriteHtml(html, finalUrl, webEndpoint, hostOrigin, isEmbed = false) {
     } catch(err){}
   }, true);
 
+  var _origReplaceState = history.replaceState;
+  var _origPushState = history.pushState;
   try {
     var _u = new URL(TARGET_URL);
-    var _fakePath = (_u.pathname || "/") + (_u.search ? _u.search + "&" : "?") + "__tb=" + encodeURIComponent(TARGET_URL) + (_u.hash || "");
-    history.replaceState(null, "", _fakePath);
+    if (_origReplaceState) {
+      _origReplaceState.call(history, null, "", (_u.pathname || "/") + (_u.search || "") + (_u.hash || ""));
+    }
   } catch(e){}
+
+  function _normalizeHistoryUrl(u) {
+    if (!u) return u;
+    try {
+      var abs = toAbs(String(u));
+      if (abs && /^https?:\\/\\//i.test(abs)) {
+        var pu = new URL(abs);
+        TARGET_URL = pu.href;
+        TARGET_DIR = pu.href.replace(/[^/]*$/, "") || (pu.origin + "/");
+        try {
+          window.parent.postMessage({ type: "TB_WEB_URL_CHANGE", url: TARGET_URL, title: document.title || TARGET_URL }, "*");
+        } catch(err){}
+        return (pu.pathname || "/") + (pu.search || "") + (pu.hash || "");
+      }
+    } catch(e){}
+    return u;
+  }
+
+  if (_origPushState) {
+    history.pushState = markNative(function(state, title, url) {
+      return _origPushState.call(this, state, title, _normalizeHistoryUrl(url));
+    }, "pushState");
+  }
+  if (_origReplaceState) {
+    history.replaceState = markNative(function(state, title, url) {
+      return _origReplaceState.call(this, state, title, _normalizeHistoryUrl(url));
+    }, "replaceState");
+  }
 
   function isWrapped(u) {
     return typeof u === "string" && (
@@ -385,10 +458,16 @@ function rewriteHtml(html, finalUrl, webEndpoint, hostOrigin, isEmbed = false) {
 
   function rewriteHtmlFragment(str) {
     if (typeof str !== "string" || str.indexOf("<") === -1) return str;
-    return str.replace(/<(script|img|iframe|audio|video|source|embed|track|link)\\b([^>]*?)\\b(src|href)\\s*=\\s*(['"])([^'"]*)\\4/gi, function(m, tag, before, attr, q, val) {
+    return str.replace(/<(script|img|iframe|audio|video|source|embed|track|link|a|area|object|form)\\b([^>]*?)\\b(src|href|poster|data|action)\\s*=\\s*(['"])([^'"]*)\\4/gi, function(m, tag, before, attr, q, val) {
       var lowerTag = tag.toLowerCase();
-      var wrapped = lowerTag === "iframe" ? wrapBrowse(val) : wrapRaw(val);
-      return "<" + tag + before + attr + "=" + q + wrapped + q;
+      var lowerAttr = attr.toLowerCase();
+      if (lowerTag === "a" || lowerTag === "area" || lowerTag === "iframe" || (lowerTag === "form" && lowerAttr === "action")) {
+        return "<" + tag + before + attr + "=" + q + wrapBrowse(val) + q;
+      }
+      if (lowerAttr === "src" || lowerAttr === "href" || lowerAttr === "poster" || (lowerTag === "object" && lowerAttr === "data")) {
+        return "<" + tag + before + attr + "=" + q + wrapRaw(val) + q;
+      }
+      return m;
     });
   }
 
@@ -420,19 +499,35 @@ function rewriteHtml(html, finalUrl, webEndpoint, hostOrigin, isEmbed = false) {
     }, "open");
   }
 
+  if (window.EventSource) {
+    var OrigEventSource = window.EventSource;
+    window.EventSource = markNative(function(url, init) {
+      return new OrigEventSource(wrapRaw(String(url)), init);
+    }, "EventSource");
+    window.EventSource.prototype = OrigEventSource.prototype;
+  }
+
   var origSetAttr = Element.prototype.setAttribute;
   Element.prototype.setAttribute = markNative(function(name, value) {
     try {
       var n = String(name).toLowerCase();
       if (n === "integrity" || n === "nonce" || n === "referrerpolicy" || n === "sandbox") return;
       var tag = (this.tagName || "").toUpperCase();
-      if ((n === "src" || n === "href" || n === "poster") && typeof value === "string") {
-        if (tag === "A" || tag === "IFRAME") value = wrapBrowse(value);
-        else value = wrapRaw(value);
+      if ((n === "src" || n === "href" || n === "poster" || n === "action" || n === "data") && value !== null && value !== undefined) {
+        var strVal = String(value);
+        if (tag === "A" || tag === "AREA" || tag === "IFRAME" || tag === "FORM") value = wrapBrowse(strVal);
+        else value = wrapRaw(strVal);
       }
     } catch(e){}
     return origSetAttr.call(this, name, value);
   }, "setAttribute");
+
+  if (Element.prototype.insertAdjacentHTML) {
+    var origInsertAdjacentHTML = Element.prototype.insertAdjacentHTML;
+    Element.prototype.insertAdjacentHTML = markNative(function(position, text) {
+      return origInsertAdjacentHTML.call(this, position, rewriteHtmlFragment(text));
+    }, "insertAdjacentHTML");
+  }
 
   function patchProp(Proto, prop, wrapperFn) {
     if (!Proto || !Proto.prototype) return;
@@ -442,7 +537,7 @@ function rewriteHtml(html, finalUrl, webEndpoint, hostOrigin, isEmbed = false) {
         Object.defineProperty(Proto.prototype, prop, {
           get: markNative(function() { return desc.get.call(this); }, "get " + prop),
           set: markNative(function(val) {
-            try { if (typeof val === "string") val = wrapperFn(val); } catch(e){}
+            try { if (val !== null && val !== undefined) val = wrapperFn(String(val)); } catch(e){}
             return desc.set.call(this, val);
           }, "set " + prop),
           configurable: true,
@@ -454,6 +549,11 @@ function rewriteHtml(html, finalUrl, webEndpoint, hostOrigin, isEmbed = false) {
   patchProp(window.HTMLScriptElement, "src", wrapRaw);
   patchProp(window.HTMLImageElement, "src", wrapRaw);
   patchProp(window.HTMLLinkElement, "href", wrapRaw);
+  patchProp(window.HTMLAnchorElement, "href", wrapBrowse);
+  patchProp(window.HTMLAreaElement, "href", wrapBrowse);
+  patchProp(window.HTMLFormElement, "action", wrapBrowse);
+  patchProp(window.HTMLObjectElement, "data", wrapRaw);
+  patchProp(window.HTMLVideoElement, "poster", wrapRaw);
   patchProp(window.HTMLMediaElement, "src", wrapRaw);
   patchProp(window.HTMLSourceElement, "src", wrapRaw);
   patchProp(window.HTMLEmbedElement, "src", wrapRaw);
@@ -461,6 +561,7 @@ function rewriteHtml(html, finalUrl, webEndpoint, hostOrigin, isEmbed = false) {
   patchProp(window.HTMLIFrameElement, "src", wrapBrowse);
   patchProp(window.HTMLIframeElement, "src", wrapBrowse);
   patchProp(window.Element, "innerHTML", rewriteHtmlFragment);
+  patchProp(window.Element, "outerHTML", rewriteHtmlFragment);
 
   if (document.write) {
     var origWrite = document.write;
@@ -499,19 +600,6 @@ function rewriteHtml(html, finalUrl, webEndpoint, hostOrigin, isEmbed = false) {
     }, "Worker");
     window.Worker.prototype = OrigWorker.prototype;
   }
-
-  try {
-    var origImgDesc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, "src");
-    if (origImgDesc && origImgDesc.set) {
-      Object.defineProperty(HTMLImageElement.prototype, "src", {
-        set: function(val) {
-          return origImgDesc.set.call(this, wrapRaw(val));
-        },
-        get: origImgDesc.get,
-        configurable: true
-      });
-    }
-  } catch(e){}
 
   window.open = markNative(function(url) {
     if (IS_EMBED || window !== window.top) {
@@ -600,9 +688,22 @@ function rewriteHtml(html, finalUrl, webEndpoint, hostOrigin, isEmbed = false) {
   return html;
 }
 
+async function readReqBody(req) {
+  if (req.body !== undefined && req.body !== null) {
+    if (Buffer.isBuffer(req.body)) return req.body;
+    if (typeof req.body === "string") return req.body;
+    return JSON.stringify(req.body);
+  }
+  const chunks = [];
+  for await (const chunk of req) {
+    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+  }
+  return chunks.length ? Buffer.concat(chunks) : undefined;
+}
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, HEAD");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS, HEAD");
   res.setHeader("Access-Control-Allow-Headers", "*");
   res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
 
@@ -632,15 +733,17 @@ export default async function handler(req, res) {
     return res.status(403).json({ error: "Restricted host" });
   }
 
+  const proto = req.headers["x-forwarded-proto"] || "https";
+  const host = req.headers["x-forwarded-host"] || req.headers.host || "ohio-notes.broshan.com.np";
+  const hostOrigin = `${proto}://${host}`;
+  const webEndpoint = `${hostOrigin}/api/web`;
+
   if (mode === "browse" && (parsed.hostname === "duckduckgo.com" || parsed.hostname === "www.duckduckgo.com" || parsed.hostname === "html.duckduckgo.com") && parsed.searchParams.has("q")) {
     const qVal = parsed.searchParams.get("q") || "";
     return res.redirect(302, `${webEndpoint}?mode=browse&url=${encodeURIComponent("https://www.bing.com/search?q=" + encodeURIComponent(qVal))}`);
   }
 
-  const proto = req.headers["x-forwarded-proto"] || "https";
-  const host = req.headers["x-forwarded-host"] || req.headers.host || "ohio-notes.broshan.com.np";
-  const hostOrigin = `${proto}://${host}`;
-  const webEndpoint = `${hostOrigin}/api/web`;
+  const reqBody = (req.method !== "GET" && req.method !== "HEAD") ? await readReqBody(req) : undefined;
 
   const makeFetchOpts = (urlObj, customReferer) => {
     const effectiveRef = customReferer || refParam || (urlObj.origin + "/");
@@ -653,17 +756,25 @@ export default async function handler(req, res) {
     if (req.headers["range"]) {
       headers["Range"] = req.headers["range"];
     }
+    if (req.headers["content-type"]) {
+      headers["Content-Type"] = req.headers["content-type"];
+    }
     try {
       const refOrigin = new URL(effectiveRef).origin;
       if (mode !== "browse" && refOrigin !== urlObj.origin) {
         headers["Origin"] = refOrigin;
       }
     } catch (e) {}
-    return {
-      method: req.method === "POST" ? "POST" : "GET",
+    const method = (req.method === "POST" || req.method === "PUT") ? req.method : (req.method === "HEAD" ? "HEAD" : "GET");
+    const opts = {
+      method,
       headers,
       redirect: "follow"
     };
+    if (reqBody !== undefined && method !== "GET" && method !== "HEAD") {
+      opts.body = reqBody;
+    }
+    return opts;
   };
 
   try {
@@ -693,20 +804,43 @@ export default async function handler(req, res) {
     const finalUrl = upstream.url || target;
     let finalOrigin = parsed.origin;
     try { finalOrigin = new URL(finalUrl).origin; } catch (e) {}
-    const contentType = upstream.headers.get("content-type") || "application/octet-stream";
+    let contentType = upstream.headers.get("content-type") || "application/octet-stream";
     const lowerCt = contentType.toLowerCase();
     const lowerUrl = finalUrl.toLowerCase();
 
+    const contentRange = upstream.headers.get("content-range");
+    const acceptRanges = upstream.headers.get("accept-ranges");
+    if (contentRange) res.setHeader("Content-Range", contentRange);
+    if (acceptRanges) res.setHeader("Accept-Ranges", acceptRanges);
+
+    let buffer = Buffer.from(await upstream.arrayBuffer());
+    const headTrim = buffer.slice(0, 512).toString("utf8").trimStart().toLowerCase();
+    const isHtmlContent =
+      lowerCt.includes("text/html") ||
+      lowerCt.includes("application/xhtml") ||
+      (lowerCt.includes("text/plain") && (
+        /\.(?:html?|xhtml)(?:$|[?#])/i.test(lowerUrl) ||
+        headTrim.startsWith("<!doctype html") ||
+        headTrim.startsWith("<html") ||
+        headTrim.startsWith("<head") ||
+        headTrim.startsWith("<body") ||
+        headTrim.startsWith("<base") ||
+        headTrim.startsWith("<script")
+      ));
+
     if (format === "json") {
-      const text = await upstream.text();
-      const body = lowerCt.includes("text/html") ? rewriteHtml(text, finalUrl, webEndpoint, hostOrigin, isEmbed) : text;
+      const text = buffer.toString("utf8");
+      const body = isHtmlContent ? rewriteHtml(text, finalUrl, webEndpoint, hostOrigin, isEmbed) : text;
       return res.status(200).json({ ok: upstream.ok, status: upstream.status, finalUrl, contentType, body });
     }
 
-    if (mode === "browse" && lowerCt.includes("text/html")) {
-      const rawHtml = await upstream.text();
+    if (isHtmlContent && (mode === "browse" || lowerCt.includes("text/plain"))) {
+      const rawHtml = buffer.toString("utf8");
       res.setHeader("Content-Type", "text/html; charset=utf-8");
-      return res.status(upstream.status).send(rewriteHtml(rawHtml, finalUrl, webEndpoint, hostOrigin, isEmbed));
+      if (mode === "browse") {
+        return res.status(upstream.status).send(rewriteHtml(rawHtml, finalUrl, webEndpoint, hostOrigin, isEmbed));
+      }
+      return res.status(upstream.status).send(rawHtml);
     }
 
     const isM3u8 =
@@ -714,7 +848,7 @@ export default async function handler(req, res) {
       lowerUrl.includes(".m3u8") ||
       req.query.ext === ".m3u8";
     if (isM3u8) {
-      const rawText = await upstream.text();
+      const rawText = buffer.toString("utf8");
       if (rawText.trim().startsWith("#EXTM3U")) {
         const rewrittenM3u8 = rewriteM3u8(rawText, finalUrl, webEndpoint, refParam || (finalOrigin + "/"));
         res.setHeader("Content-Type", "application/vnd.apple.mpegurl; charset=utf-8");
@@ -723,14 +857,14 @@ export default async function handler(req, res) {
       return res.status(upstream.status).send(rawText);
     }
 
-    if (lowerCt.includes("text/css") || lowerUrl.endsWith(".css")) {
-      const rawCss = await upstream.text();
+    if (lowerCt.includes("text/css") || /\.css(\?|$)/i.test(lowerUrl)) {
+      const rawCss = buffer.toString("utf8");
       res.setHeader("Content-Type", "text/css; charset=utf-8");
       return res.status(upstream.status).send(rewriteCss(rawCss, finalUrl, webEndpoint, refParam || (finalOrigin + "/")));
     }
 
     if (lowerCt.includes("javascript") || /\.m?js(\?|$)/i.test(lowerUrl)) {
-      const rawJs = await upstream.text();
+      const rawJs = buffer.toString("utf8");
       res.setHeader("Content-Type", "application/javascript; charset=utf-8");
       return res.status(upstream.status).send(rewriteJs(rawJs, finalUrl, webEndpoint, refParam || (finalOrigin + "/")));
     }
@@ -740,8 +874,6 @@ export default async function handler(req, res) {
     } else {
       res.setHeader("Content-Type", contentType);
     }
-
-    let buffer = Buffer.from(await upstream.arrayBuffer());
 
     // Automatic Git LFS resolution (fixes wasm magic word error: expected 00 61 73 6d, found 76 65 72 73 'vers')
     if (buffer.length < 1000 && buffer.toString("utf8").includes("git-lfs.github.com/spec/v1")) {
