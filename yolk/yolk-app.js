@@ -10919,7 +10919,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const saved = JSON.parse(rawSaved);
             if (!saved || !saved.track || !(saved.track.title || saved.track.id || saved.track.youtube_id)) return;
 
-            const shouldAutoPlay = Boolean(saved.isPlaying || hasAutoplayHandoff || hadEntryTransition || isFastRedirect || switchedFromOtherPage);
+            const shouldAutoPlay = Boolean(saved.isPlaying);
 
             window.__yolkRestoringGlobalState = true;
             currentQueue = Array.isArray(saved.queue) && saved.queue.length ? saved.queue : [saved.track];

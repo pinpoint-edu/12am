@@ -852,14 +852,14 @@
                 acceleration: 1.03,
                 friction: 0.97,
                 gravity: 1.4,
-                particles: 60,
+                particles: 45,
                 traceLength: 3,
                 traceSpeed: 8,
                 explosion: 5,
-                intensity: 18,
+                intensity: 6,
                 flickering: 45,
                 hue: { min: 0, max: 360 },
-                delay: { min: 35, max: 70 },
+                delay: { min: 70, max: 130 },
                 brightness: { min: 55, max: 85 },
                 decay: { min: 0.015, max: 0.03 }
             });
@@ -1063,11 +1063,21 @@
         }
     }
 
-    function applyTheme(theme, save = true) {
+    let selectedBaseTheme = null;
+    let themeTransitionRaf = null;
+    let lastAppliedCoverTintKey = '';
+    const SONG_COVER_TINT_KEY = '12am_song_cover_tint';
+    const MUSIC_STATE_KEY = '12am_music_state';
+    const coverPaletteCache = new Map();
+
+    function applyTheme(theme, save = true, isInternalFrame = false) {
         if (!theme || typeof theme !== "object") {
             theme = DEFAULT_THEME;
         }
 
+        if (!isInternalFrame) {
+            selectedBaseTheme = theme;
+        }
         currentTheme = theme;
         const root = document.documentElement;
         const bgLum = getLuminance(theme["bg-primary"]);
@@ -1290,14 +1300,23 @@
         });
 
         // Winter Theme Snowfall Engine
-        updateWinterSnow(theme.name);
+        if (!isInternalFrame) {
+            updateWinterSnow(theme.name);
+        }
 
-        if (save) {
+        if (save && !isInternalFrame) {
             try {
                 const serialized = JSON.stringify(theme);
                 localStorage.setItem(THEME_STORAGE_KEY, serialized);
                 localStorage.setItem(LEGACY_STORAGE_KEY, serialized);
             } catch (e) {}
+            if (typeof syncSongCoverThemeTint === 'function') {
+                if (typeof setTimeout === 'function') {
+                    setTimeout(() => syncSongCoverThemeTint(), 0);
+                } else {
+                    syncSongCoverThemeTint();
+                }
+            }
         }
 
         window.dispatchEvent(new CustomEvent("12am:theme-changed", { detail: theme }));
@@ -1378,6 +1397,297 @@
         return theme;
     }
 
+    // Song Cover Theme Tinting Engine
+    function parseCssColor(str) {
+        if (!str || typeof str !== 'string') return null;
+        const s = str.trim();
+        if (s.startsWith('#')) {
+            let h = s.slice(1);
+            if (h.length === 3) h = h.split('').map(c => c + c).join('');
+            if (h.length === 6) {
+                const n = parseInt(h, 16);
+                if (!Number.isNaN(n)) {
+                    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255, a: 1 };
+                }
+            }
+            return null;
+        }
+        const m = s.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+))?\s*\)$/i);
+        if (m) {
+            return {
+                r: Math.max(0, Math.min(255, Number(m[1]))),
+                g: Math.max(0, Math.min(255, Number(m[2]))),
+                b: Math.max(0, Math.min(255, Number(m[3]))),
+                a: m[4] !== undefined ? Math.max(0, Math.min(1, Number(m[4]))) : 1
+            };
+        }
+        return null;
+    }
+
+    function formatRgba(c) {
+        const r = Math.round(c.r);
+        const g = Math.round(c.g);
+        const b = Math.round(c.b);
+        const a = Math.round((c.a ?? 1) * 1000) / 1000;
+        return a >= 0.999 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${a})`;
+    }
+
+    function mixRgba(c1, c2, t) {
+        return {
+            r: c1.r + (c2.r - c1.r) * t,
+            g: c1.g + (c2.g - c1.g) * t,
+            b: c1.b + (c2.b - c1.b) * t,
+            a: (c1.a ?? 1) + ((c2.a ?? 1) - (c1.a ?? 1)) * t
+        };
+    }
+
+    function mixCssColor(str1, str2, t) {
+        const c1 = parseCssColor(str1);
+        const c2 = parseCssColor(str2);
+        if (!c1 || !c2) return t < 0.5 ? str1 : str2;
+        return formatRgba(mixRgba(c1, c2, t));
+    }
+
+    function rgbToHslSimple(r, g, b) {
+        r /= 255; g /= 255; b /= 255;
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        let h = 0, s = 0, l = (max + min) / 2;
+        if (max !== min) {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+            }
+            h /= 6;
+        }
+        return { h, s, l };
+    }
+
+    function hslToRgbSimple(h, s, l) {
+        const hue2rgb = (p, q, t) => {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1 / 6) return p + (q - p) * 6 * t;
+            if (t < 1 / 2) return q;
+            if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+            return p;
+        };
+        let r, g, b;
+        if (s === 0) {
+            r = g = b = l;
+        } else {
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            const p = 2 * l - q;
+            r = hue2rgb(p, q, h + 1 / 3);
+            g = hue2rgb(p, q, h);
+            b = hue2rgb(p, q, h - 1 / 3);
+        }
+        return { r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255), a: 1 };
+    }
+
+    function extractCoverPalette(imgUrl, callback) {
+        if (!imgUrl) { callback(null); return; }
+        if (coverPaletteCache.has(imgUrl)) {
+            callback(coverPaletteCache.get(imgUrl));
+            return;
+        }
+        const isLocal = imgUrl.startsWith('data:') || imgUrl.startsWith('blob:') || imgUrl.startsWith('/');
+        const tryLoad = (src, allowProxyRetry) => {
+            const img = new Image();
+            if (!isLocal) img.crossOrigin = 'Anonymous';
+            img.onload = () => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 32;
+                    canvas.height = 32;
+                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                    ctx.drawImage(img, 0, 0, 32, 32);
+                    const data = ctx.getImageData(0, 0, 32, 32).data;
+                    const buckets = new Map();
+                    for (let i = 0; i < data.length; i += 4) {
+                        if (data[i + 3] < 120) continue;
+                        const r = data[i], g = data[i + 1], b = data[i + 2];
+                        const key = `${r >> 4},${g >> 4},${b >> 4}`;
+                        const existing = buckets.get(key);
+                        if (existing) {
+                            existing.rSum += r; existing.gSum += g; existing.bSum += b; existing.count++;
+                        } else {
+                            buckets.set(key, { rSum: r, gSum: g, bSum: b, count: 1 });
+                        }
+                    }
+                    const candidates = Array.from(buckets.values()).map(bkt => {
+                        const r = Math.round(bkt.rSum / bkt.count);
+                        const g = Math.round(bkt.gSum / bkt.count);
+                        const b = Math.round(bkt.bSum / bkt.count);
+                        const hsl = rgbToHslSimple(r, g, b);
+                        const score = (hsl.s * 3.0) + (1 - Math.abs(hsl.l - 0.5)) * 1.4 + Math.log(bkt.count + 1) * 0.35;
+                        return { r, g, b, hsl, score };
+                    }).sort((a, b) => b.score - a.score);
+
+                    if (!candidates.length) { callback(null); return; }
+                    const c1 = candidates[0];
+                    let c2 = candidates[1] || c1;
+                    let bestDist = -1;
+                    for (const cand of candidates.slice(1, 12)) {
+                        const d = Math.hypot(cand.r - c1.r, cand.g - c1.g, cand.b - c1.b);
+                        if (d > bestDist) { bestDist = d; c2 = cand; }
+                    }
+                    const palette = {
+                        primary: { r: c1.r, g: c1.g, b: c1.b, hsl: c1.hsl },
+                        secondary: { r: c2.r, g: c2.g, b: c2.b, hsl: c2.hsl }
+                    };
+                    coverPaletteCache.set(imgUrl, palette);
+                    callback(palette);
+                } catch (_) {
+                    if (allowProxyRetry && !isLocal) {
+                        tryLoad(`/api/proxy?url=${encodeURIComponent(imgUrl)}`, false);
+                    } else {
+                        callback(null);
+                    }
+                }
+            };
+            img.onerror = () => {
+                if (allowProxyRetry && !isLocal) {
+                    tryLoad(`/api/proxy?url=${encodeURIComponent(imgUrl)}`, false);
+                } else {
+                    callback(null);
+                }
+            };
+            img.src = src;
+        };
+        tryLoad(imgUrl, true);
+    }
+
+    function buildTintedTheme(baseTheme, palette) {
+        if (!baseTheme || !palette) return baseTheme;
+        const isLight = lightThemeNames.includes(baseTheme.name) || getLuminance(baseTheme['bg-primary']) > 0.65;
+        const pHsl = palette.primary.hsl;
+        const sHsl = palette.secondary.hsl;
+
+        const accentRgb = hslToRgbSimple(pHsl.h, Math.max(0.55, Math.min(0.95, pHsl.s * 1.15)), isLight ? 0.45 : 0.60);
+        const secRgb = hslToRgbSimple(sHsl.h, Math.max(0.45, Math.min(0.9, sHsl.s * 1.1)), isLight ? 0.48 : 0.58);
+        const surfaceTintRgb = hslToRgbSimple(pHsl.h, Math.min(0.75, Math.max(0.25, pHsl.s)), isLight ? 0.92 : 0.14);
+
+        const accentStr = formatRgba(accentRgb);
+        const secStr = formatRgba(secRgb);
+        const surfaceTintStr = formatRgba(surfaceTintRgb);
+
+        return {
+            ...baseTheme,
+            'bg-primary': mixCssColor(baseTheme['bg-primary'] || (isLight ? '#f8fafc' : '#060608'), surfaceTintStr, isLight ? 0.42 : 0.38),
+            'bg-secondary': mixCssColor(baseTheme['bg-secondary'] || (isLight ? '#ffffff' : '#0e0e13'), surfaceTintStr, isLight ? 0.48 : 0.45),
+            'text-secondary': mixCssColor(baseTheme['text-secondary'] || (isLight ? '#475569' : '#c8c8d4'), accentStr, 0.35),
+            'accent-primary': accentStr,
+            'accent-secondary': formatRgba({ ...accentRgb, a: 0.48 }),
+            'accent-glow': formatRgba({ ...secRgb, a: 0.38 }),
+            'navbar-bg': mixCssColor(baseTheme['navbar-bg'] || (isLight ? 'rgba(255,255,255,0.9)' : 'rgba(12,12,16,0.88)'), surfaceTintStr, 0.42),
+            'navbar-border': formatRgba({ ...accentRgb, a: 0.34 }),
+            'tab-active-bg': formatRgba({ ...accentRgb, a: isLight ? 0.16 : 0.22 }),
+            'tab-active-text': isLight ? formatRgba(hslToRgbSimple(pHsl.h, Math.max(0.6, pHsl.s), 0.34)) : '#ffffff',
+            'tab-active-border': accentStr,
+            'tab-hover-bg': formatRgba({ ...accentRgb, a: 0.14 }),
+            'button-bg': mixCssColor(baseTheme['button-bg'] || (isLight ? '#f1f5f9' : '#14141c'), surfaceTintStr, 0.42),
+            'button-text': isLight ? formatRgba(hslToRgbSimple(pHsl.h, Math.max(0.6, pHsl.s), 0.36)) : accentStr,
+            'border-primary': mixCssColor(baseTheme['border-primary'] || (isLight ? '#cbd5e1' : '#27272a'), accentStr, 0.35),
+            'avatar-gradient': `linear-gradient(135deg, ${accentStr} 0%, ${secStr} 100%)`
+        };
+    }
+
+    const INTERPOLATED_COLOR_KEYS = [
+        'bg-primary', 'bg-secondary', 'text-primary', 'text-secondary',
+        'accent-primary', 'accent-secondary', 'accent-glow', 'navbar-bg',
+        'navbar-border', 'navbar-text', 'tab-active-bg', 'tab-active-text',
+        'tab-active-border', 'tab-hover-bg', 'tab-hover-text', 'button-bg',
+        'button-text', 'border-primary', 'border-secondary'
+    ];
+
+    function animateThemeTransition(fromTheme, toTheme, durationMs = 750) {
+        if (themeTransitionRaf) {
+            cancelAnimationFrame(themeTransitionRaf);
+            themeTransitionRaf = null;
+        }
+        if (!fromTheme || !toTheme) {
+            applyTheme(toTheme || selectedBaseTheme || DEFAULT_THEME, false, true);
+            return;
+        }
+        const start = performance.now();
+        const step = (now) => {
+            const rawT = Math.min(1, Math.max(0, (now - start) / durationMs));
+            const easeT = rawT < 0.5 ? 2 * rawT * rawT : 1 - Math.pow(-2 * rawT + 2, 2) / 2;
+            const frameTheme = { ...toTheme };
+            for (const key of INTERPOLATED_COLOR_KEYS) {
+                if (fromTheme[key] && toTheme[key]) {
+                    frameTheme[key] = mixCssColor(fromTheme[key], toTheme[key], easeT);
+                }
+            }
+            applyTheme(frameTheme, false, true);
+            if (rawT < 1) {
+                themeTransitionRaf = requestAnimationFrame(step);
+            } else {
+                themeTransitionRaf = null;
+                applyTheme(toTheme, false, true);
+            }
+        };
+        themeTransitionRaf = requestAnimationFrame(step);
+    }
+
+    function syncSongCoverThemeTint() {
+        const base = selectedBaseTheme || currentTheme || DEFAULT_THEME;
+        let enabled = false;
+        try {
+            enabled = localStorage.getItem(SONG_COVER_TINT_KEY) === 'true';
+        } catch (_) {}
+
+        let musicState = null;
+        try {
+            const raw = localStorage.getItem(MUSIC_STATE_KEY);
+            musicState = raw ? JSON.parse(raw) : null;
+        } catch (_) {}
+
+        const track = musicState && musicState.track ? musicState.track : null;
+        const isPlaying = Boolean(musicState && musicState.isPlaying && track);
+        const coverUrl = isPlaying ? (track.cover || track.artwork || track.thumbnail || track.image || '') : '';
+
+        if (!enabled || !isPlaying || !coverUrl) {
+            if (lastAppliedCoverTintKey !== '') {
+                lastAppliedCoverTintKey = '';
+                animateThemeTransition(currentTheme, base, 750);
+            }
+            return;
+        }
+
+        const tintKey = `${base.name}::${coverUrl}`;
+        if (tintKey === lastAppliedCoverTintKey) return;
+
+        extractCoverPalette(coverUrl, (palette) => {
+            // Re-check current state in case it stopped while loading image
+            let stillEnabled = false;
+            let latestState = null;
+            try {
+                stillEnabled = localStorage.getItem(SONG_COVER_TINT_KEY) === 'true';
+                const raw = localStorage.getItem(MUSIC_STATE_KEY);
+                latestState = raw ? JSON.parse(raw) : null;
+            } catch (_) {}
+            if (!stillEnabled || !latestState || !latestState.isPlaying || !latestState.track) return;
+            if (!palette) return;
+            const currentBase = selectedBaseTheme || base;
+            lastAppliedCoverTintKey = `${currentBase.name}::${coverUrl}`;
+            const tinted = buildTintedTheme(currentBase, palette);
+            animateThemeTransition(currentTheme, tinted, 750);
+        });
+    }
+
+    window.__sync12amSongCoverThemeTint = syncSongCoverThemeTint;
+
+    window.addEventListener('12am:music-state-updated', () => {
+        syncSongCoverThemeTint();
+    });
+    window.addEventListener('12am:song-cover-tint-changed', () => {
+        syncSongCoverThemeTint();
+    });
+
     window.applyTheme = applyTheme;
     window.setThemeByName = setThemeByName;
     window.getThemes = () => allThemes;
@@ -1408,9 +1718,13 @@
     }
 
     if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", fetchThemes);
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchThemes();
+            syncSongCoverThemeTint();
+        });
     } else {
         fetchThemes();
+        syncSongCoverThemeTint();
     }
 
     window.addEventListener("storage", (e) => {
@@ -1418,11 +1732,14 @@
             try {
                 if (e.newValue) {
                     const parsed = JSON.parse(e.newValue);
-                    if (parsed && parsed.name !== currentTheme.name) {
+                    if (parsed && (!selectedBaseTheme || parsed.name !== selectedBaseTheme.name)) {
                         applyTheme(parsed, false);
+                        syncSongCoverThemeTint();
                     }
                 }
             } catch (err) {}
+        } else if (e.key === MUSIC_STATE_KEY || e.key === SONG_COVER_TINT_KEY) {
+            syncSongCoverThemeTint();
         }
     });
 })();

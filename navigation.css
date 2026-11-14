@@ -73,8 +73,8 @@ body {
 
 /* Subtle dot grid full bleed */
 .grid-bg {
-  background-image: radial-gradient(var(--border-faint) 1px, transparent 0);
-  background-size: 24px 24px;
+  background-image: radial-gradient(var(--border-faint) 1.5px, transparent 0);
+  background-size: 48px 48px;
 }
 
 /* Dynamic ambient glow full bleed */
@@ -488,6 +488,10 @@ body.sidebar-collapsed:has(#settings-floating-dock) #settings-container {
 
 .auth-menu-collapse:hover i {
   color: var(--accent-color, #ff8800) !important;
+}
+
+body.dock-right #authCollapseDocksBtn i {
+  transform: scaleX(-1);
 }
 
 .auth-menu-displayname {

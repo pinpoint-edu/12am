@@ -890,7 +890,11 @@
 
                 try {
                     sessionStorage.setItem('12am_music_entry_transition', String(Date.now()));
-                    sessionStorage.setItem('12am_music_autoplay_handoff', '1');
+                    if (state && state.isPlaying) {
+                        sessionStorage.setItem('12am_music_autoplay_handoff', '1');
+                    } else {
+                        sessionStorage.removeItem('12am_music_autoplay_handoff');
+                    }
                     if (isFastRedirect) {
                         sessionStorage.setItem('12am_music_fast_redirect', '1');
                     } else {
@@ -1142,9 +1146,13 @@
                     if (activeId === 'music') return;
                     e.preventDefault();
                     window.__12amHandingOffToMusic = true;
-                    try { sessionStorage.setItem('12am_music_autoplay_handoff', '1'); } catch (_) {}
-                    if (window.__saveBgAudioState) window.__saveBgAudioState(true);
                     const bgEl = document.getElementById('12am-bg-audio-player');
+                    const wasBgPlaying = Boolean(bgEl && !bgEl.paused && !bgEl.ended);
+                    try {
+                        if (wasBgPlaying) sessionStorage.setItem('12am_music_autoplay_handoff', '1');
+                        else sessionStorage.removeItem('12am_music_autoplay_handoff');
+                    } catch (_) {}
+                    if (window.__saveBgAudioState) window.__saveBgAudioState();
                     if (bgEl && !bgEl.paused) { try { bgEl.pause(); } catch (_) {} }
                     launchMusicAppWithTransition(link.href || `${prefix}music.html`, false);
                 }, true);
@@ -1221,9 +1229,13 @@
                         return;
                     }
                     window.__12amHandingOffToMusic = true;
-                    try { sessionStorage.setItem('12am_music_autoplay_handoff', '1'); } catch (_) {}
-                    if (window.__saveBgAudioState) window.__saveBgAudioState(true);
                     const bgEl = document.getElementById('12am-bg-audio-player');
+                    const wasBgPlaying = Boolean(bgEl && !bgEl.paused && !bgEl.ended);
+                    try {
+                        if (wasBgPlaying) sessionStorage.setItem('12am_music_autoplay_handoff', '1');
+                        else sessionStorage.removeItem('12am_music_autoplay_handoff');
+                    } catch (_) {}
+                    if (window.__saveBgAudioState) window.__saveBgAudioState();
                     if (bgEl && !bgEl.paused) { try { bgEl.pause(); } catch (_) {} }
                     launchMusicAppWithTransition(`${prefix}music.html#now-playing`, true);
                 };

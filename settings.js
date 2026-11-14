@@ -1157,6 +1157,14 @@
                                 <i class="fa-solid fa-spinner fa-spin fa-2x text-[var(--text-muted)] opacity-40"></i>
                             </div>
                         </div>
+
+                        <div class="flex items-center justify-between gap-4 mt-5 pt-4 border-t border-[var(--border-main)]">
+                            <div>
+                                <p class="text-sm font-medium text-[var(--text-main)]">Song Cover Theme Tint</p>
+                                <p class="text-xs font-light text-[var(--text-muted)] opacity-70">Keep your selected theme, but tint it to the playing song's cover colors and fade back when it ends or closes.</p>
+                            </div>
+                            <input type="checkbox" id="songCoverThemeTintToggle" class="custom-checkbox w-5 h-5 flex-shrink-0 cursor-pointer" title="Tint active theme with playing song cover">
+                        </div>
                         
                         <div id="themeMessage" class="general-message-area text-sm mt-3"></div>
                     </div>
@@ -4130,6 +4138,24 @@
             }
 
             renderThemesGrid();
+
+            const songCoverThemeTintToggle = document.getElementById('songCoverThemeTintToggle');
+            if (songCoverThemeTintToggle) {
+                try {
+                    songCoverThemeTintToggle.checked = localStorage.getItem('12am_song_cover_tint') === 'true';
+                } catch (e) {}
+                songCoverThemeTintToggle.addEventListener('change', () => {
+                    const enabled = Boolean(songCoverThemeTintToggle.checked);
+                    try {
+                        localStorage.setItem('12am_song_cover_tint', enabled ? 'true' : 'false');
+                    } catch (e) {}
+                    window.dispatchEvent(new CustomEvent('12am:song-cover-tint-changed', { detail: { enabled } }));
+                    if (typeof window.__sync12amSongCoverThemeTint === 'function') {
+                        window.__sync12amSongCoverThemeTint();
+                    }
+                    showMessage(themeMessage, enabled ? 'Song cover theme tint enabled!' : 'Song cover theme tint disabled.', 'success');
+                });
+            }
 
             // Color Wheel Canvas Engine
             function initCanvasColorWheel(canvasId, cursorId, labelId, swatchId, initialHex, sliderId, valId) {
