@@ -86,6 +86,22 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'Host not allowed' });
     }
 
+    // Intercept defunct Flash ad/tracker hosts (MochiAds, MochiBot, CPMStar, ArmorBot) so old SWFs don't trigger 500 errors
+    if (/(?:^|\.)(?:mochiads\.com|mochibot\.com|cpmstar\.com|armorbot\.com|kongetrack\.com)$/i.test(parsedUrl.hostname)) {
+      if (/\.swf(?:$|[?#])/i.test(parsedUrl.pathname)) {
+        const emptySwf = Buffer.from([
+          0x46, 0x57, 0x53, 0x09, 0x19, 0x00, 0x00, 0x00,
+          0x78, 0x00, 0x05, 0x5f, 0x00, 0x00, 0x0f, 0xa0, 0x00,
+          0x00, 0x0c, 0x01, 0x00, 0x40, 0x00, 0x00, 0x00
+        ]);
+        res.setHeader('Content-Type', 'application/x-shockwave-flash');
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        return res.status(200).send(emptySwf);
+      }
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      return res.status(200).send('{}');
+    }
+
     const upstreamHeaders = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
       'Referer': parsedUrl.origin + '/',

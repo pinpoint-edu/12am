@@ -173,6 +173,17 @@ function getGameId(fileUrl) {
   return fileUrl.split('?')[0].split('#')[0].replace(/^https?:\/\/[^/]+\//, '').replace(/[^a-zA-Z0-9_-]/g, '_');
 }
 
+// Known local files shipped inside /textbooks/ (avoids spurious 404 local fetches for remote-only games)
+const LOCAL_TEXTBOOK_FILES = new Set([
+  'textbooks/soundboard.html',
+  'textbooks/awesome-tanks.html',
+  'textbooks/happy-wheels.html',
+  'textbooks/happy-wheels.swf',
+  'textbooks/retro-bowl.html',
+  'textbooks/superhot.html',
+  'textbooks/tetris.html'
+]);
+
 // Fetch Game HTML with CDNs & fallbacks
 async function fetchGameHtml(file) {
   file = normalizeLoaderUrl(file);
@@ -193,8 +204,7 @@ async function fetchGameHtml(file) {
     };
 
     if (file.includes('pinpoint-edu.github.io/')) {
-      // Try GitHub Pages first since jsDelivr 403s >20MB repos, then master & main raw fallbacks
-      addCandidate(file);
+      // Try raw.githubusercontent.com FIRST (CORS-enabled, avoids GitHub Pages 404/redirect CORS errors)
       const mPages = file.match(/^https?:\/\/pinpoint-edu\.github\.io\/([^/]+)\/(.*)$/i);
       if (mPages) {
         const [, repo, rest] = mPages;
@@ -206,17 +216,27 @@ async function fetchGameHtml(file) {
           addCandidate(`https://raw.githubusercontent.com/pinpoint-edu/${repo}/master/${rest}`);
         }
       }
-    } else if (file.includes('jsdelivr.net')) {
-      addCandidate(file.replace(/https?:\/\/[^/]*\.jsdelivr\.net\//i, activeMirror + '/'));
       addCandidate(file);
+    } else if (file.includes('jsdelivr.net')) {
       if (file.includes('jsdelivr.net/gh/')) {
         const mBranch = file.match(/https?:\/\/[^/]*\.jsdelivr\.net\/gh\/([^/@]+)\/([^/@]+)(?:@([^/]+))?\/(.*)$/i);
         if (mBranch) {
           const [, owner, repo, branch, rest] = mBranch;
+          const isLargePinpoint = /^pinpoint-edu$/i.test(owner) && /^(assets|pinpoint-mini)$/i.test(repo);
+          if (!isLargePinpoint) {
+            addCandidate(file.replace(/https?:\/\/[^/]*\.jsdelivr\.net\//i, activeMirror + '/'));
+            addCandidate(file);
+          }
           if (branch) addCandidate(`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${rest}`);
           addCandidate(`https://raw.githubusercontent.com/${owner}/${repo}/main/${rest}`);
           addCandidate(`https://raw.githubusercontent.com/${owner}/${repo}/master/${rest}`);
+        } else {
+          addCandidate(file.replace(/https?:\/\/[^/]*\.jsdelivr\.net\//i, activeMirror + '/'));
+          addCandidate(file);
         }
+      } else {
+        addCandidate(file.replace(/https?:\/\/[^/]*\.jsdelivr\.net\//i, activeMirror + '/'));
+        addCandidate(file);
       }
     } else {
       addCandidate(file);
@@ -259,32 +279,29 @@ async function fetchGameHtml(file) {
   }
 
   for (const fetchFile of fetchCandidates) {
-    // 1. Try local fetch first (especially for textbooks/ in 12AM)
-    try {
-      const localRes = await fetch(fetchFile);
-      if (localRes.ok) {
-        const text = await localRes.text();
-        if (!text.includes('Package size exceeded') && !text.includes('limit of 20 MB') && !text.includes('404: Not Found') && !text.trim().startsWith('{"status": 4')) {
-          let localResolved = fetchFile;
-          try {
-            localResolved = new URL(fetchFile, window.location.href).href;
-          } catch (e) {}
-          return { html: text, resolvedUrl: localResolved };
+    // 1. Try local fetch only if not a remote-only textbooks/ path (avoids spurious 404s)
+    const isTextbooksPath = /^textbooks\//i.test(fetchFile);
+    const shouldTryLocal = !isTextbooksPath || LOCAL_TEXTBOOK_FILES.has(fetchFile.toLowerCase());
+    if (shouldTryLocal) {
+      try {
+        const localRes = await fetch(fetchFile);
+        if (localRes.ok) {
+          const text = await localRes.text();
+          if (!text.includes('Package size exceeded') && !text.includes('limit of 20 MB') && !text.includes('404: Not Found') && !text.trim().startsWith('{"status": 4')) {
+            let localResolved = fetchFile;
+            try {
+              localResolved = new URL(fetchFile, window.location.href).href;
+            } catch (e) {}
+            return { html: text, resolvedUrl: localResolved };
+          }
         }
-      }
-    } catch (e) {}
+      } catch (e) {}
+    }
 
-    // 2. Try remote repositories via mirrors
-    const mirrors = [activeMirror, ...CDN_MIRRORS.filter(m => m !== activeMirror)];
-    const primaryRepo = 'pinpoint-edu/assets@main/';
-    const fallbackRepo = 'pinpoint-edu/pinpoint-mini@main/';
-
+    // 2. Fetch directly from GitHub Raw (pinpoint-edu/assets and pinpoint-edu/pinpoint-mini exceed jsDelivr 20MB 403 limit)
     const urlsToTry = [
-      ...mirrors.map(m => m + '/gh/' + primaryRepo + fetchFile),
-      'https://raw.githubusercontent.com/' + primaryRepo.replace(/@[^/]+\//, '/main/') + fetchFile,
-      'https://cdn.statically.io/gh/' + primaryRepo + fetchFile,
-      ...mirrors.map(m => m + '/gh/' + fallbackRepo + fetchFile),
-      'https://raw.githubusercontent.com/' + fallbackRepo.replace(/@[^/]+\//, '/main/') + fetchFile
+      'https://raw.githubusercontent.com/pinpoint-edu/assets/main/' + fetchFile,
+      'https://raw.githubusercontent.com/pinpoint-edu/pinpoint-mini/main/' + fetchFile
     ];
 
     for (const url of urlsToTry) {
@@ -295,12 +312,6 @@ async function fetchGameHtml(file) {
         if (text.includes('Package size exceeded') || text.includes('limit of 20 MB') || text.includes('404: Not Found') || text.trim().startsWith('{"status": 4')) {
           continue;
         }
-        for (const m of CDN_MIRRORS) {
-          if (url.startsWith(m)) {
-            activeMirror = m;
-            break;
-          }
-        }
         return { html: text, resolvedUrl: url };
       } catch (e) {
         continue;
@@ -308,9 +319,6 @@ async function fetchGameHtml(file) {
     }
 
     // 3. Fallback to our internal serverless proxy for school Chromebooks (preserve upstream resolvedUrl)
-    const hostOrigin = (typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null')
-      ? window.location.origin
-      : '';
     const proxyFallbacks = [
       'https://raw.githubusercontent.com/pinpoint-edu/assets/main/' + fetchFile,
       'https://raw.githubusercontent.com/pinpoint-edu/pinpoint-mini/main/' + fetchFile
@@ -348,6 +356,12 @@ function normalizeGitBaseUrl(url) {
 // Prepare HTML with base tags, script shims, canvas styling
 function prepareGameHtml(html, fileUrl) {
   const cleanUrl = fileUrl.split(/[?#]/)[0];
+  const hostOrigin = (typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null')
+    ? window.location.origin
+    : '';
+  const ruffleScriptSrc = hostOrigin
+    ? (hostOrigin + '/textbooks/ruffle/ruffle.js')
+    : 'https://raw.githubusercontent.com/pinpoint-edu/12am/main/textbooks/ruffle/ruffle.js';
   let base = cleanUrl.replace(/[^/]*$/, '');
   if (!base.endsWith('/')) base += '/';
   base = normalizeGitBaseUrl(base);
@@ -375,8 +389,8 @@ function prepareGameHtml(html, fileUrl) {
   html = html.replace(/<script[^>]*src=["']blob:https?:[^"']*["'][^>]*>\s*<\/script>/gi, '');
   html = html.replace(/<script[^>]*src=["'][^"']*(?:all\.js|settings\/js\/index\.js|\/vs\/gameloader-helper\.js|poki-sdk|imasdk\.googleapis\.com)[^"']*["'][^>]*>\s*<\/script>/gi, '');
 
-  // Fix broken relative Ruffle scripts on Strongdog / GitHub Pages
-  html = html.replace(/<script[^>]*src=["'](?:[^"']*\/)?ruffle\/ruffle\.js["'][^>]*>\s*<\/script>/gi, '<script src="https://pinpoint-edu.github.io/strongdog6/html/ruffle/ruffle.js"><\/script>');
+  // Rewrite Ruffle scripts to self-hosted /textbooks/ruffle/ruffle.js (avoids broken 404 chunks on GitHub Pages)
+  html = html.replace(/<script[^>]*src=["'](?:[^"']*\/)?ruffle\/ruffle\.js(?:[?#][^"']*)?["'][^>]*>\s*<\/script>/gi, `<script src="${ruffleScriptSrc}"><\/script>`);
 
   // Fix Awesome Tanks and similar bundled game missing asset errors
   html = html.replace(
@@ -415,15 +429,18 @@ function prepareGameHtml(html, fileUrl) {
     html = `${baseTag}${jqueryTag}` + html;
   }
 
-  const hostOrigin = (typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null')
-    ? window.location.origin
-    : '';
-
-  // Inject frame styling & window.top sandboxing & ServiceWorker / YaGames / PokiSDK / wasm / LFS shims
+  // Inject frame styling & window.top sandboxing & ServiceWorker / YaGames / PokiSDK / Ruffle / Flash Ad / wasm / LFS shims
   const frameStyle = '<style>html,body{height:100%;margin:0;padding:0;overflow:hidden;background:#000;}.webgl-content,#gameContainer,#canvas{width:100%;height:100%;}</style>';
   const innerScriptBody = [
     'var HOST_ORIGIN = ' + JSON.stringify(hostOrigin) + ';',
+    'var _gameBaseHref = ' + JSON.stringify(base) + ';',
     'var _proxyBase = (HOST_ORIGIN || "") + "/api/proxy?url=";',
+    'var _ruffleSrc = ' + JSON.stringify(ruffleScriptSrc) + ';',
+    'var _rufflePublicPath = HOST_ORIGIN ? (HOST_ORIGIN + "/textbooks/ruffle/") : "https://raw.githubusercontent.com/pinpoint-edu/12am/main/textbooks/ruffle/";',
+    'try {',
+    '  window.RufflePlayer = window.RufflePlayer || {};',
+    '  window.RufflePlayer.config = Object.assign({ publicPath: _rufflePublicPath, autoplay: "on", unmuteOverlay: "visible" }, window.RufflePlayer.config || {});',
+    '} catch(e){}',
     'try { Object.defineProperty(window, "top", { get: function() { return window; } }); } catch(e){}',
     'try {',
     '  var _origPostMessage = window.postMessage;',
@@ -474,6 +491,7 @@ function prepareGameHtml(html, fileUrl) {
     '  var _blockedScriptRe = /poki-sdk|imasdk\\.googleapis\\.com|\\/vs\\/gameloader-helper\\.js/i;',
     '  var _rewriteScriptUrl = function(u) {',
     '    if (typeof u === "string" && _blockedScriptRe.test(u)) return "data:text/javascript,";',
+    '    if (typeof u === "string" && /(?:^|\\/)ruffle\\/ruffle\\.js(?:$|[?#])/i.test(u)) return _ruffleSrc;',
     '    return u;',
     '  };',
     '  var _origCreateEl = document.createElement;',
@@ -517,9 +535,15 @@ function prepareGameHtml(html, fileUrl) {
     '} catch(e){}',
     'try {',
     '  var _isUnityTelemetryUrl = function(abs) {',
-    '    return /(?:cloud\\.unity3d\\.com|events\\.mz\\.unity3d\\.com|\\bunity3d\\.com\\/v1\\/events)/i.test(abs);',
+    '    return /(?:cloud\\.unity3d\\.com|events\\.mz\\.unity3d\\.com|\\bunity3d\\.com\\/v1\\/events|cloud\\.umami\\.is|gamemonetize\\.com)/i.test(abs);',
     '  };',
+    '  var _isDeadFlashAdUrl = function(abs) {',
+    '    return /(?:^|[.\\/])(?:mochiads\\.com|mochibot\\.com|cpmstar\\.com|armorbot\\.com|kongetrack\\.com)(?:[\\/:?#]|$)/i.test(abs);',
+    '  };',
+    '  var _emptySwfBytes = new Uint8Array([0x46,0x57,0x53,0x09,0x19,0x00,0x00,0x00,0x78,0x00,0x05,0x5f,0x00,0x00,0x0f,0xa0,0x00,0x00,0x0c,0x01,0x00,0x40,0x00,0x00,0x00]);',
+    '  var _emptySwfDataUri = "data:application/x-shockwave-flash;base64,RldTCRkAAAB4AAVfAAAPoAAADAEAQAAAAA==";',
     '  var _needsDirectProxy = function(abs) {',
+    '    if (HOST_ORIGIN && abs.indexOf(HOST_ORIGIN) === 0) return false;',
     '    return abs.indexOf(".wasm") !== -1 || abs.indexOf("pinpoint-edu.github.io") !== -1 || abs.indexOf("raw.githubusercontent.com") !== -1 || abs.indexOf("glseries.net") !== -1 || abs.indexOf("cdn.jsdelivr.net/gh/pinpoint-edu") !== -1 || abs.indexOf(".unityweb") !== -1 || abs.indexOf(".data") !== -1 || abs.indexOf(".pck") !== -1;',
     '  };',
     '  var _origFetch = window.fetch;',
@@ -529,6 +553,12 @@ function prepareGameHtml(html, fileUrl) {
     '      if (url && typeof url === "string") {',
     '        try {',
     '          var abs = new URL(url, document.baseURI || window.location.href).href;',
+    '          if (_isDeadFlashAdUrl(abs)) {',
+    '            if (/\\.swf(?:$|[?#])/i.test(abs)) {',
+    '              return Promise.resolve(new Response(_emptySwfBytes.slice(), { status: 200, headers: { "Content-Type": "application/x-shockwave-flash" } }));',
+    '            }',
+    '            return Promise.resolve(new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } }));',
+    '          }',
     '          if (_isUnityTelemetryUrl(abs)) {',
     '            return Promise.resolve(new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } }));',
     '          }',
@@ -568,6 +598,11 @@ function prepareGameHtml(html, fileUrl) {
     '    this._tbFakeJson = false;',
     '    try {',
     '      var abs = new URL(url, document.baseURI || window.location.href).href;',
+    '      if (_isDeadFlashAdUrl(abs)) {',
+    '        this._tbFakeJson = true;',
+    '        var fakeFlashUri = /\\.swf(?:$|[?#])/i.test(abs) ? _emptySwfDataUri : "data:application/json,%7B%7D";',
+    '        return _origXHROpen.apply(this, ["GET", fakeFlashUri].concat(rest));',
+    '      }',
     '      if (_isUnityTelemetryUrl(abs)) {',
     '        this._tbFakeJson = true;',
     '        return _origXHROpen.apply(this, ["GET", "data:application/json,%7B%7D"].concat(rest));',
@@ -584,6 +619,39 @@ function prepareGameHtml(html, fileUrl) {
     '    }',
     '    return _origXHRSend.apply(this, arguments);',
     '  };',
+    '} catch(e){}',
+    'try {',
+    '  var _shimEl = document.currentScript || document.getElementById("__STRONGDOG_SHIM__");',
+    '  var _shimCode = _shimEl ? _shimEl.textContent : "";',
+    '  if (_shimCode && !window.__12amDocWriteWrapped) {',
+    '    window.__12amDocWriteWrapped = true;',
+    '    var _shimTagHtml = "<script id=\\"__STRONGDOG_SHIM__\\">" + _shimCode.replace(/<\\/(script)/gi, "<\\\\/$1") + "<\\/" + "script>";',
+    '    var _baseTagHtml = "<base href=\\"" + _gameBaseHref + "\\">";',
+    '    var _injectShimOnWrite = function(str) {',
+    '      if (typeof str !== "string") return str;',
+    '      str = str.replace(/<script([^>]*)src=["\'](?:[^"\']*\\/)?ruffle\\/ruffle\\.js(?:[?#][^"\']*)?["\']([^>]*)>\\s*<\\/script>/gi, "<script src=\\"" + _ruffleSrc + "\\"><\\/" + "script>");',
+    '      if (str.indexOf("__STRONGDOG_SHIM__") !== -1) return str;',
+    '      if (!/<html|<head|<body/i.test(str)) return str;',
+    '      var prefix = (/<base\\b/i.test(str) ? "" : _baseTagHtml) + _shimTagHtml;',
+    '      if (/<head\\b[^>]*>/i.test(str)) return str.replace(/<head\\b[^>]*>/i, function(m) { return m + prefix; });',
+    '      if (/<html\\b[^>]*>/i.test(str)) return str.replace(/<html\\b[^>]*>/i, function(m) { return m + prefix; });',
+    '      return prefix + str;',
+    '    };',
+    '    var _origDocWrite = document.write;',
+    '    var _origDocWriteln = document.writeln;',
+    '    document.write = function() {',
+    '      var args = Array.prototype.slice.call(arguments);',
+    '      if (args.length === 1 && typeof args[0] === "string") args[0] = _injectShimOnWrite(args[0]);',
+    '      else if (args.length > 1) args = [_injectShimOnWrite(args.join(""))];',
+    '      return _origDocWrite.apply(this, args);',
+    '    };',
+    '    document.writeln = function() {',
+    '      var args = Array.prototype.slice.call(arguments);',
+    '      if (args.length === 1 && typeof args[0] === "string") args[0] = _injectShimOnWrite(args[0]);',
+    '      else if (args.length > 1) args = [_injectShimOnWrite(args.join(""))];',
+    '      return _origDocWriteln.apply(this, args);',
+    '    };',
+    '  }',
     '} catch(e){}',
     'try {',
     '  if (window.WebGL2RenderingContext && WebGL2RenderingContext.prototype && WebGL2RenderingContext.prototype.getInternalformatParameter) {',
@@ -723,7 +791,7 @@ function prepareGameHtml(html, fileUrl) {
     '})();'
   ].join('\n');
 
-  const shimScript = `<script>${innerScriptBody}<\/script>`;
+  const shimScript = `<script id="__STRONGDOG_SHIM__">${innerScriptBody}<\/script>`;
   return frameStyle + shimScript + html;
 }
 
