@@ -227,17 +227,88 @@
     <div id="fullscreen-clock-overlay" class="fixed inset-0 z-[999999] flex flex-col items-center justify-center select-none cursor-pointer p-6" style="display: none; background: var(--bg-page); user-select: none; -webkit-user-select: none;" onclick="closeFullscreenClock()">
         <p id="fs-clock-date" class="text-xs md:text-sm font-black uppercase tracking-[0.4em] mb-4 opacity-80" style="color: var(--accent-color, #818cf8);">--------</p>
         <h1 id="fs-clock-time" class="text-7xl sm:text-9xl md:text-[10rem] lg:text-[12rem] font-light tracking-tight leading-none text-center" style="color: var(--text-main);">00:00:00<span class="text-3xl md:text-5xl ml-4 opacity-30 uppercase font-light">--</span></h1>
+        <div id="fs-clock-battery" class="mt-6 inline-flex items-center gap-3 px-4 py-2 rounded-2xl text-xs md:text-sm tracking-wider uppercase" style="background: var(--bg-card); border: 1px solid var(--border-main); color: var(--text-main);">
+            <i id="fs-clock-battery-icon" class="fa-solid fa-battery-full" style="color: var(--accent-color, #818cf8);"></i>
+            <span id="fs-clock-battery-pct" class="font-semibold">--%</span>
+            <span class="opacity-40">&bull;</span>
+            <span id="fs-clock-battery-time" class="opacity-80">Battery status unavailable</span>
+        </div>
         <p class="text-xs text-[var(--text-muted)] opacity-40 mt-8 tracking-widest uppercase">Click anywhere or press Esc to exit</p>
     </div>
 
     <script>
+        function formatBatteryDuration(seconds) {
+            const totalMinutes = Math.max(1, Math.round(seconds / 60));
+            const hours = Math.floor(totalMinutes / 60);
+            const mins = totalMinutes % 60;
+            if (hours > 0 && mins > 0) return `${hours}h ${mins}m`;
+            if (hours > 0) return `${hours}h`;
+            return `${mins}m`;
+        }
+
+        function renderBatteryStatus(battery) {
+            const pctEl = document.getElementById('fs-clock-battery-pct');
+            const timeEl = document.getElementById('fs-clock-battery-time');
+            const iconEl = document.getElementById('fs-clock-battery-icon');
+            if (!pctEl || !timeEl || !iconEl || !battery) return;
+
+            const pct = Math.max(0, Math.min(100, Math.round((Number(battery.level) || 0) * 100)));
+            pctEl.textContent = `${pct}%`;
+
+            if (battery.charging) {
+                iconEl.className = 'fa-solid fa-bolt';
+                if (pct >= 100) {
+                    timeEl.textContent = 'Fully charged';
+                } else if (Number.isFinite(battery.chargingTime) && battery.chargingTime > 0 && battery.chargingTime < Infinity) {
+                    timeEl.textContent = `Charging (${formatBatteryDuration(battery.chargingTime)} to full)`;
+                } else {
+                    timeEl.textContent = 'Charging';
+                }
+            } else {
+                let batClass = 'fa-battery-empty';
+                if (pct >= 88) batClass = 'fa-battery-full';
+                else if (pct >= 63) batClass = 'fa-battery-three-quarters';
+                else if (pct >= 38) batClass = 'fa-battery-half';
+                else if (pct >= 13) batClass = 'fa-battery-quarter';
+                iconEl.className = `fa-solid ${batClass}`;
+
+                if (Number.isFinite(battery.dischargingTime) && battery.dischargingTime > 0 && battery.dischargingTime < Infinity) {
+                    timeEl.textContent = `${formatBatteryDuration(battery.dischargingTime)} until empty`;
+                } else {
+                    timeEl.textContent = 'Estimating time until empty';
+                }
+            }
+        }
+
+        let __dashboardBatteryManager = null;
+        function refreshDashboardBatteryStatus() {
+            if (__dashboardBatteryManager) {
+                renderBatteryStatus(__dashboardBatteryManager);
+                return;
+            }
+            if (navigator && typeof navigator.getBattery === 'function') {
+                navigator.getBattery().then((battery) => {
+                    if (!battery) return;
+                    __dashboardBatteryManager = battery;
+                    renderBatteryStatus(battery);
+                    if (!battery.__clockListenersBound) {
+                        battery.__clockListenersBound = true;
+                        const onChange = () => renderBatteryStatus(battery);
+                        battery.addEventListener('levelchange', onChange);
+                        battery.addEventListener('chargingchange', onChange);
+                        battery.addEventListener('dischargingtimechange', onChange);
+                        battery.addEventListener('chargingtimechange', onChange);
+                    }
+                }).catch(() => {});
+            }
+        }
+        refreshDashboardBatteryStatus();
+
         function openFullscreenClock() {
             const overlay = document.getElementById('fullscreen-clock-overlay');
             if (overlay) {
                 overlay.style.display = 'flex';
-                if (!document.fullscreenElement) {
-                    overlay.requestFullscreen().catch(() => {});
-                }
+                refreshDashboardBatteryStatus();
             }
         }
 
@@ -245,9 +316,6 @@
             const overlay = document.getElementById('fullscreen-clock-overlay');
             if (overlay) {
                 overlay.style.display = 'none';
-                if (document.fullscreenElement) {
-                    document.exitFullscreen().catch(() => {});
-                }
             }
         }
 

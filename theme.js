@@ -972,6 +972,43 @@
                     filter: brightness(0.8) !important;
                     transition: filter 0.3s ease;
                 }
+                /* AMOLED Contrast Fix: --accent-primary is #ffffff, so accent-background buttons must use dark icons/text */
+                html.theme-amoled-midnight #now-playing-container #now-playing-play-pause,
+                html.theme-amoled-midnight #now-playing-container #now-playing-play-pause *,
+                html.theme-amoled-midnight #np-lyrics-floating-bar #lyrics-bar-play-pause,
+                html.theme-amoled-midnight #np-lyrics-floating-bar #lyrics-bar-play-pause *,
+                html.theme-amoled-midnight .yolk-active,
+                html.theme-amoled-midnight .yolk-active *,
+                html.theme-amoled-midnight .crossfade-preset-pill.bg-zinc-900,
+                html.theme-amoled-midnight .crossfade-preset-pill.bg-zinc-900 *,
+                html.theme-amoled-midnight .crossfade-preset-pill.active,
+                html.theme-amoled-midnight .crossfade-preset-pill.active *,
+                html.theme-amoled-midnight #play-pause-btn:hover,
+                html.theme-amoled-midnight #play-pause-btn:hover *,
+                html.theme-amoled-midnight .card-btn-play,
+                html.theme-amoled-midnight .card-btn-play *,
+                html.theme-amoled-midnight .btn-primary-sharp:hover,
+                html.theme-amoled-midnight .btn-primary-sharp:hover *,
+                html.theme-amoled-midnight .proxy-go-btn,
+                html.theme-amoled-midnight .proxy-go-btn *,
+                html.theme-amoled-midnight .proxy-center-search button,
+                html.theme-amoled-midnight .proxy-center-search button *,
+                html.theme-amoled-midnight .ai-send-btn,
+                html.theme-amoled-midnight .ai-send-btn *,
+                html.theme-amoled-midnight .spotlight-btn-play,
+                html.theme-amoled-midnight .spotlight-btn-play * {
+                    color: #000000 !important;
+                }
+                html.theme-amoled-midnight #now-playing-container #now-playing-play-pause svg,
+                html.theme-amoled-midnight #np-lyrics-floating-bar #lyrics-bar-play-pause svg,
+                html.theme-amoled-midnight .yolk-active svg,
+                html.theme-amoled-midnight .card-btn-play svg,
+                html.theme-amoled-midnight .proxy-go-btn svg,
+                html.theme-amoled-midnight .proxy-center-search button svg,
+                html.theme-amoled-midnight .ai-send-btn svg,
+                html.theme-amoled-midnight .spotlight-btn-play svg {
+                    fill: currentColor !important;
+                }
             `;
             document.head.appendChild(amoledStyle);
         }

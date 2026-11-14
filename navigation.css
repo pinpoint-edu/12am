@@ -797,9 +797,11 @@ body.dock-right.sidebar-collapsed.sidebar-peek-open #settings-floating-dock {
 }
 
 /* Minimal footer shifts to bottom left when dock is on right to avoid collision */
-body.dock-right .minimal-footer-cluster {
+body.dock-right .minimal-footer-cluster,
+body.dock-right #minimal-footer-cluster {
   right: auto !important;
   left: 24px !important;
+  width: max-content !important;
 }
 
 /* Page content padding when dock is on right */
@@ -1051,6 +1053,7 @@ body.dock-right .music-mini-menu-container.open {
 }
 
 .music-mini-ctrl-btn,
+.music-mini-close-btn,
 .music-mini-play-btn,
 .music-mini-redirect-btn {
   width: 38px !important;
@@ -1073,6 +1076,7 @@ body.dock-right .music-mini-menu-container.open {
 }
 
 .music-mini-ctrl-btn:hover,
+.music-mini-close-btn:hover,
 .music-mini-play-btn:hover,
 .music-mini-redirect-btn:hover {
   transform: scale(1.05);

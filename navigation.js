@@ -934,6 +934,9 @@
                     </button>
                     <div class="music-mini-menu-container closed" id="music-mini-menu-container" role="dialog" aria-label="Music Player Controls">
                         <div class="music-mini-controls-row">
+                            <button type="button" class="music-mini-ctrl-btn music-mini-close-btn" id="dockMusicCloseBtn" title="Close Song" aria-label="Close Song">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
                             <button type="button" class="music-mini-ctrl-btn" id="dockMusicPrevBtn" title="Previous Song" aria-label="Previous Song">
                                 <i class="fa-solid fa-backward-step"></i>
                             </button>
@@ -959,7 +962,17 @@
             const track = state?.track || null;
             const hasTrack = Boolean(track && (track.title || track.id || track.youtube_id));
             wrapper.classList.toggle('is-empty', !hasTrack);
-            if (!hasTrack) return;
+            if (!hasTrack) {
+                wrapper.classList.remove('is-playing');
+                const menuEl = document.getElementById('music-mini-menu-container');
+                const toggleBtn = document.getElementById('sidebarMusicToggle');
+                if (menuEl) {
+                    menuEl.classList.remove('open');
+                    menuEl.classList.add('closed');
+                }
+                if (toggleBtn) toggleBtn.classList.remove('active');
+                return;
+            }
 
             const isMusicPage = activeId === 'music';
             const bgAudio = document.getElementById('12am-bg-audio-player');
@@ -998,6 +1011,7 @@
         function initDockAndBackgroundMusic() {
             const toggleBtn = document.getElementById('sidebarMusicToggle');
             const menuEl = document.getElementById('music-mini-menu-container');
+            const closeBtn = document.getElementById('dockMusicCloseBtn');
             const prevBtn = document.getElementById('dockMusicPrevBtn');
             const playBtn = document.getElementById('dockMusicPlayPauseBtn');
             const nextBtn = document.getElementById('dockMusicNextBtn');
@@ -1009,6 +1023,35 @@
                     menuEl.classList.add('closed');
                 }
                 if (toggleBtn) toggleBtn.classList.remove('active');
+            };
+
+            const closeMusicFromDock = () => {
+                window.__12amMusicClosed = true;
+                closeMusicMenu();
+                if (activeId === 'music' && window.__twelveAmMusicController && typeof window.__twelveAmMusicController.close === 'function') {
+                    window.__twelveAmMusicController.close();
+                }
+                if (typeof window.__closeBgMusicPlayer === 'function') {
+                    window.__closeBgMusicPlayer();
+                } else {
+                    const bgEl = document.getElementById('12am-bg-audio-player');
+                    if (bgEl) {
+                        try {
+                            bgEl.pause();
+                            bgEl.removeAttribute('src');
+                            bgEl.load();
+                        } catch (_) {}
+                    }
+                }
+                try { localStorage.removeItem(MUSIC_STATE_KEY); } catch (_) {}
+                try { sessionStorage.removeItem('12am_music_fast_redirect'); } catch (_) {}
+                try { sessionStorage.removeItem('12am_music_autoplay_handoff'); } catch (_) {}
+                window.__12amBgCachedStatus = '';
+                if (typeof window.__sync12amGameAudioDucking === 'function') {
+                    window.__sync12amGameAudioDucking(false);
+                }
+                window.dispatchEvent(new CustomEvent('12am:music-state-updated', { detail: null }));
+                refreshDockMusicWidgetUI();
             };
 
             let musicHoverTimer = null;
@@ -1106,9 +1149,17 @@
                     launchMusicAppWithTransition(link.href || `${prefix}music.html`, false);
                 }, true);
 
-                window.addEventListener('12am:music-state-updated', () => refreshDockMusicWidgetUI());
+                window.addEventListener('12am:music-state-updated', (e) => {
+                    if (e && e.detail && e.detail.track) {
+                        window.__12amMusicClosed = false;
+                    }
+                    refreshDockMusicWidgetUI();
+                });
                 window.addEventListener('storage', (e) => {
-                    if (e.key === MUSIC_STATE_KEY) refreshDockMusicWidgetUI();
+                    if (e.key === MUSIC_STATE_KEY) {
+                        if (e.newValue) window.__12amMusicClosed = false;
+                        refreshDockMusicWidgetUI();
+                    }
                 });
             }
 
@@ -1116,6 +1167,13 @@
                 try {
                     if (document.body) document.body.classList.add('music-entry-anim');
                 } catch (_) {}
+            }
+
+            if (closeBtn) {
+                closeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    closeMusicFromDock();
+                };
             }
 
             if (playBtn) {
@@ -1211,8 +1269,9 @@
             }
 
             function persistBgAudioState(forcePlayFlag) {
-                const latest = readSavedMusicState() || {};
-                const trackNow = latest.track || state.track;
+                if (window.__12amMusicClosed) return;
+                const latest = readSavedMusicState();
+                const trackNow = latest && latest.track ? latest.track : null;
                 if (!trackNow) return;
                 const cur = Number.isFinite(bgAudio.currentTime) ? bgAudio.currentTime : (Number(latest.currentTime) || 0);
                 const dur = Number.isFinite(bgAudio.duration) && bgAudio.duration > 0 ? bgAudio.duration : (Number(latest.duration) || 0);
@@ -1232,6 +1291,25 @@
                 refreshDockMusicWidgetUI();
             }
             window.__saveBgAudioState = persistBgAudioState;
+
+            window.__closeBgMusicPlayer = () => {
+                window.__12amMusicClosed = true;
+                desiredPlaying = false;
+                activeLoadedUid = '';
+                pendingSeekTime = 0;
+                if (currentActiveObjectUrl) {
+                    try { URL.revokeObjectURL(currentActiveObjectUrl); } catch (_) {}
+                    currentActiveObjectUrl = null;
+                }
+                try {
+                    bgAudio.pause();
+                    bgAudio.removeAttribute('src');
+                    bgAudio.load();
+                } catch (_) {}
+                if (typeof window.__sync12amGameAudioDucking === 'function') {
+                    window.__sync12amGameAudioDucking(false);
+                }
+            };
 
             async function cacheSongInBackground(track, ytId, fmt) {
                 const uid = resolveDockTrackUid(track) || ytId;
@@ -1450,6 +1528,7 @@
             });
 
             window.__toggleBgMusicPlayPause = async () => {
+                window.__12amMusicClosed = false;
                 const latest = readSavedMusicState();
                 const tr = latest?.track || state.track;
                 if (!tr) return;
@@ -1473,6 +1552,7 @@
             };
 
             window.__skipBgMusicTrack = async (delta) => {
+                window.__12amMusicClosed = false;
                 const latest = readSavedMusicState() || {};
                 const q = Array.isArray(latest.queue) && latest.queue.length ? latest.queue : (latest.track ? [latest.track] : []);
                 if (!q.length) return;

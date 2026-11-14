@@ -2633,6 +2633,33 @@
             fill: currentColor !important;
         }
 
+        /* AMOLED theme: --accent-primary is #ffffff so accent-background buttons need dark icons/text */
+        html.theme-amoled-midnight #now-playing-container #now-playing-play-pause,
+        html.theme-amoled-midnight #now-playing-container #now-playing-play-pause *,
+        html.theme-amoled-midnight #np-lyrics-floating-bar #lyrics-bar-play-pause,
+        html.theme-amoled-midnight #np-lyrics-floating-bar #lyrics-bar-play-pause *,
+        html.theme-amoled-midnight #top-nav-bar a.yolk-active,
+        html.theme-amoled-midnight #top-nav-bar a.yolk-active *,
+        html.theme-amoled-midnight #bp-desktop-nav a.yolk-active,
+        html.theme-amoled-midnight #bp-desktop-nav a.yolk-active *,
+        html.theme-amoled-midnight .yolk-active,
+        html.theme-amoled-midnight .yolk-active *,
+        html.theme-amoled-midnight .crossfade-preset-pill.bg-zinc-900,
+        html.theme-amoled-midnight .crossfade-preset-pill.bg-zinc-900 *,
+        html.theme-amoled-midnight .crossfade-preset-pill.active,
+        html.theme-amoled-midnight .crossfade-preset-pill.active *,
+        html.theme-amoled-midnight #play-pause-btn:hover,
+        html.theme-amoled-midnight #play-pause-btn:hover * {
+            color: #000000 !important;
+        }
+
+        html.theme-amoled-midnight #now-playing-container #now-playing-play-pause svg,
+        html.theme-amoled-midnight #np-lyrics-floating-bar #lyrics-bar-play-pause svg,
+        html.theme-amoled-midnight .yolk-active svg {
+            color: #000000 !important;
+            fill: currentColor !important;
+        }
+
         #now-playing-container #now-playing-fav-btn,
         #now-playing-container #np-lyrics-btn,
         #now-playing-container #now-playing-prev,

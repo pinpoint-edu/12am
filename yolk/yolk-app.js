@@ -10804,6 +10804,59 @@ document.addEventListener('DOMContentLoaded', () => {
         prev: () => {
             if (typeof playPrev === 'function') playPrev();
         },
+        close: () => {
+            userPausedIntentionally = true;
+            isPlaying = false;
+            currentTrack = null;
+            pendingRestoreSeekTime = 0;
+            pendingRestoreTrackUid = '';
+            try {
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio.removeAttribute('src');
+                    currentAudio.load();
+                }
+            } catch (_) {}
+            try {
+                if (typeof preloadedNextAudio !== 'undefined' && preloadedNextAudio) {
+                    preloadedNextAudio.pause();
+                    preloadedNextAudio.removeAttribute('src');
+                    preloadedNextAudio.load();
+                }
+            } catch (_) {}
+            try {
+                if (typeof ytPlayer !== 'undefined' && ytPlayer && typeof ytPlayer.stopVideo === 'function') {
+                    ytPlayer.stopVideo();
+                }
+                if (typeof window !== 'undefined') window.isYtPlaying = false;
+            } catch (_) {}
+            if (typeof bottomPlayer !== 'undefined' && bottomPlayer) {
+                bottomPlayer.classList.add('hidden-force');
+                bottomPlayer.classList.remove('is-loading', 'is-track-loading');
+            }
+            if (typeof npLyricsFloatingBar !== 'undefined' && npLyricsFloatingBar) {
+                npLyricsFloatingBar.classList.add('hidden');
+            }
+            if (typeof updatePlayPauseButtons === 'function') {
+                updatePlayPauseButtons();
+            }
+            if (document.body.getAttribute('data-page') === 'now-playing') {
+                window.location.hash = '#library';
+                if (typeof window._yolkNavigate === 'function') {
+                    window._yolkNavigate();
+                }
+            }
+            try { localStorage.removeItem(MUSIC_STATE_KEY); } catch (_) {}
+            try { sessionStorage.removeItem('12am_music_fast_redirect'); } catch (_) {}
+            try { sessionStorage.removeItem('12am_music_autoplay_handoff'); } catch (_) {}
+            window.dispatchEvent(new CustomEvent('12am:music-state-updated', { detail: null }));
+            if (typeof window.__sync12amGameAudioDucking === 'function') {
+                window.__sync12amGameAudioDucking(false);
+            }
+            if (typeof window.__refreshDockMusicWidget === 'function') {
+                window.__refreshDockMusicWidget();
+            }
+        },
         openNowPlaying: () => {
             window.location.hash = '#now-playing';
             if (typeof window._yolkNavigate === 'function') {
