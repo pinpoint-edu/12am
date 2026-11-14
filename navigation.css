@@ -213,7 +213,6 @@ body {
   height: 28px;
   object-fit: contain;
   display: block;
-  transform: translateX(-100px);
   transition: filter 0.2s ease !important;
 }
 
@@ -837,6 +836,10 @@ body.dock-right.sidebar-collapsed #games-container,
 body.dock-right.sidebar-collapsed #movies-container {
   padding-left: 28px !important;
   padding-right: 28px !important;
+}
+
+body.dock-right:has(#settings-floating-dock) #page-content {
+  padding-right: 0 !important;
 }
 
 body.dock-right:has(#settings-floating-dock) #settings-container {

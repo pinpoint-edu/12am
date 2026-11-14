@@ -1562,29 +1562,37 @@
         return { r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255), a: 1 };
     }
 
+    function getCorsSafeCoverUrlForTint(imgUrl) {
+        if (!imgUrl) return '';
+        if (imgUrl.startsWith('data:') || imgUrl.startsWith('blob:') || imgUrl.startsWith('/')) return imgUrl;
+        const prefix = window.location.pathname.includes('/logged-in/') ? '../' : '';
+        if (imgUrl.includes('api/music-api') || imgUrl.includes('proxy-image')) return imgUrl;
+        return `${prefix}api/music-api?endpoint=proxy-image&url=${encodeURIComponent(imgUrl)}`;
+    }
+
     function extractCoverPalette(imgUrl, callback) {
         if (!imgUrl) { callback(null); return; }
         if (coverPaletteCache.has(imgUrl)) {
             callback(coverPaletteCache.get(imgUrl));
             return;
         }
-        const isLocal = imgUrl.startsWith('data:') || imgUrl.startsWith('blob:') || imgUrl.startsWith('/');
-        const tryLoad = (src, allowProxyRetry) => {
+        const safeSrc = getCorsSafeCoverUrlForTint(imgUrl);
+        const tryLoad = (src, allowFallback) => {
             const img = new Image();
-            if (!isLocal) img.crossOrigin = 'Anonymous';
+            if (!src.startsWith('data:') && !src.startsWith('blob:')) img.crossOrigin = 'Anonymous';
             img.onload = () => {
                 try {
                     const canvas = document.createElement('canvas');
-                    canvas.width = 32;
-                    canvas.height = 32;
+                    canvas.width = 48;
+                    canvas.height = 48;
                     const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                    ctx.drawImage(img, 0, 0, 32, 32);
-                    const data = ctx.getImageData(0, 0, 32, 32).data;
+                    ctx.drawImage(img, 0, 0, 48, 48);
+                    const data = ctx.getImageData(0, 0, 48, 48).data;
                     const buckets = new Map();
                     for (let i = 0; i < data.length; i += 4) {
                         if (data[i + 3] < 120) continue;
                         const r = data[i], g = data[i + 1], b = data[i + 2];
-                        const key = `${r >> 4},${g >> 4},${b >> 4}`;
+                        const key = `${Math.round(r / 16) * 16},${Math.round(g / 16) * 16},${Math.round(b / 16) * 16}`;
                         const existing = buckets.get(key);
                         if (existing) {
                             existing.rSum += r; existing.gSum += g; existing.bSum += b; existing.count++;
@@ -1619,25 +1627,23 @@
                     coverPaletteCache.set(imgUrl, palette);
                     callback(palette);
                 } catch (_) {
-                    if (allowProxyRetry && !isLocal) {
-                        const prefix = window.location.pathname.includes('/logged-in/') ? '../' : '';
-                        tryLoad(`${prefix}api/music-api?endpoint=proxy-image&url=${encodeURIComponent(imgUrl)}`, false);
+                    if (allowFallback && src !== imgUrl) {
+                        tryLoad(imgUrl, false);
                     } else {
                         callback(null);
                     }
                 }
             };
             img.onerror = () => {
-                if (allowProxyRetry && !isLocal) {
-                    const prefix = window.location.pathname.includes('/logged-in/') ? '../' : '';
-                    tryLoad(`${prefix}api/music-api?endpoint=proxy-image&url=${encodeURIComponent(imgUrl)}`, false);
+                if (allowFallback && src !== imgUrl) {
+                    tryLoad(imgUrl, false);
                 } else {
                     callback(null);
                 }
             };
             img.src = src;
         };
-        tryLoad(imgUrl, true);
+        tryLoad(safeSrc, true);
     }
 
     function buildTintedTheme(baseTheme, palette) {

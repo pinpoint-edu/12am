@@ -884,11 +884,11 @@
              }
 
              return `
-                 <h2 class="text-3xl font-bold text-[var(--text-main)] mb-6">General Settings</h2>
+                 <h2 class="text-3xl font-bold text-[var(--text-main)] mb-4">General Settings</h2>
                  
                  <div class="w-full">
                     
-                    <div class="flex justify-between items-center mb-4 settings-box p-4">
+                    <div class="flex justify-between items-center mb-3 settings-box p-4">
                         <p class="text-sm font-light text-[var(--text-muted)] opacity-80">
                            <i class="fa-solid fa-calendar-alt mr-2 text-yellow-500"></i>
                            Changes this month (<span class="text-emphasis text-yellow-300">${currentMonthName}</span>):
@@ -953,12 +953,12 @@
             ).join('');
 
             return `
-                <h2 class="text-3xl font-bold text-[var(--text-main)] mb-6">Privacy & Security</h2>
+                <h2 class="text-3xl font-bold text-[var(--text-main)] mb-4">Privacy & Security</h2>
                 
                 <div class="w-full">
                     <h3 class="text-xl font-bold text-[var(--text-main)] mb-2">Tab Disguise (URL Changer)</h3>
                     <div id="urlChangerSection" class="settings-box transition-all duration-300 p-4">
-                        <p class="text-sm font-light text-[var(--text-muted)] opacity-60 mb-4">
+                        <p class="text-sm font-light text-[var(--text-muted)] opacity-60 mb-3">
                             Change the title and favicon of the website to disguise it. This setting is saved locally in your browser.
                         </p>
                         
@@ -1007,10 +1007,10 @@
                     </div>
                 </div>
 
-                <div class="w-full mt-8">
+                <div class="w-full mt-5">
                     <h3 class="text-xl font-bold text-[var(--text-main)] mb-2">Panic Key Settings</h3>
                     <div id="panicKeySection" class="settings-box transition-all duration-300 p-4">
-                        <p class="text-sm font-light text-[var(--text-muted)] opacity-60 mb-4">
+                        <p class="text-sm font-light text-[var(--text-muted)] opacity-60 mb-3">
                             Configure up to 3 panic keys. Pressing the specified key (without Shift, Ctrl, or Alt) on any page will redirect you to the URL you set.
                             <br>
                             <span class="text-yellow-400">Valid keys:</span> a-z, 0-9, and &#96; - = [ ] \\ ; ' , . /
@@ -1058,10 +1058,10 @@
 
                 <div class="w-full">
                     <h3 class="text-xl font-bold text-[var(--text-main)] mb-2">School & District</h3>
-                    <div id="schoolSettingsSection" class="settings-box transition-all duration-300 p-6 relative">
+                    <div id="schoolSettingsSection" class="settings-box transition-all duration-300 p-4 relative">
                         <!-- Current View -->
                         <div id="school-current-view">
-                            <p class="text-sm font-light text-[var(--text-muted)] opacity-60 mb-6">
+                            <p class="text-sm font-light text-[var(--text-muted)] opacity-60 mb-4">
                                 Customize your local experience. You can change your school or district up to 2 times per month.
                             </p>
                             
@@ -1127,9 +1127,9 @@
                     </div>
                 </div>
 
-                <div class="w-full mt-8">
+                <div class="w-full mt-5">
                     <h3 class="text-xl font-bold text-[var(--text-main)] mb-2">Activity Presence</h3>
-                    <div id="activityPresenceSection" class="settings-box p-6 space-y-6">
+                    <div id="activityPresenceSection" class="settings-box p-4 space-y-4">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-emphasis">Appear Offline</p>
@@ -1138,7 +1138,7 @@
                             <input type="checkbox" id="showOfflineToggle" class="custom-checkbox w-5 h-5">
                         </div>
 
-                        <div class="flex justify-between items-center pt-4 border-t border-[var(--border-main)]">
+                        <div class="flex justify-between items-center pt-3 border-t border-[var(--border-main)]">
                             <p id="activityPresenceMessage" class="general-message-area text-sm"></p>
                             <button id="saveActivityPresenceBtn" class="btn-toolbar-style btn-primary-override w-36" style="padding: 0.5rem 0.75rem;">
                                 <i class="fa-solid fa-check mr-1"></i> Save
@@ -1155,23 +1155,23 @@
          */
         function getPersonalizationContent() {
              return `
-                <h2 class="text-3xl font-bold text-[var(--text-main)] mb-6">Personalization</h2>
+                <h2 class="text-3xl font-bold text-[var(--text-main)] mb-4">Personalization</h2>
                 
                 <div class="w-full">
                     <!-- THEME SECTION -->
                     <h3 class="text-xl font-bold text-[var(--text-main)] mb-2">Theme Selection</h3>
-                    <div id="themeSection" class="settings-box transition-all duration-300 p-6 mb-8">
-                        <p class="text-sm font-light text-[var(--text-muted)] opacity-70 mb-4">
+                    <div id="themeSection" class="settings-box transition-all duration-300 p-4 mb-5">
+                        <p class="text-sm font-light text-[var(--text-muted)] opacity-70 mb-3">
                             Select a curated theme for 12AM. Your choice is instantly applied across navigation, music, apps, and controls.
                         </p>
                         
                         <div id="theme-picker-container">
-                            <div class="flex items-center justify-center p-8">
+                            <div class="flex items-center justify-center p-6">
                                 <i class="fa-solid fa-spinner fa-spin fa-2x text-[var(--text-muted)] opacity-40"></i>
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-between gap-4 mt-5 pt-4 border-t border-[var(--border-main)]">
+                        <div class="flex items-center justify-between gap-4 mt-4 pt-3 border-t border-[var(--border-main)]">
                             <div>
                                 <p class="text-sm font-medium text-[var(--text-main)]">Song Cover Theme Tint</p>
                                 <p class="text-xs font-light text-[var(--text-muted)] opacity-70">Keep your selected theme, but tint it to the playing song's cover colors and fade back when it ends or closes.</p>
@@ -1184,12 +1184,12 @@
 
                     <!-- CUSTOM THEME CREATOR -->
                     <h3 class="text-xl font-bold text-[var(--text-main)] mb-2">Create Custom Theme</h3>
-                    <div id="customThemeSection" class="settings-box transition-all duration-300 p-6">
-                        <p class="text-sm font-light text-[var(--text-muted)] opacity-70 mb-5">
+                    <div id="customThemeSection" class="settings-box transition-all duration-300 p-4">
+                        <p class="text-sm font-light text-[var(--text-muted)] opacity-70 mb-4">
                             Craft your own custom theme with interactive color wheels. Choose 1 to 3 colors: primary accent is required, while background shade and secondary glow are optional.
                         </p>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                             <!-- Color 1: Primary Accent (Required) -->
                             <div class="relative rounded-2xl border border-[var(--border-main)] bg-[var(--bg-page)] p-4 flex flex-col items-center gap-3">
                                 <div class="w-full flex items-center justify-between">
@@ -1300,22 +1300,24 @@
                     </div>
 
                     <!-- DOCK POSITION -->
-                    <h3 class="text-xl font-bold text-[var(--text-main)] mb-2 mt-8">Dock Position</h3>
-                    <div id="dockPositionSection" class="settings-box transition-all duration-300 p-6 mb-8">
-                        <p class="text-sm font-light text-[var(--text-muted)] opacity-70 mb-4">
-                            Choose whether the 12AM navigation dock floats on the left or right side of your screen. Content alignment and sidebars adapt automatically.
-                        </p>
-                        <div class="flex items-center gap-3">
-                            <button type="button" id="dockPosLeftBtn" class="dock-pos-btn btn-toolbar-style px-5 py-2.5 rounded-xl flex items-center gap-2.5 cursor-pointer">
-                                <i class="fa-solid fa-align-left text-sm"></i>
-                                <span>Left Side (Default)</span>
-                            </button>
-                            <button type="button" id="dockPosRightBtn" class="dock-pos-btn btn-toolbar-style px-5 py-2.5 rounded-xl flex items-center gap-2.5 cursor-pointer">
-                                <i class="fa-solid fa-align-right text-sm"></i>
-                                <span>Right Side</span>
-                            </button>
+                    <h3 class="text-xl font-bold text-[var(--text-main)] mb-2 mt-5">Dock Position</h3>
+                    <div id="dockPositionSection" class="settings-box transition-all duration-300 p-4 mb-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <p class="text-sm font-light text-[var(--text-muted)] opacity-70">
+                                Choose whether the 12AM navigation dock floats on the left or right side of your screen.
+                            </p>
+                            <div class="flex items-center gap-2.5 shrink-0">
+                                <button type="button" id="dockPosLeftBtn" class="dock-pos-btn btn-toolbar-style px-4 py-2 rounded-xl flex items-center gap-2 cursor-pointer text-sm">
+                                    <i class="fa-solid fa-align-left text-xs"></i>
+                                    <span>Left Side</span>
+                                </button>
+                                <button type="button" id="dockPosRightBtn" class="dock-pos-btn btn-toolbar-style px-4 py-2 rounded-xl flex items-center gap-2 cursor-pointer text-sm">
+                                    <i class="fa-solid fa-align-right text-xs"></i>
+                                    <span>Right Side</span>
+                                </button>
+                            </div>
                         </div>
-                        <div id="dockPosMessage" class="general-message-area text-sm mt-3"></div>
+                        <div id="dockPosMessage" class="general-message-area text-sm mt-2"></div>
                     </div>
                 </div>
              `;
@@ -1324,11 +1326,11 @@
         // --- NEW: Generates the HTML for the "Data Management" section ---
         function getDataManagementContent() {
             return `
-                <h2 class="text-3xl font-bold text-[var(--text-main)] mb-6">Data Management</h2>
+                <h2 class="text-3xl font-bold text-[var(--text-main)] mb-4">Data Management</h2>
                 <div class="w-full">
                     <h3 class="text-xl font-bold text-[var(--text-main)] mb-2">Export Data</h3>
-                    <div class="settings-box transition-all duration-300 p-4 mb-8">
-                        <p class="text-sm font-light text-[var(--text-muted)] opacity-60 mb-4">
+                    <div class="settings-box transition-all duration-300 p-4 mb-5">
+                        <p class="text-sm font-light text-[var(--text-muted)] opacity-60 mb-3">
                             Export all your local game data (from LocalStorage and IndexedDB) into a single JSON file.
                             This file can be used as a backup or to transfer your data to another browser.
                         </p>
@@ -1339,7 +1341,7 @@
 
                     <h3 class="text-xl font-bold text-[var(--text-main)] mb-2">Import Data</h3>
                     <div class="settings-box transition-all duration-300 p-4 bg-red-900/10 border-red-700/50">
-                        <p class="text-sm font-light text-red-300 mb-4">
+                        <p class="text-sm font-light text-red-300 mb-3">
                             <i class="fa-solid fa-triangle-exclamation mr-1"></i> 
                             **WARNING:** Importing data will overwrite all existing local game data. This action cannot be undone.
                             Only import a file you have previously exported from this site.
@@ -2089,8 +2091,8 @@
 
     // Animate UI
     // Parent changes layout to row
-    previewWrapper.classList.remove('w-1/2', 'flex-col', 'items-center', 'justify-center');
-    previewWrapper.classList.add('w-full', 'flex-row', 'justify-start', 'items-start', 'gap-x-12', 'pl-16'); 
+    previewWrapper.classList.remove('w-1/2', 'md:w-5/12', 'flex-col', 'justify-center');
+    previewWrapper.classList.add('w-full', 'md:w-full', 'flex-row', 'justify-start', 'items-center', 'gap-x-8', 'px-8'); 
 
     // Explicitly force width and height to be equal to fix pill bug
     const computedHeight = previewContainer.offsetHeight; 
@@ -2112,11 +2114,11 @@
     // --- FIX END ---
 
     // Adjust sliders container
-    slidersContainer.classList.remove('hidden', 'opacity-0', 'max-w-xs', 'w-1/3', 'ml-4');
-    slidersContainer.classList.add('flex', 'opacity-100', 'flex-grow', 'mt-16', 'p-4'); 
+    slidersContainer.classList.remove('hidden', 'opacity-0', 'max-w-xs', 'max-w-[220px]', 'w-1/3', 'ml-4');
+    slidersContainer.classList.add('flex', 'opacity-100', 'flex-1', 'min-w-0', 'p-4'); 
 
-    controlsWrapper.classList.add('translate-x-full', 'w-0', 'overflow-hidden', 'p-0'); 
-    controlsWrapper.classList.remove('translate-x-0', 'w-1/2');
+    controlsWrapper.classList.add('translate-x-full', 'w-0', 'md:w-0', 'overflow-hidden', 'p-0'); 
+    controlsWrapper.classList.remove('translate-x-0', 'w-1/2', 'w-full', 'md:w-7/12');
 
     // Hide "Click preview" text
     macPreviewLabel.classList.add('hidden');
@@ -2175,11 +2177,11 @@
 
                             
 
-                                                        previewWrapper.classList.add('w-1/2', 'flex-col', 'items-center', 'justify-center'); // Revert to default layout
+                                                        previewWrapper.classList.add('w-full', 'md:w-5/12', 'flex-col', 'items-center', 'justify-center'); // Revert to default layout
 
                             
 
-                                                        previewWrapper.classList.remove('w-full', 'flex-row', 'justify-start', 'items-start', 'gap-x-12', 'pl-16');
+                                                        previewWrapper.classList.remove('md:w-full', 'flex-row', 'justify-start', 'items-start', 'gap-x-8', 'gap-x-12', 'px-8', 'pl-16');
 
                             
 
@@ -2223,15 +2225,11 @@
 
                             
 
-                                                        slidersContainer.classList.add('hidden', 'opacity-0', 'max-w-xs');
+                                                        slidersContainer.classList.add('hidden', 'opacity-0', 'max-w-[220px]');
 
                             
 
-                                                        slidersContainer.classList.remove('flex', 'opacity-100', 'flex-grow', 'mt-16', 'p-4'); // Remove dynamic positioning and padding
-
-                            
-
-                                        
+                                                        slidersContainer.classList.remove('flex', 'opacity-100', 'flex-1', 'min-w-0', 'flex-grow', 'mt-16', 'p-4'); // Remove dynamic positioning and padding
 
                             
 
@@ -2239,11 +2237,15 @@
 
                             
 
-                                                        controlsWrapper.classList.remove('translate-x-full', 'w-0', 'overflow-hidden', 'p-0');
+                                        
 
                             
 
-                                                        controlsWrapper.classList.add('translate-x-0', 'w-1/2');
+                                                        controlsWrapper.classList.remove('translate-x-full', 'w-0', 'md:w-0', 'overflow-hidden', 'p-0');
+
+                            
+
+                                                        controlsWrapper.classList.add('translate-x-0', 'w-full', 'md:w-7/12');
 
                             
 

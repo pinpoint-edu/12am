@@ -239,7 +239,7 @@
             // LOGGED IN: Single squircle avatar button with dropdown menu + collapse button
             const displayName = currentUser.firstName ? `${currentUser.firstName} ${currentUser.lastName || ''}`.trim() : currentUser.nickname;
             const handle = currentUser.nickname || 'user';
-            const avatarHtml = renderNavAvatar(currentUser, 32, '12px', '11px');
+            const avatarHtml = renderNavAvatar(currentUser, 38, '13px', '12px');
             const menuAvatarHtml = renderNavAvatar(currentUser, 42, '16px', '14px');
 
             const isCollapsed = localStorage.getItem('12am_sidebar_collapsed') === 'true';
@@ -1690,6 +1690,7 @@
         setupSettingsSecondaryDock();
         setupEdgeSensorAndPeek();
         injectMinimalFooter();
+        if (typeof window.__updateNavbarLogo === 'function') window.__updateNavbarLogo();
     }
 
     // Injected Minimal Footer: Injected on top in bottom right, separate from page flow
