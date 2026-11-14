@@ -442,25 +442,42 @@ function updateLyricsSync(currentTime, force = false) {
         }
     }
 
-    // Fast-path: If active index hasn't changed, skip DOM line re-evaluation
-    if (!force && container._lastActiveIndex === activeIndex) {
+    let pastCount = 0;
+    for (let i = 0; i < parsedLyrics.length; i++) {
+        const item = parsedLyrics[i];
+        const isPastItem = (activeIndex >= 0 && i < activeIndex) ||
+            (activeIndex === -1 && item && item.time !== null && item.time !== undefined &&
+                ((item.endTime && adjustedTime >= item.endTime) || (!item.endTime && adjustedTime > item.time + 0.5)));
+        if (isPastItem) pastCount++;
+    }
+
+    // Fast-path: If active index and played count haven't changed, skip DOM line re-evaluation
+    if (!force && container._lastActiveIndex === activeIndex && container._lastPastCount === pastCount) {
         return;
     }
 
     container._lastActiveIndex = activeIndex;
+    container._lastPastCount = pastCount;
 
     const lineElements = container.querySelectorAll('.lyric-line');
     let activeLineEl = null;
 
     lineElements.forEach((el) => {
         const idx = parseInt(el.dataset.index);
+        const item = !isNaN(idx) ? parsedLyrics[idx] : null;
+        const isPast = (activeIndex >= 0 && idx < activeIndex) ||
+            (activeIndex === -1 && item && item.time !== null && item.time !== undefined &&
+                ((item.endTime && adjustedTime >= item.endTime) || (!item.endTime && adjustedTime > item.time + 0.5)));
+
         if (idx === activeIndex) {
             activeLineEl = el;
             el.classList.add('active');
-            el.classList.remove('next-up');
+            el.classList.remove('next-up', 'past-lyric', 'upcoming-lyric');
         } else {
             el.classList.remove('active');
-            if (idx === activeIndex + 1) {
+            el.classList.toggle('past-lyric', Boolean(isPast));
+            el.classList.toggle('upcoming-lyric', !isPast);
+            if (!isPast && activeIndex >= 0 && idx === activeIndex + 1) {
                 el.classList.add('next-up');
             } else {
                 el.classList.remove('next-up');
@@ -4838,14 +4855,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const npIconHtml = isPlaying
-            ? `<span class="material-symbols-rounded is-filled text-[34px] flex items-center justify-center leading-none text-center">pause</span>`
-            : `<span class="material-symbols-rounded is-filled text-[34px] flex items-center justify-center leading-none text-center ml-0.5">play_arrow</span>`;
+            ? `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="4" width="4.6" height="16" rx="2.3"></rect><rect x="13.9" y="4" width="4.6" height="16" rx="2.3"></rect></svg>`
+            : `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="ml-1"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>`;
         const bpIconHtml = isPlaying
             ? `<span class="material-symbols-rounded is-filled text-[24px] flex items-center justify-center leading-none text-center">pause</span>`
             : `<span class="material-symbols-rounded is-filled text-[24px] flex items-center justify-center leading-none text-center ml-0.5">play_arrow</span>`;
         const lyricsBarIconHtml = isPlaying
-            ? `<span class="material-symbols-rounded is-filled text-[32px] flex items-center justify-center leading-none text-center">pause</span>`
-            : `<span class="material-symbols-rounded is-filled text-[32px] flex items-center justify-center leading-none text-center ml-0.5">play_arrow</span>`;
+            ? `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="4" width="4.6" height="16" rx="2.3"></rect><rect x="13.9" y="4" width="4.6" height="16" rx="2.3"></rect></svg>`
+            : `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="ml-0.5"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>`;
 
         if (npPlayPauseBtn) npPlayPauseBtn.innerHTML = npIconHtml;
         if (bpPlayPauseBtn) bpPlayPauseBtn.innerHTML = bpIconHtml;
@@ -5991,67 +6008,74 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    function applyAppleMusicNowPlayingBg(colors) {
+    function parseThemeCssColorToRgb(colorStr, fallback) {
+        if (!colorStr || typeof colorStr !== 'string') return fallback;
+        const s = colorStr.trim();
+        if (s.startsWith('#')) {
+            const parsed = hexToRgbObj(s);
+            if (parsed) return parsed;
+        }
+        const m = s.match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i);
+        if (m) {
+            return {
+                r: Math.max(0, Math.min(255, Math.round(Number(m[1])))),
+                g: Math.max(0, Math.min(255, Math.round(Number(m[2])))),
+                b: Math.max(0, Math.min(255, Math.round(Number(m[3]))))
+            };
+        }
+        return fallback;
+    }
+
+    function applyAppleMusicNowPlayingBg() {
         const meshEl = document.getElementById('now-playing-mesh');
         const fadeEl = document.getElementById('now-playing-top-safari-fade');
         const bgWrapper = document.getElementById('now-playing-bg-wrapper');
-        if (!meshEl) return;
 
-        const isDark = document.body.classList.contains('dark-mode');
-        const defaultBg = isDark ? '#0c0c0e' : '#FCFBF8';
+        const isDark = document.body.classList.contains('dark-mode') && !document.documentElement.classList.contains('light');
+        const cs = getComputedStyle(document.documentElement);
 
-        if (!colors || colors.length === 0) {
-            if (currentTrack) {
-                colors = [
-                    { r: 245, g: 158, b: 11 },
-                    { r: 234, g: 88, b: 12 },
-                    { r: 217, g: 119, b: 6 },
-                    { r: 251, g: 191, b: 36 }
-                ];
-            } else {
-                meshEl.style.opacity = '0';
-                meshEl.style.background = '';
-                if (fadeEl) fadeEl.style.opacity = '0';
-                if (bgWrapper) bgWrapper.style.backgroundColor = defaultBg;
-                updateNowPlayingIconContrast();
-                return;
-            }
+        const bgPrimary = parseThemeCssColorToRgb(
+            cs.getPropertyValue('--bg-primary'),
+            isDark ? { r: 7, g: 7, b: 9 } : { r: 248, g: 250, b: 252 }
+        );
+        const bgSecondary = parseThemeCssColorToRgb(
+            cs.getPropertyValue('--bg-secondary'),
+            isDark ? { r: 15, g: 15, b: 20 } : { r: 255, g: 255, b: 255 }
+        );
+        const accentPrimary = parseThemeCssColorToRgb(
+            cs.getPropertyValue('--accent-primary'),
+            isDark ? { r: 255, g: 136, b: 0 } : { r: 124, g: 58, b: 237 }
+        );
+        const accentSecondary = parseThemeCssColorToRgb(
+            cs.getPropertyValue('--accent-secondary'),
+            accentPrimary
+        );
+
+        const { h, s, l } = rgbToHsl(accentPrimary.r, accentPrimary.g, accentPrimary.b);
+        const accentShift1 = hslToRgb((h + 24) % 360, Math.max(0.45, s), Math.max(0.38, Math.min(0.68, l)));
+        const accentShift2 = hslToRgb((h + 336) % 360, Math.max(0.45, s), Math.max(0.38, Math.min(0.68, l)));
+
+        if (meshEl) {
+            meshEl.style.background = `
+                radial-gradient(circle at 18% 20%, rgba(${accentPrimary.r}, ${accentPrimary.g}, ${accentPrimary.b}, ${isDark ? '0.42' : '0.32'}) 0%, transparent 60%),
+                radial-gradient(circle at 82% 16%, rgba(${accentShift1.r}, ${accentShift1.g}, ${accentShift1.b}, ${isDark ? '0.34' : '0.26'}) 0%, transparent 58%),
+                radial-gradient(circle at 78% 82%, rgba(${accentSecondary.r}, ${accentSecondary.g}, ${accentSecondary.b}, ${isDark ? '0.30' : '0.22'}) 0%, transparent 60%),
+                radial-gradient(circle at 20% 82%, rgba(${accentShift2.r}, ${accentShift2.g}, ${accentShift2.b}, ${isDark ? '0.28' : '0.20'}) 0%, transparent 58%),
+                radial-gradient(circle at 50% 50%, rgba(${bgSecondary.r}, ${bgSecondary.g}, ${bgSecondary.b}, ${isDark ? '0.45' : '0.35'}) 0%, transparent 70%)
+            `;
+            meshEl.style.opacity = '1';
         }
 
-        const [c1, c2, c3, c4] = colors;
-        meshEl.style.background = `
-            radial-gradient(circle at 18% 20%, rgba(${c1.r}, ${c1.g}, ${c1.b}, ${isDark ? '0.62' : '0.74'}) 0%, transparent 60%),
-            radial-gradient(circle at 82% 16%, rgba(${c2.r}, ${c2.g}, ${c2.b}, ${isDark ? '0.58' : '0.68'}) 0%, transparent 56%),
-            radial-gradient(circle at 78% 82%, rgba(${c3.r}, ${c3.g}, ${c3.b}, ${isDark ? '0.52' : '0.62'}) 0%, transparent 58%),
-            radial-gradient(circle at 20% 82%, rgba(${c4.r}, ${c4.g}, ${c4.b}, ${isDark ? '0.48' : '0.58'}) 0%, transparent 56%),
-            radial-gradient(circle at 50% 50%, rgba(${c1.r}, ${c1.g}, ${c1.b}, ${isDark ? '0.32' : '0.40'}) 0%, transparent 64%)
-        `;
-        meshEl.style.opacity = '1';
-
-        // Use vibrant dominant artwork palette (c1/c2) for the Now Playing top tint so letterboxed thumbnails never wash out to grey/black
-        const topR = Math.round(c1.r * 0.72 + c2.r * 0.28);
-        const topG = Math.round(c1.g * 0.72 + c2.g * 0.28);
-        const topB = Math.round(c1.b * 0.72 + c2.b * 0.28);
-
-        let blendR, blendG, blendB;
-        if (isDark) {
-            blendR = Math.round(topR * 0.72 + 12 * 0.28);
-            blendG = Math.round(topG * 0.72 + 12 * 0.28);
-            blendB = Math.round(topB * 0.72 + 14 * 0.28);
-        } else {
-            blendR = Math.round(topR * 0.82 + 252 * 0.18);
-            blendG = Math.round(topG * 0.82 + 251 * 0.18);
-            blendB = Math.round(topB * 0.82 + 248 * 0.18);
-        }
+        const blendR = Math.round(bgPrimary.r * 0.85 + bgSecondary.r * 0.15);
+        const blendG = Math.round(bgPrimary.g * 0.85 + bgSecondary.g * 0.15);
+        const blendB = Math.round(bgPrimary.b * 0.85 + bgSecondary.b * 0.15);
 
         if (bgWrapper) {
-            bgWrapper.style.backgroundColor = `rgb(${blendR}, ${blendG}, ${blendB})`;
+            bgWrapper.style.backgroundColor = `rgb(${bgPrimary.r}, ${bgPrimary.g}, ${bgPrimary.b})`;
         }
 
         if (fadeEl) {
-            fadeEl.style.background = isDark
-                ? `linear-gradient(180deg, #0c0c0e 0%, rgba(${blendR}, ${blendG}, ${blendB}, 0.78) 42%, transparent 100%)`
-                : `linear-gradient(180deg, #FCFBF8 0%, rgba(${blendR}, ${blendG}, ${blendB}, 0.78) 42%, transparent 100%)`;
+            fadeEl.style.background = `linear-gradient(180deg, rgb(${bgPrimary.r}, ${bgPrimary.g}, ${bgPrimary.b}) 0%, rgba(${blendR}, ${blendG}, ${blendB}, 0.78) 42%, transparent 100%)`;
             fadeEl.style.opacity = '1';
         }
         const topWhiteBlackFade = document.getElementById('now-playing-top-fade');
@@ -6059,10 +6083,10 @@ document.addEventListener('DOMContentLoaded', () => {
             topWhiteBlackFade.style.opacity = '1';
         }
 
-        currentCoverColor = { r: blendR, g: blendG, b: blendB };
-        updateNowPlayingIconContrast(blendR, blendG, blendB);
+        currentCoverColor = { r: bgPrimary.r, g: bgPrimary.g, b: bgPrimary.b };
+        updateNowPlayingIconContrast(bgPrimary.r, bgPrimary.g, bgPrimary.b);
         if (typeof updateSafariThemeTint === 'function') {
-            updateSafariThemeTint(blendR, blendG, blendB, 1.0);
+            updateSafariThemeTint(bgPrimary.r, bgPrimary.g, bgPrimary.b, 1.0);
         }
         if (typeof updateTopNavTint === 'function') {
             updateTopNavTint();
@@ -6072,13 +6096,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateNowPlayingIconContrast(r, g, b) {
         const npContainer = document.getElementById('now-playing-container');
         if (!npContainer) return;
-        let lum = 0.2;
+        const isHtmlLight = document.documentElement.classList.contains('light');
+        let lum = isHtmlLight ? 0.92 : 0.12;
         if (r !== undefined && g !== undefined && b !== undefined) {
             lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
         }
 
-        // Lyrics are white most of the time; only black if the background colors chosen are too bright (high luminance)
-        if (lum >= 0.78) {
+        if (isHtmlLight || lum >= 0.62) {
             npContainer.classList.add('np-bg-light');
             npContainer.classList.remove('np-bg-dark');
         } else {
@@ -6087,6 +6111,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     window.updateNowPlayingIconContrast = updateNowPlayingIconContrast;
+    window.addEventListener('12am:theme-changed', () => applyAppleMusicNowPlayingBg());
+    window.addEventListener('12am:themes-ready', () => applyAppleMusicNowPlayingBg());
+    applyAppleMusicNowPlayingBg();
 
     function applyPlaylistMultiTint(colors) {
         if (!currentPlaylistContextId || currentPlaylistContextId === 'favorites' || currentPlaylistContextId === 'downloaded') {
@@ -10440,7 +10467,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (npVisualizerCanvas && visualizerStyle !== 'glow') {
                     const ctx = npVisualizerCanvas.getContext('2d');
                     const isDark = document.body.classList.contains('dark-mode');
-                    const strokeColor = isDark ? '#f4f4f5' : '#18181b';
+                    const accentCol = getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim();
+                    const strokeColor = accentCol || (isDark ? '#f4f4f5' : '#18181b');
                     drawVisualizerBarsOnContext(ctx, npVisualizerCanvas.width, npVisualizerCanvas.height, visualizerStyle, strokeColor);
                 }
                 if (npArtBox) {

@@ -880,9 +880,6 @@
             const cover = resolveDockCoverUrl(track);
             const title = track?.title || 'Nothing Playing';
             const artist = track?.artist_name || '12AM Music';
-            const dur = Number(state?.duration) || 0;
-            const cur = Number(state?.currentTime) || 0;
-            const pct = dur > 0 ? Math.max(0, Math.min(100, (cur / dur) * 100)) : 0;
 
             return `
                 <div class="sidebar-music-wrapper ${hasTrack ? '' : 'is-empty'} ${isPlaying ? 'is-playing' : ''}" id="sidebarMusicWrapper">
@@ -895,38 +892,26 @@
                         <span class="sidebar-tooltip" id="sidebarMusicTooltip">${escapeHtml(hasTrack ? `${title} — ${artist}` : 'Music Player')}</span>
                     </button>
                     <div class="music-mini-menu-container closed" id="music-mini-menu-container" role="dialog" aria-label="Music Player Controls">
-                        <div class="music-mini-header">
-                            <img id="dockMusicMenuArt" class="music-mini-art" src="${escapeHtml(cover)}" alt="" style="display:${cover ? 'block' : 'none'};" onerror="if(!this.dataset.proxied && this.src && !this.src.includes('proxy-image')){this.dataset.proxied='1';this.src='${prefix}api/music-api?endpoint=proxy-image&url='+encodeURIComponent(this.src);return;}this.style.display='none';">
-                            <div class="music-mini-meta">
-                                <div class="music-mini-title" id="dockMusicMenuTitle">${escapeHtml(title)}</div>
-                                <div class="music-mini-artist" id="dockMusicMenuArtist">${escapeHtml(artist)}</div>
-                                <div class="music-mini-status-badge" id="dockMusicMenuStatus">${isPlaying ? 'Playing' : 'Paused'}</div>
-                            </div>
-                        </div>
-                        <div class="music-mini-progress-track">
-                            <div class="music-mini-progress-fill" id="dockMusicProgressFill" style="width:${pct.toFixed(1)}%"></div>
-                        </div>
                         <div class="music-mini-controls-row">
-                            <button type="button" class="music-mini-ctrl-btn" id="dockMusicPrevBtn" title="Skip Back" aria-label="Skip Back">
+                            <button type="button" class="music-mini-ctrl-btn" id="dockMusicPrevBtn" title="Previous Song" aria-label="Previous Song">
                                 <i class="fa-solid fa-backward-step"></i>
                             </button>
-                            <button type="button" class="music-mini-play-btn" id="dockMusicPlayPauseBtn" title="Play / Pause" aria-label="Play or Pause">
+                            <button type="button" class="music-mini-ctrl-btn music-mini-play-btn" id="dockMusicPlayPauseBtn" title="Play / Pause" aria-label="Play or Pause">
                                 <i class="fa-solid ${isPlaying ? 'fa-pause' : 'fa-play'}" id="dockMusicPlayPauseIcon"></i>
                             </button>
-                            <button type="button" class="music-mini-ctrl-btn" id="dockMusicNextBtn" title="Next Track" aria-label="Next Track">
+                            <button type="button" class="music-mini-ctrl-btn" id="dockMusicNextBtn" title="Next Song" aria-label="Next Song">
                                 <i class="fa-solid fa-forward-step"></i>
                             </button>
+                            <button type="button" class="music-mini-ctrl-btn music-mini-redirect-btn" id="dockMusicRedirectBtn" title="Fast Redirect to Music" aria-label="Fast Redirect to Music">
+                                <i class="fa-solid fa-up-right-from-square"></i>
+                            </button>
                         </div>
-                        <button type="button" class="music-mini-redirect-btn" id="dockMusicRedirectBtn">
-                            <i class="fa-solid fa-bolt"></i>
-                            <span>Fast Redirect to Music</span>
-                        </button>
                     </div>
                 </div>
             `;
         }
 
-        function refreshDockMusicWidgetUI(overrideStatusText) {
+        function refreshDockMusicWidgetUI() {
             const wrapper = document.getElementById('sidebarMusicWrapper');
             if (!wrapper) return;
             const state = readSavedMusicState();
@@ -946,7 +931,6 @@
             const cover = resolveDockCoverUrl(track);
             const coverImg = document.getElementById('sidebarMusicCoverImg');
             const fallbackIcon = document.getElementById('sidebarMusicFallbackIcon');
-            const menuArt = document.getElementById('dockMusicMenuArt');
             if (coverImg) {
                 if (cover) {
                     if (coverImg.getAttribute('src') !== cover) coverImg.src = cover;
@@ -957,50 +941,15 @@
                     if (fallbackIcon) fallbackIcon.style.display = 'inline-flex';
                 }
             }
-            if (menuArt) {
-                if (cover) {
-                    if (menuArt.getAttribute('src') !== cover) menuArt.src = cover;
-                    menuArt.style.display = 'block';
-                } else {
-                    menuArt.style.display = 'none';
-                }
-            }
 
             const title = track.title || 'Unknown Title';
             const artist = track.artist_name || '12AM Music';
             const tooltip = document.getElementById('sidebarMusicTooltip');
-            const titleEl = document.getElementById('dockMusicMenuTitle');
-            const artistEl = document.getElementById('dockMusicMenuArtist');
-            const statusEl = document.getElementById('dockMusicMenuStatus');
             const playIcon = document.getElementById('dockMusicPlayPauseIcon');
-            const fillEl = document.getElementById('dockMusicProgressFill');
 
             if (tooltip) tooltip.textContent = `${title} — ${artist}`;
-            if (titleEl) titleEl.textContent = title;
-            if (artistEl) artistEl.textContent = artist;
             if (playIcon) {
                 playIcon.className = `fa-solid ${livePlaying ? 'fa-pause' : 'fa-play'}`;
-            }
-
-            let curTime = Number(state?.currentTime) || 0;
-            let durTime = Number(state?.duration) || 0;
-            if (!isMusicPage && bgAudio && bgAudio.src) {
-                if (Number.isFinite(bgAudio.currentTime)) curTime = bgAudio.currentTime;
-                if (Number.isFinite(bgAudio.duration) && bgAudio.duration > 0) durTime = bgAudio.duration;
-            }
-            if (fillEl) {
-                const pct = durTime > 0 ? Math.max(0, Math.min(100, (curTime / durTime) * 100)) : 0;
-                fillEl.style.width = `${pct.toFixed(1)}%`;
-            }
-
-            if (statusEl) {
-                if (overrideStatusText) {
-                    statusEl.textContent = overrideStatusText;
-                } else if (window.__12amBgCachedStatus && activeId !== 'music') {
-                    statusEl.textContent = livePlaying ? `Playing • ${window.__12amBgCachedStatus}` : `Paused • ${window.__12amBgCachedStatus}`;
-                } else {
-                    statusEl.textContent = livePlaying ? 'Playing' : 'Paused';
-                }
             }
         }
         window.__refreshDockMusicWidget = refreshDockMusicWidgetUI;
