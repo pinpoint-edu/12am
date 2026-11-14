@@ -838,7 +838,33 @@
             }
         }
 
+        const GAME_DUCK_FACTOR = 0.18;
+        window.__sync12amGameAudioDucking = function(isMusicPlaying) {
+            const ducked = Boolean(isMusicPlaying);
+            window.__12amMusicDuckingActive = ducked;
+            const factor = ducked ? GAME_DUCK_FACTOR : 1.0;
+            const payload = { type: '12AM_GAME_AUDIO_DUCK', ducked, factor };
+            try {
+                const frames = document.querySelectorAll('iframe');
+                frames.forEach((frame) => {
+                    try {
+                        if (frame && frame.contentWindow) {
+                            if (typeof frame.contentWindow.__set12amGameAudioDuck === 'function') {
+                                frame.contentWindow.__set12amGameAudioDuck(ducked, factor);
+                            }
+                            frame.contentWindow.postMessage(payload, '*');
+                        }
+                    } catch (_) {}
+                });
+            } catch (_) {}
+        };
+        try {
+            const initialMusicState = readSavedMusicState();
+            window.__sync12amGameAudioDucking(Boolean(initialMusicState && initialMusicState.isPlaying));
+        } catch (_) {}
+
         function launchMusicAppWithTransition(targetUrl, isFastRedirect) {
+            window.__12amHandingOffToMusic = true;
             try {
                 const existing = document.getElementById('twelveam-music-launch-overlay');
                 if (existing) existing.remove();
@@ -864,6 +890,7 @@
 
                 try {
                     sessionStorage.setItem('12am_music_entry_transition', String(Date.now()));
+                    sessionStorage.setItem('12am_music_autoplay_handoff', '1');
                     if (isFastRedirect) {
                         sessionStorage.setItem('12am_music_fast_redirect', '1');
                     } else {
@@ -1071,7 +1098,9 @@
                     if (!isMusicLink || link.target === '_blank') return;
                     if (activeId === 'music') return;
                     e.preventDefault();
-                    if (window.__saveBgAudioState) window.__saveBgAudioState();
+                    window.__12amHandingOffToMusic = true;
+                    try { sessionStorage.setItem('12am_music_autoplay_handoff', '1'); } catch (_) {}
+                    if (window.__saveBgAudioState) window.__saveBgAudioState(true);
                     const bgEl = document.getElementById('12am-bg-audio-player');
                     if (bgEl && !bgEl.paused) { try { bgEl.pause(); } catch (_) {} }
                     launchMusicAppWithTransition(link.href || `${prefix}music.html`, false);
@@ -1133,7 +1162,9 @@
                         window.__twelveAmMusicController.openNowPlaying();
                         return;
                     }
-                    if (window.__saveBgAudioState) window.__saveBgAudioState();
+                    window.__12amHandingOffToMusic = true;
+                    try { sessionStorage.setItem('12am_music_autoplay_handoff', '1'); } catch (_) {}
+                    if (window.__saveBgAudioState) window.__saveBgAudioState(true);
                     const bgEl = document.getElementById('12am-bg-audio-player');
                     if (bgEl && !bgEl.paused) { try { bgEl.pause(); } catch (_) {} }
                     launchMusicAppWithTransition(`${prefix}music.html#now-playing`, true);
@@ -1291,7 +1322,12 @@
                     window.__12amBgCachedStatus = '';
                     const ytId = await resolveYoutubeIdForTrack(track);
                     if (activeLoadedUid !== uid) return;
-                    if (!ytId) return;
+                    if (!ytId) {
+                        if (typeof window.__sync12amGameAudioDucking === 'function') {
+                            window.__sync12amGameAudioDucking(false);
+                        }
+                        return;
+                    }
                     // Re-check IDB by ytId in case original uid differed from resolved ytId
                     if (ytId !== uid) {
                         const altCached = await getCachedTrackFromIDB(ytId);
@@ -1316,10 +1352,21 @@
                 if (desiredPlaying) {
                     bgAudio.play().then(() => {
                         persistBgAudioState(true);
+                        if (typeof window.__sync12amGameAudioDucking === 'function') {
+                            window.__sync12amGameAudioDucking(true);
+                        }
                     }).catch(() => {
+                        if (typeof window.__sync12amGameAudioDucking === 'function') {
+                            window.__sync12amGameAudioDucking(false);
+                        }
                         const resumeOnInteraction = () => {
                             if (desiredPlaying && bgAudio.paused) {
-                                bgAudio.play().then(() => persistBgAudioState(true)).catch(() => {});
+                                bgAudio.play().then(() => {
+                                    persistBgAudioState(true);
+                                    if (typeof window.__sync12amGameAudioDucking === 'function') {
+                                        window.__sync12amGameAudioDucking(true);
+                                    }
+                                }).catch(() => {});
                             }
                         };
                         document.addEventListener('pointerdown', resumeOnInteraction, { once: true, capture: true });
@@ -1327,6 +1374,9 @@
                         refreshDockMusicWidgetUI('Tap page to resume audio');
                     });
                 } else {
+                    if (typeof window.__sync12amGameAudioDucking === 'function') {
+                        window.__sync12amGameAudioDucking(false);
+                    }
                     refreshDockMusicWidgetUI();
                 }
             }
@@ -1347,10 +1397,18 @@
 
             bgAudio.addEventListener('loadedmetadata', applyPendingSeek);
             bgAudio.addEventListener('canplay', applyPendingSeek);
+            bgAudio.addEventListener('play', () => {
+                if (typeof window.__sync12amGameAudioDucking === 'function') {
+                    window.__sync12amGameAudioDucking(true);
+                }
+            });
             bgAudio.addEventListener('playing', async () => {
                 applyPendingSeek();
                 desiredPlaying = true;
                 persistBgAudioState(true);
+                if (typeof window.__sync12amGameAudioDucking === 'function') {
+                    window.__sync12amGameAudioDucking(true);
+                }
                 // Ensure any playing track on a non-music page gets cached for faster loading
                 const curState = readSavedMusicState();
                 const tr = curState?.track || state.track;
@@ -1360,11 +1418,26 @@
                 }
             });
             bgAudio.addEventListener('pause', () => {
+                if (window.__12amHandingOffToMusic) return;
+                if (typeof window.__sync12amGameAudioDucking === 'function') {
+                    window.__sync12amGameAudioDucking(false);
+                }
                 if (!bgAudio.ended) {
                     persistBgAudioState(false);
                 }
             });
+            const restoreGameAudioOnStop = () => {
+                if (typeof window.__sync12amGameAudioDucking === 'function') {
+                    window.__sync12amGameAudioDucking(false);
+                }
+            };
+            bgAudio.addEventListener('error', restoreGameAudioOnStop);
+            bgAudio.addEventListener('abort', restoreGameAudioOnStop);
+            bgAudio.addEventListener('emptied', restoreGameAudioOnStop);
             bgAudio.addEventListener('timeupdate', () => {
+                if (typeof window.__sync12amGameAudioDucking === 'function') {
+                    window.__sync12amGameAudioDucking(!bgAudio.paused && !bgAudio.ended);
+                }
                 const now = Date.now();
                 if (now - lastPersistAt >= 450 && (!bgAudio.paused || bgAudio.currentTime > 0)) {
                     lastPersistAt = now;
@@ -1372,6 +1445,7 @@
                 }
             });
             bgAudio.addEventListener('ended', () => {
+                restoreGameAudioOnStop();
                 window.__skipBgMusicTrack?.(1);
             });
 
@@ -1427,12 +1501,24 @@
                 await loadTrackIntoBgPlayer(nextTrack, 0, true);
             };
 
-            window.addEventListener('pagehide', () => persistBgAudioState(!bgAudio.paused));
-            window.addEventListener('beforeunload', () => persistBgAudioState(!bgAudio.paused));
+            window.addEventListener('pagehide', () => {
+                if (window.__12amHandingOffToMusic) return;
+                persistBgAudioState(!bgAudio.paused);
+            });
+            window.addEventListener('beforeunload', () => {
+                if (window.__12amHandingOffToMusic) return;
+                persistBgAudioState(!bgAudio.paused);
+            });
 
             if (state.isPlaying) {
+                if (typeof window.__sync12amGameAudioDucking === 'function') {
+                    window.__sync12amGameAudioDucking(true);
+                }
                 loadTrackIntoBgPlayer(state.track, Number(state.currentTime) || 0, true);
             } else {
+                if (typeof window.__sync12amGameAudioDucking === 'function') {
+                    window.__sync12amGameAudioDucking(false);
+                }
                 // Pre-check cache status silently for UI badge
                 const uid = resolveDockTrackUid(state.track);
                 getCachedTrackFromIDB(uid).then((c) => {

@@ -85,12 +85,13 @@
     .search-box {
       display: flex;
       align-items: center;
+      min-height: 54px;
       background: var(--bg-card);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--border-main);
       border-radius: 9999px;
-      padding: 0.65rem 1.25rem;
+      padding: 0.9rem 1.35rem;
       box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2), 0 0 20px var(--accent-glow);
       transition: all 0.25s ease;
     }
@@ -106,7 +107,8 @@
       border: none;
       outline: none;
       color: var(--text-main);
-      font-size: 0.95rem;
+      font-size: 0.98rem;
+      line-height: 1.4;
       font-family: inherit;
       padding: 0 0.5rem;
     }
@@ -1318,11 +1320,17 @@
 
       if ((isLocal || category === 'GN-Math' || category === 'StrongdogXP' || url.includes('pinpoint-edu.github.io') || url.includes('raw.githubusercontent.com') || url.includes('cdn.jsdelivr.net')) && window.playGame) {
         window.playGame(encodeURIComponent(url), encodeURIComponent(title));
+        if (typeof window.__sync12amGameAudioDucking === 'function') {
+          setTimeout(() => window.__sync12amGameAudioDucking(Boolean(window.__12amMusicDuckingActive)), 150);
+        }
         return;
       }
 
       iframe.removeAttribute('srcdoc');
       iframe.src = url;
+      if (typeof window.__sync12amGameAudioDucking === 'function') {
+        setTimeout(() => window.__sync12amGameAudioDucking(Boolean(window.__12amMusicDuckingActive)), 150);
+      }
     }
 
     function closePlayer() {
@@ -1333,6 +1341,9 @@
       iframe.removeAttribute('src');
       iframe.removeAttribute('srcdoc');
       iframe.src = 'about:blank';
+      if (typeof window.__sync12amGameAudioDucking === 'function') {
+        window.__sync12amGameAudioDucking(Boolean(window.__12amMusicDuckingActive));
+      }
     }
 
     function reloadCurrentGame() {
@@ -1353,7 +1364,17 @@
       }
     }
 
-    document.addEventListener('DOMContentLoaded', initGamesHub);
+    document.addEventListener('DOMContentLoaded', () => {
+      initGamesHub();
+      const iframe = document.getElementById('gameIframe');
+      if (iframe) {
+        iframe.addEventListener('load', () => {
+          if (typeof window.__sync12amGameAudioDucking === 'function') {
+            window.__sync12amGameAudioDucking(Boolean(window.__12amMusicDuckingActive));
+          }
+        });
+      }
+    });
   </script>
 </body>
 </html>

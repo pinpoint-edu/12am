@@ -707,6 +707,110 @@ function rewriteHtml(html, finalUrl, webEndpoint, hostOrigin, isEmbed = false) {
     window.location.href = isWrapped(rawHref) ? rawHref : wrapBrowse(rawHref);
   }, true);
 
+  (function() {
+    if (window.__12amGameAudioDuckInstalled) return;
+    window.__12amGameAudioDuckInstalled = true;
+    var _ducked = false;
+    var _duckFactor = 1.0;
+    var _ctxs = [];
+    var _mediaEls = [];
+    var _volDesc = window.HTMLMediaElement ? Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, "volume") : null;
+    function trackMedia(el) {
+      if (!el || el.id === "12am-bg-audio-player") return;
+      if (_mediaEls.indexOf(el) === -1) _mediaEls.push(el);
+    }
+    function applyMedia(el) {
+      if (!el || el.id === "12am-bg-audio-player" || !_volDesc || !_volDesc.set || !_volDesc.get) return;
+      trackMedia(el);
+      if (typeof el._tbNominalVol !== "number") {
+        try { el._tbNominalVol = _volDesc.get.call(el); } catch(e) { el._tbNominalVol = 1; }
+      }
+      try { _volDesc.set.call(el, Math.max(0, Math.min(1, el._tbNominalVol * _duckFactor))); } catch(e) {}
+    }
+    function applyCtx(ctx) {
+      if (!ctx || !ctx.__12amMasterGain) return;
+      try {
+        var g = ctx.__12amMasterGain.gain;
+        if (typeof g.setTargetAtTime === "function") {
+          try { g.cancelScheduledValues(ctx.currentTime || 0); } catch(e) {}
+          g.setTargetAtTime(_duckFactor, ctx.currentTime || 0, 0.04);
+        } else {
+          g.value = _duckFactor;
+        }
+      } catch(e) { try { ctx.__12amMasterGain.gain.value = _duckFactor; } catch(e2) {} }
+    }
+    function setDuck(ducked, factor) {
+      _ducked = Boolean(ducked);
+      _duckFactor = _ducked ? (typeof factor === "number" && factor >= 0 && factor <= 1 ? factor : 0.18) : 1.0;
+      for (var i = 0; i < _ctxs.length; i++) applyCtx(_ctxs[i]);
+      try {
+        var domMedia = document.querySelectorAll("audio,video");
+        for (var j = 0; j < domMedia.length; j++) trackMedia(domMedia[j]);
+      } catch(e) {}
+      for (var k = 0; k < _mediaEls.length; k++) applyMedia(_mediaEls[k]);
+    }
+    window.__set12amGameAudioDuck = setDuck;
+    try {
+      if (window.AudioNode && AudioNode.prototype && AudioNode.prototype.connect) {
+        var _origConnect = AudioNode.prototype.connect;
+        AudioNode.prototype.connect = function(target) {
+          try {
+            var ctx = (target && target.context) || this.context;
+            if (ctx && target === ctx.destination && this !== ctx.__12amMasterGain) {
+              if (!ctx.__12amMasterGain) {
+                var gain = typeof ctx.createGain === "function" ? ctx.createGain() : (typeof ctx.createGainNode === "function" ? ctx.createGainNode() : null);
+                if (gain) {
+                  ctx.__12amMasterGain = gain;
+                  gain.gain.value = _duckFactor;
+                  if (_ctxs.indexOf(ctx) === -1) _ctxs.push(ctx);
+                  _origConnect.call(gain, ctx.destination);
+                }
+              }
+              if (ctx.__12amMasterGain) {
+                var args = Array.prototype.slice.call(arguments);
+                args[0] = ctx.__12amMasterGain;
+                return _origConnect.apply(this, args);
+              }
+            }
+          } catch(e) {}
+          return _origConnect.apply(this, arguments);
+        };
+      }
+    } catch(e) {}
+    try {
+      if (_volDesc && _volDesc.configurable && _volDesc.get && _volDesc.set) {
+        Object.defineProperty(HTMLMediaElement.prototype, "volume", {
+          configurable: true,
+          get: function() { return typeof this._tbNominalVol === "number" ? this._tbNominalVol : _volDesc.get.call(this); },
+          set: function(v) {
+            if (this.id === "12am-bg-audio-player") return _volDesc.set.call(this, v);
+            var nv = Math.max(0, Math.min(1, Number(v) || 0));
+            this._tbNominalVol = nv;
+            trackMedia(this);
+            return _volDesc.set.call(this, Math.max(0, Math.min(1, nv * _duckFactor)));
+          }
+        });
+      }
+      if (window.HTMLMediaElement && HTMLMediaElement.prototype && HTMLMediaElement.prototype.play) {
+        var _origMediaPlay = HTMLMediaElement.prototype.play;
+        HTMLMediaElement.prototype.play = function() {
+          applyMedia(this);
+          return _origMediaPlay.apply(this, arguments);
+        };
+      }
+    } catch(e) {}
+    window.addEventListener("message", function(e) {
+      if (e && e.data && e.data.type === "12AM_GAME_AUDIO_DUCK") {
+        setDuck(e.data.ducked, e.data.factor);
+      }
+    });
+    try {
+      if (window.parent && window.parent !== window && window.parent.__12amMusicDuckingActive) {
+        setDuck(true, 0.18);
+      }
+    } catch(e) {}
+  })();
+
   document.addEventListener("submit", function(e) {
     var form = e.target;
     if (!form || form.tagName !== "FORM") return;

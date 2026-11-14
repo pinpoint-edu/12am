@@ -897,10 +897,24 @@
             }
         }
 
-        /* Ensure bottom player is NEVER visible when in lyrics mode or when floating lyrics bar is active */
-        body[data-page="now-playing"].np-lyrics-open #bottom-player,
+        /* On mobile (<640px), swap bottom player for floating lyrics pill; on desktop keep bottom bar visible */
         body[data-page="now-playing"]:has(#np-lyrics-floating-bar:not(.hidden)) #bottom-player {
             display: none !important;
+        }
+
+        /* Fullscreen Lyrics Mode: Fade bottom bar & hide cursor only when cursor is idle */
+        body[data-page="now-playing"].np-lyrics-open #bottom-player {
+            transition: opacity 0.4s ease, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), width 0.75s var(--parabola-ease), max-width 0.75s var(--parabola-ease), height 0.35s var(--parabola-ease), box-shadow 0.35s var(--parabola-ease) !important;
+        }
+        html body[data-page="now-playing"].np-lyrics-open.np-lyrics-cursor-idle,
+        html body[data-page="now-playing"].np-lyrics-open.np-lyrics-cursor-idle * {
+            cursor: none !important;
+        }
+        html body[data-page="now-playing"].np-lyrics-open.np-lyrics-cursor-idle #bottom-player,
+        html body[data-page="now-playing"].np-lyrics-open.np-lyrics-cursor-idle #np-lyrics-floating-bar {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: translate(-50%, 18px) !important;
         }
 
         /* Top Page Fade — Smooth Creme (Light) / Black (Dark) Fade for Now Playing Mobile Only */
@@ -4501,6 +4515,8 @@
                     if (bp) {
                         bp.classList.remove('!hidden');
                     }
+                    document.body.classList.remove('np-lyrics-cursor-idle');
+                    if (typeof window.resetNowPlayingIdleTimer === 'function') window.resetNowPlayingIdleTimer();
                 }
 
                 // Update nav links: map album and artist to library
