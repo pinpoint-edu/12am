@@ -2180,6 +2180,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Search Logic & Category Tabs
     let searchTimeout;
+    let lastCompletedSearchQuery = '';
+    let searchRequestSeq = 0;
+    let currentSearchAbortController = null;
+    const inMemorySearchCache = new Map();
     const searchTabsContainer = document.getElementById('search-tabs-container');
     let currentSearchTab = 'all';
     let currentSearchData = { tracks: [], albums: [], artists: [], playlists: [] };
@@ -2337,10 +2341,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Logo Click -> Return to Home
     // ==========================================
     function returnToHomeScreen() {
+        clearTimeout(searchTimeout);
+        searchRequestSeq++;
+        if (currentSearchAbortController) {
+            try { currentSearchAbortController.abort(); } catch (_) {}
+            currentSearchAbortController = null;
+        }
         if (searchInput) {
             searchInput.value = '';
         }
         currentSearchQuery = '';
+        lastCompletedSearchQuery = '';
         document.body.classList.remove('is-searching');
         if (searchTabsContainer) {
             searchTabsContainer.classList.add('hidden');
@@ -2385,6 +2396,10 @@ document.addEventListener('DOMContentLoaded', () => {
         searchInput.addEventListener('input', (e) => {
             clearTimeout(clearCollapseTimeout);
             const val = e.target.value.trim();
+            if (currentSearchAbortController) {
+                try { currentSearchAbortController.abort(); } catch (_) {}
+                currentSearchAbortController = null;
+            }
             if (val.length > 0) {
                 document.body.classList.add('is-searching');
                 hideRecentSearches();
@@ -2397,11 +2412,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 searchTimeout = setTimeout(() => {
                     currentSearchQuery = val;
                     searchOffset = 0;
+                    if (
+                        lastCompletedSearchQuery &&
+                        val.toLowerCase() === lastCompletedSearchQuery.toLowerCase() &&
+                        searchResults &&
+                        searchResults.children.length > 0 &&
+                        !searchResults.querySelector('[data-search-loading]')
+                    ) {
+                        return;
+                    }
                     performSearch(val, true);
                 }, 450);
             } else {
                 clearTimeout(searchTimeout);
+                searchRequestSeq++;
                 currentSearchQuery = '';
+                lastCompletedSearchQuery = '';
                 document.body.classList.remove('is-searching');
                 const ps = document.getElementById('page-search');
                 if (ps) ps.scrollTop = 0;
@@ -2455,18 +2481,58 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function performSearch(query, clear) {
-        isLoadingMore = true;
-        if (clear) {
-            searchResults.innerHTML = '<div class="text-[11px] font-semibold text-zinc-400 uppercase tracking-widest text-left w-full mb-1 pl-5">Searching YouTube Music…</div>';
-            if (query && query.trim().length >= 2) {
-                saveRecentSearch(query.trim());
+        const cleanQuery = String(query || '').trim();
+        const normQuery = cleanQuery.toLowerCase();
+
+        if (clear && searchResults) {
+            if (
+                lastCompletedSearchQuery &&
+                normQuery === lastCompletedSearchQuery.toLowerCase() &&
+                searchResults.children.length > 0 &&
+                !searchResults.querySelector('[data-search-loading]')
+            ) {
+                isLoadingMore = false;
+                return;
+            }
+            if (inMemorySearchCache.has(normQuery)) {
+                const cached = inMemorySearchCache.get(normQuery);
+                currentSearchData = {
+                    tracks: [...(cached.tracks || [])],
+                    albums: [...(cached.albums || [])],
+                    artists: [...(cached.artists || [])],
+                    playlists: [...(cached.playlists || [])]
+                };
+                lastCompletedSearchQuery = cleanQuery;
+                isLoadingMore = false;
+                if (cleanQuery.length >= 2) {
+                    saveRecentSearch(cleanQuery);
+                }
+                renderSearchResults();
+                return;
             }
         }
-        
+
+        const reqSeq = ++searchRequestSeq;
+        if (clear && currentSearchAbortController) {
+            try { currentSearchAbortController.abort(); } catch (_) {}
+        }
+        const abortController = new AbortController();
+        currentSearchAbortController = abortController;
+
+        isLoadingMore = true;
+        if (clear && searchResults) {
+            if (searchResults.children.length === 0) {
+                searchResults.innerHTML = '<div data-search-loading="1" class="text-[11px] font-semibold text-zinc-400 uppercase tracking-widest text-left w-full mb-1 pl-5">Searching YouTube Music…</div>';
+            }
+        }
+
         try {
-            const res = await fetch(`${API_BASE}?endpoint=search&q=${encodeURIComponent(query)}&limit=25&offset=${searchOffset}`);
+            const res = await fetch(`${API_BASE}?endpoint=search&q=${encodeURIComponent(cleanQuery)}&limit=25&offset=${searchOffset}`, {
+                signal: abortController.signal
+            });
             const data = await res.json();
-            
+            if (reqSeq !== searchRequestSeq) return;
+
             if (clear) {
                 const rawAlbums = Array.isArray(data.albums) ? data.albums : [];
                 const filteredAlbums = rawAlbums.filter(alb => {
@@ -2488,19 +2554,42 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     });
                 }
+                if (searchOffset === 0) {
+                    if (inMemorySearchCache.size >= 30) {
+                        const oldestKey = inMemorySearchCache.keys().next().value;
+                        inMemorySearchCache.delete(oldestKey);
+                    }
+                    inMemorySearchCache.set(normQuery, {
+                        tracks: [...currentSearchData.tracks],
+                        albums: [...currentSearchData.albums],
+                        artists: [...currentSearchData.artists],
+                        playlists: [...currentSearchData.playlists]
+                    });
+                }
+                lastCompletedSearchQuery = cleanQuery;
+                if (cleanQuery.length >= 2) {
+                    saveRecentSearch(cleanQuery);
+                }
             } else if (data && Array.isArray(data.tracks) && data.tracks.length > 0) {
                 // Append more tracks if in infinite scroll
                 const existingVids = new Set(currentSearchData.tracks.map(t => t.youtube_id || t.id));
                 const newTracks = data.tracks.filter(t => !existingVids.has(t.youtube_id || t.id));
                 currentSearchData.tracks.push(...newTracks);
             }
-            
+
             renderSearchResults();
         } catch (e) {
+            if (e && e.name === 'AbortError') return;
+            if (reqSeq !== searchRequestSeq) return;
             console.error('Search error:', e);
-            if (clear) searchResults.innerHTML = '<div class="text-xs text-red-400 pl-5 py-4">Failed to load results.</div>';
+            if (clear && searchResults) searchResults.innerHTML = '<div class="text-xs text-red-400 pl-5 py-4">Failed to load results.</div>';
         } finally {
-            isLoadingMore = false;
+            if (reqSeq === searchRequestSeq) {
+                isLoadingMore = false;
+            }
+            if (currentSearchAbortController === abortController) {
+                currentSearchAbortController = null;
+            }
         }
     }
 
@@ -4848,15 +4937,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const npIconHtml = isPlaying
-            ? `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="4" width="4.6" height="16" rx="2.3"></rect><rect x="13.9" y="4" width="4.6" height="16" rx="2.3"></rect></svg>`
-            : `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="ml-1"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>`;
+        const fsPlayIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="ml-0.5"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>`;
+        const fsPauseIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="4.5" width="3.8" height="15" rx="1.9"></rect><rect x="14.2" y="4.5" width="3.8" height="15" rx="1.9"></rect></svg>`;
+        const npIconHtml = isPlaying ? fsPauseIcon : fsPlayIcon;
         const bpIconHtml = isPlaying
             ? `<span class="material-symbols-rounded is-filled text-[24px] flex items-center justify-center leading-none text-center">pause</span>`
             : `<span class="material-symbols-rounded is-filled text-[24px] flex items-center justify-center leading-none text-center ml-0.5">play_arrow</span>`;
-        const lyricsBarIconHtml = isPlaying
-            ? `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="4" width="4.6" height="16" rx="2.3"></rect><rect x="13.9" y="4" width="4.6" height="16" rx="2.3"></rect></svg>`
-            : `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="ml-0.5"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>`;
+        const lyricsBarIconHtml = isPlaying ? fsPauseIcon : fsPlayIcon;
 
         if (npPlayPauseBtn) npPlayPauseBtn.innerHTML = npIconHtml;
         if (bpPlayPauseBtn) bpPlayPauseBtn.innerHTML = bpIconHtml;

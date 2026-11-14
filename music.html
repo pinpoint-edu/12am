@@ -1103,7 +1103,7 @@
                 padding-left: 16px;
                 padding-right: 16px;
                 transform: translate(-50%, -4px);
-                box-shadow: 0 20px 45px rgba(0, 0, 0, 0.12), 0 4px 14px rgba(0, 0, 0, 0.05);
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
                 border-color: rgba(212, 212, 216, 0.95);
             }
         }
@@ -2348,9 +2348,20 @@
         #bottom-player {
             background: var(--bg-secondary, rgba(14, 14, 18, 0.95)) !important;
             border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.12)) !important;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.85), 0 0 20px var(--accent-secondary, rgba(255, 136, 0, 0.18)) !important;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22) !important;
             backdrop-filter: blur(24px) !important;
             -webkit-backdrop-filter: blur(24px) !important;
+        }
+        #bottom-player.group:hover,
+        #bottom-player:not(.is-loading):hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28) !important;
+        }
+        html.light #bottom-player {
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08) !important;
+        }
+        html.light #bottom-player.group:hover,
+        html.light #bottom-player:not(.is-loading):hover {
+            box-shadow: 0 6px 20px rgba(15, 23, 42, 0.12) !important;
         }
 
         #bottom-player-title {
@@ -2525,7 +2536,6 @@
         html.light #lyrics-bar-play-pause svg {
             color: #ffffff !important;
             fill: currentColor !important;
-            stroke: currentColor !important;
         }
 
         /* =====================================================================
@@ -2581,9 +2591,9 @@
 
         #now-playing-container #now-playing-play-pause,
         #np-lyrics-floating-bar #lyrics-bar-play-pause {
-            width: 60px !important;
-            height: 60px !important;
-            border-radius: 22px !important;
+            width: 52px !important;
+            height: 52px !important;
+            border-radius: 18px !important;
             background: var(--accent-primary) !important;
             border: 1px solid var(--border-primary) !important;
             color: #ffffff !important;
@@ -2591,8 +2601,9 @@
         }
 
         #np-lyrics-floating-bar #lyrics-bar-play-pause {
-            width: 54px !important;
-            height: 54px !important;
+            width: 48px !important;
+            height: 48px !important;
+            border-radius: 16px !important;
         }
 
         #now-playing-container #now-playing-play-pause:hover,
@@ -2602,9 +2613,10 @@
 
         #now-playing-container #now-playing-play-pause svg,
         #np-lyrics-floating-bar #lyrics-bar-play-pause svg {
+            width: 24px !important;
+            height: 24px !important;
             color: #ffffff !important;
             fill: currentColor !important;
-            stroke: currentColor !important;
         }
 
         #now-playing-container #now-playing-fav-btn,
@@ -3231,7 +3243,7 @@
                         <span class="material-symbols-rounded text-[22px]">skip_previous</span>
                     </button>
                     <button id="now-playing-play-pause" class="flex items-center justify-center w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-black/45 dark:bg-white/25 hover:bg-black/60 dark:hover:bg-white/35 backdrop-blur-2xl text-white dark:text-zinc-900 border border-white/30 dark:border-white/40 shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0" title="Play / Pause">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="ml-1"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="ml-0.5"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
                     </button>
                     <button id="now-playing-next" class="bubbly-hover flex items-center justify-center w-10 h-10 rounded-full bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 backdrop-blur-xl border border-black/10 dark:border-white/15 shadow-xs hover:scale-105 active:scale-95 transition-all text-current cursor-pointer shrink-0" title="Next Track">
                         <span class="material-symbols-rounded text-[22px]">skip_next</span>
@@ -3323,7 +3335,7 @@
 
             <!-- Play / Pause Button -->
             <button id="lyrics-bar-play-pause" class="flex items-center justify-center w-12 h-12 rounded-full bg-black/45 dark:bg-white/25 hover:bg-black/60 dark:hover:bg-white/35 backdrop-blur-2xl text-white dark:text-zinc-900 border border-white/30 dark:border-white/40 shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0" title="Play / Pause">
-                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="ml-0.5"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="ml-0.5"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
             </button>
 
             <!-- Next Track -->

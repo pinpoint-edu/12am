@@ -327,6 +327,13 @@
                     moreMenu.classList.add('closed');
                     if (moreToggle) moreToggle.classList.remove('active');
                 }
+                const musicMenu = document.getElementById('music-mini-menu-container');
+                const musicToggle = document.getElementById('sidebarMusicToggle');
+                if (musicMenu && musicMenu.classList.contains('open')) {
+                    musicMenu.classList.remove('open');
+                    musicMenu.classList.add('closed');
+                    if (musicToggle) musicToggle.classList.remove('active');
+                }
                 const isOpen = menu.classList.contains('open');
                 if (isOpen) {
                     menu.classList.remove('open');
@@ -454,6 +461,13 @@
                     authMenu.classList.remove('open');
                     authMenu.classList.add('closed');
                     if (authToggle) authToggle.classList.remove('active');
+                }
+                const musicMenu = document.getElementById('music-mini-menu-container');
+                const musicToggle = document.getElementById('sidebarMusicToggle');
+                if (musicMenu && musicMenu.classList.contains('open')) {
+                    musicMenu.classList.remove('open');
+                    musicMenu.classList.add('closed');
+                    if (musicToggle) musicToggle.classList.remove('active');
                 }
                 const isOpen = moreMenu.classList.contains('open');
                 if (isOpen) {
@@ -967,24 +981,49 @@
                     menuEl.classList.remove('open');
                     menuEl.classList.add('closed');
                 }
+                if (toggleBtn) toggleBtn.classList.remove('active');
             };
+
+            let musicHoverTimer = null;
+            const closeMusicIfHoverAway = () => {
+                clearTimeout(musicHoverTimer);
+                musicHoverTimer = setTimeout(() => {
+                    const isHoveringMenu = menuEl && menuEl.matches(':hover');
+                    const isHoveringToggle = toggleBtn && toggleBtn.matches(':hover');
+                    if (!isHoveringMenu && !isHoveringToggle && menuEl && menuEl.classList.contains('open')) {
+                        closeMusicMenu();
+                    }
+                }, 250);
+            };
+
+            if (menuEl) {
+                menuEl.addEventListener('mouseleave', closeMusicIfHoverAway);
+                menuEl.addEventListener('mouseenter', () => clearTimeout(musicHoverTimer));
+            }
 
             if (toggleBtn && menuEl) {
                 toggleBtn.onclick = (e) => {
                     e.stopPropagation();
                     const isOpen = menuEl.classList.contains('open');
                     const authMenu = document.getElementById('auth-menu-container');
+                    const authToggleEl = document.getElementById('sidebarAuthToggle');
                     const moreMenu = document.getElementById('more-menu-container');
+                    const moreToggleEl = document.getElementById('sidebarMoreToggle');
                     if (authMenu) { authMenu.classList.remove('open'); authMenu.classList.add('closed'); }
+                    if (authToggleEl) authToggleEl.classList.remove('active');
                     if (moreMenu) { moreMenu.classList.remove('open'); moreMenu.classList.add('closed'); }
+                    if (moreToggleEl) moreToggleEl.classList.remove('active');
                     if (isOpen) {
                         closeMusicMenu();
                     } else {
                         refreshDockMusicWidgetUI();
                         menuEl.classList.remove('closed');
                         menuEl.classList.add('open');
+                        toggleBtn.classList.add('active');
                     }
                 };
+                toggleBtn.addEventListener('mouseleave', closeMusicIfHoverAway);
+                toggleBtn.addEventListener('mouseenter', () => clearTimeout(musicHoverTimer));
             }
 
             const authToggle = document.getElementById('sidebarAuthToggle');
@@ -994,12 +1033,32 @@
 
             if (!window.__12amMusicDocListenersBound) {
                 window.__12amMusicDocListenersBound = true;
+                document.addEventListener('mousemove', (e) => {
+                    const menu = document.getElementById('music-mini-menu-container');
+                    const toggle = document.getElementById('sidebarMusicToggle');
+                    if (!menu || !toggle || !menu.classList.contains('open')) return;
+                    const menuRect = menu.getBoundingClientRect();
+                    const toggleRect = toggle.getBoundingClientRect();
+                    const distToRect = (r) => {
+                        const dx = Math.max(r.left - e.clientX, 0, e.clientX - r.right);
+                        const dy = Math.max(r.top - e.clientY, 0, e.clientY - r.bottom);
+                        return Math.hypot(dx, dy);
+                    };
+                    if (Math.min(distToRect(menuRect), distToRect(toggleRect)) > 85) {
+                        menu.classList.remove('open');
+                        menu.classList.add('closed');
+                        toggle.classList.remove('active');
+                    }
+                }, { passive: true });
+
                 document.addEventListener('click', (e) => {
                     const wrap = document.getElementById('sidebarMusicWrapper');
                     const menu = document.getElementById('music-mini-menu-container');
+                    const toggle = document.getElementById('sidebarMusicToggle');
                     if (menu && wrap && !wrap.contains(e.target)) {
                         menu.classList.remove('open');
                         menu.classList.add('closed');
+                        if (toggle) toggle.classList.remove('active');
                     }
                 });
 
@@ -1099,9 +1158,11 @@
                 bgAudio = document.createElement('audio');
                 bgAudio.id = '12am-bg-audio-player';
                 bgAudio.preload = 'auto';
-                bgAudio.crossOrigin = 'anonymous';
+                bgAudio.removeAttribute('crossorigin');
                 bgAudio.style.display = 'none';
                 document.body.appendChild(bgAudio);
+            } else {
+                bgAudio.removeAttribute('crossorigin');
             }
 
             const inflightCacheDownloads = new Set();
@@ -1156,8 +1217,20 @@
                     refreshDockMusicWidgetUI();
 
                     const dlUrl = `${prefix}api/music-api?endpoint=download&id=${encodeURIComponent(ytId)}&format=${encodeURIComponent(fmt)}&v=2`;
-                    const audioRes = await fetch(dlUrl);
-                    if (!audioRes.ok) throw new Error(`HTTP ${audioRes.status}`);
+                    let audioRes = await fetch(dlUrl).catch(() => null);
+                    if (!audioRes || !audioRes.ok) {
+                        try {
+                            const resolveRes = await fetch(`${prefix}api/music-api?endpoint=resolve_audio&id=${encodeURIComponent(ytId)}&format=${encodeURIComponent(fmt)}&v=2`);
+                            if (resolveRes.ok) {
+                                const info = await resolveRes.json();
+                                const corsSafeUrl = info?.issuerUrl || info?.proxiedUrl || (Array.isArray(info?.companionUrls) ? info.companionUrls[0] : null);
+                                if (corsSafeUrl) {
+                                    audioRes = await fetch(corsSafeUrl).catch(() => null);
+                                }
+                            }
+                        } catch (_) {}
+                    }
+                    if (!audioRes || !audioRes.ok) throw new Error(`HTTP ${audioRes ? audioRes.status : 'network'}`);
                     const audioBlob = await audioRes.blob();
                     if (!audioBlob || audioBlob.size < 1024) throw new Error('Empty audio blob');
 

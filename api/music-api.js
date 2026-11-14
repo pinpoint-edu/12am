@@ -1792,21 +1792,32 @@ async function resolveAudioStreamFallback(videoId, requestedFormat = 'auto') {
 
             const rawUrl = chosenFormat.url;
             const resolvedItag = chosenFormat.itag || defaultItag;
+            let issuerUrl = null;
             let proxiedUrl = rawUrl;
-            try {
-                const u = new URL(rawUrl);
-                if (u.hostname.includes('googlevideo.com')) {
-                    proxiedUrl = `${inst}${u.pathname}${u.search}`;
-                }
-            } catch (_) {}
-
             const companionUrls = [];
             if (process.env.CF_WORKER_URL) {
                 companionUrls.push(`${process.env.CF_WORKER_URL}?id=${encodeURIComponent(videoId)}&mode=stream`);
             }
+            try {
+                const u = new URL(rawUrl);
+                if (u.hostname.includes('googlevideo.com')) {
+                    const issuer = u.searchParams.get('issuer');
+                    if (issuer && /^[a-zA-Z0-9.-]+$/.test(issuer)) {
+                        issuerUrl = `https://${issuer}${u.pathname}${u.search}`;
+                        proxiedUrl = issuerUrl;
+                    } else {
+                        proxiedUrl = `${inst}${u.pathname}${u.search}`;
+                    }
+                    const instProxyUrl = `${inst}${u.pathname}${u.search}`;
+                    if (instProxyUrl !== proxiedUrl) {
+                        companionUrls.push(instProxyUrl);
+                    }
+                }
+            } catch (_) {}
 
             return {
                 directUrl: rawUrl,
+                issuerUrl: issuerUrl,
                 proxiedUrl: proxiedUrl,
                 latestVersionUrl: `${inst}/latest_version?id=${encodeURIComponent(videoId)}&itag=${encodeURIComponent(resolvedItag)}&local=true`,
                 companionUrls: companionUrls,
@@ -1838,28 +1849,43 @@ async function resolveAudioStream(videoId, requestedFormat = 'auto') {
 
 async function openUpstreamAudioStream(streamInfo, upstreamHeaders) {
     const candidates = [];
-    if (streamInfo.directUrl) candidates.push(streamInfo.directUrl);
+    if (streamInfo.winningUrl) candidates.push(streamInfo.winningUrl);
+    if (streamInfo.issuerUrl) candidates.push(streamInfo.issuerUrl);
+    if (streamInfo.proxiedUrl) candidates.push(streamInfo.proxiedUrl);
     if (Array.isArray(streamInfo.companionUrls)) candidates.push(...streamInfo.companionUrls);
-    if (streamInfo.proxiedUrl && streamInfo.proxiedUrl !== streamInfo.directUrl) candidates.push(streamInfo.proxiedUrl);
     if (streamInfo.latestVersionUrl) candidates.push(streamInfo.latestVersionUrl);
+    if (streamInfo.directUrl) candidates.push(streamInfo.directUrl);
 
     const unique = [...new Set(candidates.filter(Boolean))];
     if (unique.length === 0) return null;
 
+    const headersWithUA = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        ...(upstreamHeaders || {})
+    };
+
     const abortControllers = unique.map(() => new AbortController());
+    const timers = [];
     try {
         const winning = await Promise.any(unique.map(async (url, idx) => {
+            const ac = abortControllers[idx];
+            const timer = setTimeout(() => {
+                try { ac.abort(); } catch (_) {}
+            }, 5500);
+            timers.push(timer);
             const res = await fetch(url, {
-                headers: upstreamHeaders,
-                signal: AbortSignal.any([AbortSignal.timeout(4500), abortControllers[idx].signal])
+                headers: headersWithUA,
+                signal: ac.signal
             });
             const ct = (res.headers.get('content-type') || '').toLowerCase();
             if ((res.ok || res.status === 206) && !ct.includes('text/html')) {
                 return { res, idx };
             }
+            try { res.body?.cancel?.(); } catch (_) {}
             throw new Error(`Failed ${url}: HTTP ${res.status} (${ct})`);
         }));
 
+        timers.forEach(t => clearTimeout(t));
         abortControllers.forEach((ac, idx) => {
             if (idx !== winning.idx) {
                 try { ac.abort(); } catch (_) {}
@@ -1867,14 +1893,31 @@ async function openUpstreamAudioStream(streamInfo, upstreamHeaders) {
         });
 
         if (winning.res && winning.res.url) {
-            streamInfo.directUrl = winning.res.url;
+            streamInfo.winningUrl = winning.res.url;
         }
 
         return winning.res;
     } catch (_) {
+        timers.forEach(t => clearTimeout(t));
         return null;
     }
 }
+
+    if (endpoint === 'resolve_audio') {
+        const targetId = id || req.query.id || req.query.url;
+        if (!targetId) return res.status(400).json({ error: 'Missing stream id or url' });
+        const videoIdMatch = String(targetId).match(/(?:v=|\/embed\/|\/v\/|youtu\.be\/|\/shorts\/|^)([a-zA-Z0-9_-]{11})/);
+        const videoId = /^[a-zA-Z0-9_-]{11}$/.test(targetId) ? targetId : (videoIdMatch?.[1] ?? null);
+        if (!videoId) return res.status(400).json({ error: 'Could not parse video ID' });
+        const requestedFormat = (req.query.format || 'auto').toLowerCase();
+        try {
+            const streamInfo = await resolveAudioStream(videoId, requestedFormat);
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            return res.status(200).json(streamInfo);
+        } catch (err) {
+            return res.status(502).json({ error: 'Unable to resolve audio stream' });
+        }
+    }
 
     if (endpoint === 'stream') {
         const targetId = id || req.query.id || req.query.url;
@@ -1888,10 +1931,14 @@ async function openUpstreamAudioStream(streamInfo, upstreamHeaders) {
         const cacheKey = `${videoId}:${requestedFormat}`;
 
         try {
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.setHeader('Access-Control-Allow-Headers', 'Range, Content-Type');
+            res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Content-Length, Accept-Ranges, X-Track-Duration');
+
             let streamInfo = await resolveAudioStream(videoId, requestedFormat);
             
             const upstreamHeaders = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
             };
             if (req.headers && req.headers.range) {
                 upstreamHeaders['Range'] = req.headers.range;
@@ -1904,9 +1951,16 @@ async function openUpstreamAudioStream(streamInfo, upstreamHeaders) {
                 streamInfo = await resolveAudioStreamFallback(videoId, requestedFormat);
                 audioStreamRes = await openUpstreamAudioStream(streamInfo, upstreamHeaders);
                 if (!audioStreamRes) {
-                    if (streamInfo && streamInfo.directUrl) {
+                    const safeRedirectUrl = streamInfo && (
+                        streamInfo.issuerUrl ||
+                        (streamInfo.proxiedUrl && !streamInfo.proxiedUrl.includes('googlevideo.com') ? streamInfo.proxiedUrl : null) ||
+                        (Array.isArray(streamInfo.companionUrls) ? streamInfo.companionUrls[0] : null) ||
+                        streamInfo.latestVersionUrl ||
+                        streamInfo.directUrl
+                    );
+                    if (safeRedirectUrl) {
                         res.writeHead(302, {
-                            Location: streamInfo.directUrl,
+                            Location: safeRedirectUrl,
                             'Access-Control-Allow-Origin': '*',
                             'Cache-Control': 'no-cache'
                         });
@@ -1955,9 +2009,13 @@ async function openUpstreamAudioStream(streamInfo, upstreamHeaders) {
         const cacheKey = `${videoId}:${requestedFormat}`;
 
         try {
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.setHeader('Access-Control-Allow-Headers', 'Range, Content-Type');
+            res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Range, Accept-Ranges');
+
             let streamInfo = await resolveAudioStream(videoId, requestedFormat);
             const upstreamHeaders = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
                 'Range': 'bytes=0-'
             };
 
@@ -1970,9 +2028,16 @@ async function openUpstreamAudioStream(streamInfo, upstreamHeaders) {
             }
 
             if (!audioStreamRes) {
-                if (streamInfo && streamInfo.directUrl) {
+                const safeRedirectUrl = streamInfo && (
+                    streamInfo.issuerUrl ||
+                    (streamInfo.proxiedUrl && !streamInfo.proxiedUrl.includes('googlevideo.com') ? streamInfo.proxiedUrl : null) ||
+                    (Array.isArray(streamInfo.companionUrls) ? streamInfo.companionUrls[0] : null) ||
+                    streamInfo.latestVersionUrl ||
+                    streamInfo.directUrl
+                );
+                if (safeRedirectUrl) {
                     res.writeHead(302, {
-                        Location: streamInfo.directUrl,
+                        Location: safeRedirectUrl,
                         'Access-Control-Allow-Origin': '*',
                         'Cache-Control': 'no-cache'
                     });
