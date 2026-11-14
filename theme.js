@@ -1262,9 +1262,10 @@
                 /* Faint star pattern behind main dock buttons */
                 html #floating-sidebar {
                     background-color: var(--navbar-bg, rgba(14, 34, 82, 0.92)) !important;
-                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpolygon points='6,2.8 6.76,4.95 9.04,5.01 7.24,6.4 7.88,8.59 6,7.3 4.12,8.59 4.76,6.4 2.96,5.01 5.24,4.95' fill='%23ffffff' fill-opacity='0.12'/%3E%3Cpolygon points='18,14.8 18.76,16.95 21.04,17.01 19.24,18.4 19.88,20.59 18,19.3 16.12,20.59 16.76,18.4 14.96,17.01 17.24,16.95' fill='%23ffffff' fill-opacity='0.12'/%3E%3C/svg%3E") !important;
-                    background-repeat: repeat !important;
-                    background-size: 24px 24px !important;
+                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='84' viewBox='0 0 60 84'%3E%3Cpolygon points='19,8 22.06,16.79 31.36,16.98 23.95,22.61 26.64,31.52 19,26.2 11.36,31.52 14.05,22.61 6.64,16.98 15.94,16.79' fill='%23ffffff' fill-opacity='0.11'/%3E%3Cpolygon points='41,50 44.06,58.79 53.36,58.98 45.95,64.61 48.64,73.52 41,68.2 33.36,73.52 36.05,64.61 28.64,58.98 37.94,58.79' fill='%23ffffff' fill-opacity='0.11'/%3E%3C/svg%3E") !important;
+                    background-repeat: repeat-y !important;
+                    background-position: center top !important;
+                    background-size: 60px 84px !important;
                 }
             ` : '';
             fixStyle.textContent = `
