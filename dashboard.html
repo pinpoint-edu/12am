@@ -93,6 +93,9 @@
             border-radius: 12px;
             overflow: hidden;
             flex-shrink: 0;
+            position: relative;
+            padding: 0;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -105,15 +108,44 @@
             object-fit: cover;
             display: block;
         }
+        .fs-clock-music-cover-hover {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.18s ease;
+            border-radius: inherit;
+        }
+        .fs-clock-music-cover:hover .fs-clock-music-cover-hover {
+            opacity: 1;
+        }
+        .fs-clock-music-progress-col {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 2px;
+            width: clamp(120px, 22vw, 220px);
+            flex-shrink: 1;
+        }
         .fs-clock-music-progress-wrap {
-            width: clamp(110px, 22vw, 220px);
-            height: 28px;
+            width: 100%;
+            height: 16px;
             display: flex;
             align-items: center;
             cursor: pointer;
             touch-action: none;
-            flex-shrink: 1;
             padding: 0 2px;
+        }
+        .fs-clock-music-times {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 10px;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-muted, rgba(255, 255, 255, 0.65));
+            padding: 0 2px;
+            user-select: none;
         }
         .fs-clock-music-progress-track {
             position: relative;
@@ -354,15 +386,34 @@
 
         <!-- Fullscreen Clock Music Bottom Bar -->
         <div id="fs-clock-music-bar" onclick="event.stopPropagation()" role="region" aria-label="Fullscreen Clock Music Controls">
-            <div class="fs-clock-music-cover">
+            <button type="button" id="fs-clock-music-cover-btn" class="fs-clock-music-cover" title="Open Now Playing" aria-label="Open Now Playing">
                 <img id="fs-clock-music-cover-img" src="" alt="Album Cover" style="display:none;" onerror="this.style.display='none'; var fb=this.nextElementSibling; if(fb) fb.style.display='inline-flex';">
                 <i id="fs-clock-music-cover-fallback" class="fa-solid fa-music" style="font-size:14px; color:var(--text-main, #ffffff); display:inline-flex;"></i>
-            </div>
-            <div id="fs-clock-music-progress" class="fs-clock-music-progress-wrap" title="Seek">
-                <div class="fs-clock-music-progress-track">
-                    <div id="fs-clock-music-progress-fill" class="fs-clock-music-progress-fill">
-                        <span class="fs-clock-music-progress-thumb"></span>
+                <span class="fs-clock-music-cover-hover" aria-hidden="true">
+                    <svg viewBox="0 0 38 38" width="38" height="38" style="display:block;width:100%;height:100%;">
+                        <defs>
+                            <mask id="fs-clock-cover-redirect-cutout">
+                                <rect width="38" height="38" fill="#ffffff"/>
+                                <g transform="translate(7, 7) scale(1)">
+                                    <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z" fill="#000000"/>
+                                </g>
+                            </mask>
+                        </defs>
+                        <rect width="38" height="38" fill="rgba(0, 0, 0, 0.72)" mask="url(#fs-clock-cover-redirect-cutout)"/>
+                    </svg>
+                </span>
+            </button>
+            <div class="fs-clock-music-progress-col">
+                <div id="fs-clock-music-progress" class="fs-clock-music-progress-wrap" title="Seek">
+                    <div class="fs-clock-music-progress-track">
+                        <div id="fs-clock-music-progress-fill" class="fs-clock-music-progress-fill">
+                            <span class="fs-clock-music-progress-thumb"></span>
+                        </div>
                     </div>
+                </div>
+                <div class="fs-clock-music-times">
+                    <span id="fs-clock-music-cur">0:00</span>
+                    <span id="fs-clock-music-dur">0:00</span>
                 </div>
             </div>
             <button type="button" id="fs-clock-music-prev" class="fs-clock-music-btn" title="Previous Track" aria-label="Previous Track">
@@ -459,6 +510,22 @@
             return ytId ? `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg` : '';
         }
 
+        function formatFsMusicTime(sec) {
+            const s = Math.max(0, Math.floor(Number(sec) || 0));
+            const m = Math.floor(s / 60);
+            const r = s % 60;
+            return `${m}:${r < 10 ? '0' : ''}${r}`;
+        }
+
+        function getFsClockCurrentDuration(state) {
+            const bgAudio = document.getElementById('12am-bg-audio-player');
+            const track = state && state.track ? state.track : null;
+            const estTrackDur = track && (track.duration || 0) > 1000 ? track.duration / 1000 : ((track && track.duration) || 0);
+            return (bgAudio && Number.isFinite(bgAudio.duration) && bgAudio.duration > 0)
+                ? bgAudio.duration
+                : ((state && Number(state.duration)) || estTrackDur || 0);
+        }
+
         function syncFsClockMusicBar() {
             const bar = document.getElementById('fs-clock-music-bar');
             if (!bar) return;
@@ -479,8 +546,7 @@
             const bgAudio = document.getElementById('12am-bg-audio-player');
             const isPlaying = bgAudio && bgAudio.src ? (!bgAudio.paused && !bgAudio.ended) : Boolean(state.isPlaying);
             const cur = (bgAudio && Number.isFinite(bgAudio.currentTime) && bgAudio.currentTime > 0) ? bgAudio.currentTime : (Number(state.currentTime) || 0);
-            const estTrackDur = (track.duration || 0) > 1000 ? track.duration / 1000 : (track.duration || 0);
-            const dur = (bgAudio && Number.isFinite(bgAudio.duration) && bgAudio.duration > 0) ? bgAudio.duration : (Number(state.duration) || estTrackDur || 0);
+            const dur = getFsClockCurrentDuration(state);
 
             const cover = resolveFsClockCover(track);
             const coverImg = document.getElementById('fs-clock-music-cover-img');
@@ -503,24 +569,54 @@
 
             if (!__fsClockDragging) {
                 const fill = document.getElementById('fs-clock-music-progress-fill');
+                const curEl = document.getElementById('fs-clock-music-cur');
+                const durEl = document.getElementById('fs-clock-music-dur');
                 const pct = dur > 0 ? Math.max(0, Math.min(100, (cur / dur) * 100)) : 0;
                 if (fill) fill.style.width = `${pct}%`;
+                if (curEl) curEl.textContent = formatFsMusicTime(cur);
+                if (durEl) durEl.textContent = formatFsMusicTime(dur);
             }
         }
 
         (function initFsClockMusicControls() {
+            const coverBtn = document.getElementById('fs-clock-music-cover-btn');
             const progressWrap = document.getElementById('fs-clock-music-progress');
             const fill = document.getElementById('fs-clock-music-progress-fill');
+            const curEl = document.getElementById('fs-clock-music-cur');
+            const durEl = document.getElementById('fs-clock-music-dur');
             const prevBtn = document.getElementById('fs-clock-music-prev');
             const playBtn = document.getElementById('fs-clock-music-play');
             const nextBtn = document.getElementById('fs-clock-music-next');
             const closeBtn = document.getElementById('fs-clock-music-close');
+
+            if (coverBtn) {
+                coverBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (typeof window.__open12amNowPlayingFromDock === 'function') {
+                        window.__open12amNowPlayingFromDock(e);
+                    } else {
+                        window.location.href = 'music.html#now-playing';
+                    }
+                });
+            }
 
             const getRatioFromClientX = (clientX) => {
                 if (!progressWrap) return 0;
                 const rect = progressWrap.getBoundingClientRect();
                 if (!rect.width) return 0;
                 return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+            };
+
+            const updateDragPreview = (ratio) => {
+                if (fill) fill.style.width = `${ratio * 100}%`;
+                let state = null;
+                try {
+                    const raw = localStorage.getItem('12am_music_playback_state');
+                    state = raw ? JSON.parse(raw) : null;
+                } catch (_) {}
+                const dur = getFsClockCurrentDuration(state);
+                if (curEl && dur > 0) curEl.textContent = formatFsMusicTime(ratio * dur);
+                if (durEl && dur > 0) durEl.textContent = formatFsMusicTime(dur);
             };
 
             const seekToRatio = (ratio) => {
@@ -530,11 +626,7 @@
                     const raw = localStorage.getItem('12am_music_playback_state');
                     state = raw ? JSON.parse(raw) : null;
                 } catch (_) {}
-                const track = state && state.track ? state.track : null;
-                const estTrackDur = track && (track.duration || 0) > 1000 ? track.duration / 1000 : ((track && track.duration) || 0);
-                const dur = (bgAudio && Number.isFinite(bgAudio.duration) && bgAudio.duration > 0)
-                    ? bgAudio.duration
-                    : ((state && Number(state.duration)) || estTrackDur || 0);
+                const dur = getFsClockCurrentDuration(state);
                 if (dur <= 0) return;
                 const targetSec = ratio * dur;
                 if (bgAudio && bgAudio.src) {
@@ -543,13 +635,23 @@
                 if (state) {
                     try {
                         state.currentTime = targetSec;
+                        state.isPlaying = true;
                         state.updatedAt = Date.now();
                         localStorage.setItem('12am_music_playback_state', JSON.stringify(state));
                     } catch (_) {}
                 }
-                if (typeof window.__saveBgAudioState === 'function') {
-                    window.__saveBgAudioState();
+                // Auto-unpause if paused when dragged/seeked
+                if (bgAudio && bgAudio.src) {
+                    if (bgAudio.paused) {
+                        try { bgAudio.play().catch(() => {}); } catch (_) {}
+                    }
+                    if (typeof window.__saveBgAudioState === 'function') {
+                        window.__saveBgAudioState(true);
+                    }
+                } else if (typeof window.__toggleBgMusicPlayPause === 'function') {
+                    window.__toggleBgMusicPlayPause();
                 }
+                syncFsClockMusicBar();
             };
 
             if (progressWrap) {
@@ -557,23 +659,21 @@
                     e.stopPropagation();
                     __fsClockDragging = true;
                     progressWrap.classList.add('is-dragging');
-                    const r = getRatioFromClientX(e.clientX);
-                    if (fill) fill.style.width = `${r * 100}%`;
+                    updateDragPreview(getRatioFromClientX(e.clientX));
                     if (progressWrap.setPointerCapture) {
                         try { progressWrap.setPointerCapture(e.pointerId); } catch (_) {}
                     }
                 });
                 progressWrap.addEventListener('pointermove', (e) => {
                     if (!__fsClockDragging) return;
-                    const r = getRatioFromClientX(e.clientX);
-                    if (fill) fill.style.width = `${r * 100}%`;
+                    updateDragPreview(getRatioFromClientX(e.clientX));
                 });
                 const finishDrag = (e) => {
                     if (!__fsClockDragging) return;
                     __fsClockDragging = false;
                     progressWrap.classList.remove('is-dragging');
                     const r = getRatioFromClientX(e.clientX);
-                    if (fill) fill.style.width = `${r * 100}%`;
+                    updateDragPreview(r);
                     seekToRatio(r);
                 };
                 progressWrap.addEventListener('pointerup', finishDrag);

@@ -1101,8 +1101,8 @@
                     toggleBtn.classList.add('active');
                 };
 
-                toggleBtn.onclick = (e) => {
-                    e.stopPropagation();
+                const openMusicNowPlayingFromDock = (e) => {
+                    if (e && e.stopPropagation) e.stopPropagation();
                     closeMusicMenu();
                     if (activeId === 'music' && window.__twelveAmMusicController) {
                         window.__twelveAmMusicController.openNowPlaying();
@@ -1119,6 +1119,8 @@
                     if (bgEl && !bgEl.paused) { try { bgEl.pause(); } catch (_) {} }
                     launchMusicAppWithTransition(`${prefix}music.html#now-playing`, true);
                 };
+                window.__open12amNowPlayingFromDock = openMusicNowPlayingFromDock;
+                toggleBtn.onclick = openMusicNowPlayingFromDock;
                 toggleBtn.addEventListener('mouseenter', openMusicMenu);
                 toggleBtn.addEventListener('mouseleave', closeMusicIfHoverAway);
             }
