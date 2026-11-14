@@ -28,12 +28,12 @@
             --bg-card: var(--bg-secondary, #0c0c0e);
             --text-main: var(--text-primary, #ffffff);
             --text-muted: var(--text-secondary, #a1a1aa);
-            --accent-color: var(--accent-primary, #8b5cf6);
-            --accent-glow: var(--accent-secondary, rgba(139, 92, 246, 0.4));
+            --accent-color: var(--accent-primary, #ff8800);
+            --accent-glow: var(--accent-secondary, rgba(255, 136, 0, 0.4));
             --border-main: var(--border-primary, #1c1c20);
             --border-faint: var(--border-secondary, rgba(255, 255, 255, 0.05));
-            --btn-bg: var(--button-bg, rgba(139, 92, 246, 0.12));
-            --btn-text: var(--button-text, #8b5cf6);
+            --btn-bg: var(--button-bg, rgba(255, 136, 0, 0.12));
+            --btn-text: var(--button-text, #ff8800);
         }
 
         * {
@@ -58,7 +58,7 @@
 
         /* Subtle dot grid full bleed */
         .grid-bg {
-            background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 0);
+            background-image: radial-gradient(var(--border-faint, rgba(255, 255, 255, 0.07)) 1px, transparent 0);
             background-size: 24px 24px;
         }
 
@@ -66,8 +66,8 @@
             position: fixed;
             inset: 0;
             background: 
-                radial-gradient(circle 360px at 92% 10%, var(--accent-primary, #ff8800) 0%, rgba(255, 136, 0, 0.45) 45%, transparent 75%),
-                radial-gradient(circle 700px at 90% 14%, var(--accent-glow, rgba(255, 140, 0, 0.28)) 0%, transparent 65%);
+                radial-gradient(circle 360px at 92% 10%, var(--accent-color) 0%, var(--accent-glow) 45%, transparent 75%),
+                radial-gradient(circle 700px at 90% 14%, var(--accent-glow) 0%, transparent 65%);
             pointer-events: none;
             z-index: 0;
             opacity: 0.9;
@@ -75,7 +75,7 @@
 
         /* Thinner Gradient Text Animation */
         .gradient-text {
-            background-image: linear-gradient(90deg, #ffd700, #ff8800, #f59e0b, #ffd700);
+            background-image: linear-gradient(90deg, var(--accent-color), var(--tab-active-text, var(--text-muted)), var(--text-muted), var(--accent-color));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -142,7 +142,7 @@
     <!-- Main Content Aligned to the Right -->
     <main id="page-content" class="flex-1 min-w-0 flex flex-col justify-center items-end relative z-10 py-16 px-6 sm:px-12 md:px-16 lg:pr-24 xl:pr-32">
         <section class="text-right max-w-2xl sm:max-w-3xl ml-auto flex flex-col items-end">
-            <h1 class="text-xs md:text-sm font-normal text-purple-400 uppercase tracking-widest mb-6 opacity-85 text-right">
+            <h1 class="text-xs md:text-sm font-normal uppercase tracking-widest mb-6 opacity-85 text-right" style="color: var(--accent-color);">
                 Next-generation workspace &amp; entertainment platform
             </h1>
 
@@ -162,16 +162,16 @@
 
             <div class="flex flex-wrap items-center justify-end gap-3">
                 <a href="dashboard.html" class="hero-btn-base">
-                    <i class="fa-solid fa-gauge mr-2"></i> Dashboard
+                    <i class="fa-solid fa-gauge mr-2" style="color: var(--accent-color);"></i> Dashboard
                 </a>
                 <a href="games.html" class="hero-btn-base">
-                    <i class="fa-solid fa-gamepad mr-2"></i> Games
+                    <i class="fa-solid fa-gamepad mr-2" style="color: var(--accent-color);"></i> Games
                 </a>
                 <a href="movies.html" class="hero-btn-base">
-                    <i class="fa-solid fa-film mr-2"></i> Media
+                    <i class="fa-solid fa-film mr-2" style="color: var(--accent-color);"></i> Media
                 </a>
                 <a href="music.html" class="hero-btn-base">
-                    <i class="fa-solid fa-music mr-2"></i> Music
+                    <i class="fa-solid fa-music mr-2" style="color: var(--accent-color);"></i> Music
                 </a>
             </div>
         </section>

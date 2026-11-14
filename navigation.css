@@ -385,7 +385,7 @@ body.sidebar-collapsed:has(#settings-floating-dock) #settings-container {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(245, 158, 11, 0.15);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 25px var(--accent-glow, rgba(245, 158, 11, 0.15));
   z-index: 100010;
   transform-origin: bottom left;
   backdrop-filter: blur(24px);
@@ -552,7 +552,7 @@ body.sidebar-collapsed.sidebar-peek-open #settings-floating-dock {
   font-size: 0.75rem !important;
   font-family: 'Geist', sans-serif !important;
   font-weight: 500 !important;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7), 0 0 15px rgba(245, 158, 11, 0.08) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7), 0 0 15px var(--accent-glow, rgba(245, 158, 11, 0.08)) !important;
   pointer-events: auto !important;
   user-select: none !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;

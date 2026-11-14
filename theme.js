@@ -995,9 +995,21 @@
         if (isLightTheme) {
             fixStyle.textContent = `
                 /* Dynamic contrast for icons and text on light surfaces */
-                .sidebar-btn { color: #0f172a !important; background: rgba(0, 0, 0, 0.05) !important; border-color: rgba(0, 0, 0, 0.12) !important; }
-                .sidebar-btn:hover { color: #000000 !important; background: rgba(0, 0, 0, 0.1) !important; }
-                .sidebar-btn.active { color: #ffffff !important; }
+                .sidebar-btn, .settings-dock-btn { color: #0f172a !important; background: rgba(0, 0, 0, 0.05) !important; border-color: rgba(0, 0, 0, 0.12) !important; }
+                .sidebar-btn i, .settings-dock-btn i { color: inherit !important; }
+                .sidebar-btn:hover, .settings-dock-btn:hover, .nav-tab:hover { color: #000000 !important; background: rgba(0, 0, 0, 0.1) !important; }
+                .sidebar-btn.active, .settings-dock-btn.active, .nav-tab.active {
+                    color: var(--tab-active-text, var(--accent-primary, #0f172a)) !important;
+                    background: var(--tab-active-bg, rgba(79, 70, 229, 0.14)) !important;
+                    border-color: var(--tab-active-border, var(--accent-primary, #4f46e5)) !important;
+                    font-weight: 500 !important;
+                }
+                .sidebar-btn.active i, .settings-dock-btn.active i, .nav-tab.active i {
+                    color: var(--tab-active-text, var(--accent-primary, #0f172a)) !important;
+                }
+                .sidebar-page-badge i {
+                    color: var(--accent-primary, #4f46e5) !important;
+                }
                 .auth-menu-container { background: #ffffff !important; border-color: #e2e8f0 !important; color: #0f172a !important; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15) !important; }
                 .auth-menu-link, .auth-menu-button { color: #334155 !important; }
                 .auth-menu-link:hover, .auth-menu-button:hover { color: #0f172a !important; background: rgba(0, 0, 0, 0.06) !important; }
@@ -1005,8 +1017,6 @@
                 .auth-menu-collapse { color: #475569 !important; }
                 .minimal-footer-cluster { background: #ffffff !important; border-color: #e2e8f0 !important; color: #0f172a !important; }
                 .minimal-footer-copy { color: #64748b !important; }
-                .nav-tab:hover { color: #000000 !important; }
-                .nav-tab.active { color: var(--accent-primary) !important; font-weight: 500 !important; }
                 .text-white { color: #0f172a !important; }
                 .text-gray-400, .text-zinc-400 { color: #475569 !important; }
                 i, .material-symbols-sharp, .material-symbols-rounded {

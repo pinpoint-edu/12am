@@ -515,7 +515,7 @@
         }
 
         const tabsHtml = tabs.map(t => `
-            <button type="button" class="sidebar-btn settings-dock-btn ${t.id === activeTab ? 'active' : ''}" data-tab="${t.id}" aria-label="${t.name}">
+            <button type="button" class="sidebar-btn nav-tab settings-dock-btn ${t.id === activeTab ? 'active' : ''}" data-tab="${t.id}" aria-label="${t.name}">
                 <i class="${t.icon}"></i>
                 <span class="sidebar-tooltip">${t.name}</span>
             </button>
@@ -663,7 +663,7 @@
                     </div>
                     <span class="sidebar-tooltip">Home</span>
                 </a>
-                <a href="${prefix}legal.html" class="sidebar-btn ${isLegal ? 'active' : ''}" aria-label="Terms &amp; Policies">
+                <a href="${prefix}legal.html" class="sidebar-btn nav-tab ${isLegal ? 'active' : ''}" aria-label="Terms &amp; Policies">
                     <i class="fa-solid fa-scale-balanced"></i>
                     <span class="sidebar-tooltip">Terms &amp; Policies</span>
                 </a>

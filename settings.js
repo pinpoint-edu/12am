@@ -1173,7 +1173,7 @@
                             <div class="relative rounded-2xl border border-[var(--border-main)] bg-[var(--bg-page)] p-4 flex flex-col items-center gap-3">
                                 <div class="w-full flex items-center justify-between">
                                     <span class="text-xs font-semibold text-[var(--text-main)]">1. Primary Accent <span class="text-[var(--accent-color)]">*</span></span>
-                                    <span id="hexLabel1" class="font-mono text-[11px] text-[var(--text-muted)] px-2 py-0.5 rounded-lg bg-black/40 border border-white/5">#ff8800</span>
+                                    <span id="hexLabel1" class="font-mono text-[11px] text-[var(--text-muted)] px-2 py-0.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-main)]">#ff8800</span>
                                 </div>
                                 <div class="relative flex flex-col items-center justify-center py-1">
                                     <canvas id="wheelCanvas1" width="130" height="130" class="cursor-crosshair rounded-full touch-none shadow-inner"></canvas>
@@ -1185,11 +1185,11 @@
                                         <span>Brightness</span>
                                         <span id="brightnessVal1" class="font-mono">50%</span>
                                     </div>
-                                    <input type="range" id="brightnessSlider1" min="5" max="95" value="50" class="w-full h-1.5 bg-black/50 rounded-lg appearance-none cursor-pointer accent-[var(--accent-color)]">
+                                    <input type="range" id="brightnessSlider1" min="5" max="95" value="50" class="w-full h-1.5 bg-[var(--bg-secondary)] border border-[var(--border-main)] rounded-lg appearance-none cursor-pointer accent-[var(--accent-color)]">
                                 </div>
                                 <div class="w-full flex items-center justify-between text-xs text-[var(--text-muted)] pt-2 border-t border-[var(--border-main)]">
                                     <span>Buttons &amp; Highlights</span>
-                                    <div id="previewSwatch1" class="w-5 h-5 rounded-lg border border-white/10" style="background-color: #ff8800;"></div>
+                                    <div id="previewSwatch1" class="w-5 h-5 rounded-lg border border-[var(--border-main)]" style="background-color: var(--accent-color);"></div>
                                 </div>
                             </div>
 
@@ -1198,7 +1198,7 @@
                                 <div class="w-full flex items-center justify-between z-20">
                                     <span class="text-xs font-semibold text-[var(--text-main)]">2. Background Tint</span>
                                     <div class="flex items-center gap-2">
-                                        <span id="hexLabel2" class="font-mono text-[11px] text-[var(--text-muted)] px-2 py-0.5 rounded-lg bg-black/40 border border-white/5">#0a0a0f</span>
+                                        <span id="hexLabel2" class="font-mono text-[11px] text-[var(--text-muted)] px-2 py-0.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-main)]">#0a0a0f</span>
                                         <button type="button" id="disableColor2Btn" class="hidden text-[11px] px-2 py-0.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 cursor-pointer transition-all items-center gap-1">
                                             <i class="fa-solid fa-xmark text-[10px]"></i> Disable
                                         </button>
@@ -1214,19 +1214,19 @@
                                         <span>Brightness</span>
                                         <span id="brightnessVal2" class="font-mono">5%</span>
                                     </div>
-                                    <input type="range" id="brightnessSlider2" min="2" max="95" value="5" class="w-full h-1.5 bg-black/50 rounded-lg appearance-none cursor-pointer accent-[var(--accent-color)]">
+                                    <input type="range" id="brightnessSlider2" min="2" max="95" value="5" class="w-full h-1.5 bg-[var(--bg-secondary)] border border-[var(--border-main)] rounded-lg appearance-none cursor-pointer accent-[var(--accent-color)]">
                                 </div>
                                 <div class="w-full flex items-center justify-between text-xs text-[var(--text-muted)] pt-2 border-t border-[var(--border-main)]">
                                     <span>Custom Background</span>
-                                    <div id="previewSwatch2" class="w-5 h-5 rounded-lg border border-white/10" style="background-color: #0a0a0f;"></div>
+                                    <div id="previewSwatch2" class="w-5 h-5 rounded-lg border border-[var(--border-main)]" style="background-color: #0a0a0f;"></div>
                                 </div>
 
-                                <!-- Disabled Overlay with Dark solid Enable Button -->
-                                <div id="overlayColor2" class="absolute inset-0 bg-[#07070a]/95 backdrop-blur-sm flex flex-col items-center justify-center p-4 z-10 rounded-2xl text-center">
-                                    <button type="button" id="enableColor2Btn" class="px-4 py-2.5 rounded-xl bg-[#121218] hover:bg-[#1a1a24] border border-white/15 text-white font-medium text-xs flex items-center gap-2 cursor-pointer transition-all shadow-md active:scale-95">
-                                        <i class="fa-solid fa-plus text-[var(--accent-color)]"></i> Enable Background Tint
+                                <!-- Disabled Overlay with Theme-Tinted Blur and Enable Button -->
+                                <div id="overlayColor2" class="absolute inset-0 backdrop-blur-md flex flex-col items-center justify-center p-4 z-10 rounded-2xl text-center transition-all duration-300" style="background: radial-gradient(circle at 50% 50%, var(--tab-active-bg, rgba(255, 136, 0, 0.16)), transparent 80%), var(--navbar-bg, rgba(12, 11, 15, 0.85));">
+                                    <button type="button" id="enableColor2Btn" class="btn-toolbar-style btn-primary-override px-4 py-2.5 rounded-xl font-medium text-xs flex items-center gap-2 cursor-pointer transition-all shadow-md active:scale-95">
+                                        <i class="fa-solid fa-plus"></i> Enable Background Tint
                                     </button>
-                                    <span class="text-[11px] text-[var(--text-muted)] opacity-60 mt-2">Defaults to deep carbon black</span>
+                                    <span class="text-[11px] text-[var(--text-muted)] opacity-75 mt-2">Defaults to deep carbon black</span>
                                 </div>
                             </div>
 
@@ -1235,7 +1235,7 @@
                                 <div class="w-full flex items-center justify-between z-20">
                                     <span class="text-xs font-semibold text-[var(--text-main)]">3. Secondary Glow</span>
                                     <div class="flex items-center gap-2">
-                                        <span id="hexLabel3" class="font-mono text-[11px] text-[var(--text-muted)] px-2 py-0.5 rounded-lg bg-black/40 border border-white/5">#ffd700</span>
+                                        <span id="hexLabel3" class="font-mono text-[11px] text-[var(--text-muted)] px-2 py-0.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-main)]">#ffd700</span>
                                         <button type="button" id="disableColor3Btn" class="hidden text-[11px] px-2 py-0.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 cursor-pointer transition-all items-center gap-1">
                                             <i class="fa-solid fa-xmark text-[10px]"></i> Disable
                                         </button>
@@ -1251,19 +1251,19 @@
                                         <span>Brightness</span>
                                         <span id="brightnessVal3" class="font-mono">50%</span>
                                     </div>
-                                    <input type="range" id="brightnessSlider3" min="5" max="95" value="50" class="w-full h-1.5 bg-black/50 rounded-lg appearance-none cursor-pointer accent-[var(--accent-color)]">
+                                    <input type="range" id="brightnessSlider3" min="5" max="95" value="50" class="w-full h-1.5 bg-[var(--bg-secondary)] border border-[var(--border-main)] rounded-lg appearance-none cursor-pointer accent-[var(--accent-color)]">
                                 </div>
                                 <div class="w-full flex items-center justify-between text-xs text-[var(--text-muted)] pt-2 border-t border-[var(--border-main)]">
                                     <span>Glow &amp; Highlights</span>
-                                    <div id="previewSwatch3" class="w-5 h-5 rounded-lg border border-white/10" style="background-color: #ffd700;"></div>
+                                    <div id="previewSwatch3" class="w-5 h-5 rounded-lg border border-[var(--border-main)]" style="background-color: var(--accent-color);"></div>
                                 </div>
 
-                                <!-- Disabled Overlay with Dark solid Enable Button -->
-                                <div id="overlayColor3" class="absolute inset-0 bg-[#07070a]/95 backdrop-blur-sm flex flex-col items-center justify-center p-4 z-10 rounded-2xl text-center">
-                                    <button type="button" id="enableColor3Btn" class="px-4 py-2.5 rounded-xl bg-[#121218] hover:bg-[#1a1a24] border border-white/15 text-white font-medium text-xs flex items-center gap-2 cursor-pointer transition-all shadow-md active:scale-95">
-                                        <i class="fa-solid fa-plus text-[var(--accent-color)]"></i> Enable Secondary Glow
+                                <!-- Disabled Overlay with Theme-Tinted Blur and Enable Button -->
+                                <div id="overlayColor3" class="absolute inset-0 backdrop-blur-md flex flex-col items-center justify-center p-4 z-10 rounded-2xl text-center transition-all duration-300" style="background: radial-gradient(circle at 50% 50%, var(--tab-active-bg, rgba(255, 136, 0, 0.16)), transparent 80%), var(--navbar-bg, rgba(12, 11, 15, 0.85));">
+                                    <button type="button" id="enableColor3Btn" class="btn-toolbar-style btn-primary-override px-4 py-2.5 rounded-xl font-medium text-xs flex items-center gap-2 cursor-pointer transition-all shadow-md active:scale-95">
+                                        <i class="fa-solid fa-plus"></i> Enable Secondary Glow
                                     </button>
-                                    <span class="text-[11px] text-[var(--text-muted)] opacity-60 mt-2">Defaults to primary glow</span>
+                                    <span class="text-[11px] text-[var(--text-muted)] opacity-75 mt-2">Defaults to primary glow</span>
                                 </div>
                             </div>
                         </div>
@@ -4279,9 +4279,14 @@
             }
 
             // Initialize the 3 Color Wheels with brightness sliders
-            const wheel1 = initCanvasColorWheel('wheelCanvas1', 'wheelCursor1', 'hexLabel1', 'previewSwatch1', '#ff8800', 'brightnessSlider1', 'brightnessVal1');
+            const activeThemeObj = window.getCurrentTheme ? window.getCurrentTheme() : null;
+            const isValidHex = (c) => typeof c === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c.trim());
+            const defaultHex1 = (activeThemeObj && isValidHex(activeThemeObj['accent-primary'])) ? activeThemeObj['accent-primary'].trim() : '#ff8800';
+            const defaultHex3 = (activeThemeObj && isValidHex(activeThemeObj['text-secondary'])) ? activeThemeObj['text-secondary'].trim() : defaultHex1;
+
+            const wheel1 = initCanvasColorWheel('wheelCanvas1', 'wheelCursor1', 'hexLabel1', 'previewSwatch1', defaultHex1, 'brightnessSlider1', 'brightnessVal1');
             const wheel2 = initCanvasColorWheel('wheelCanvas2', 'wheelCursor2', 'hexLabel2', 'previewSwatch2', '#0a0a0f', 'brightnessSlider2', 'brightnessVal2');
-            const wheel3 = initCanvasColorWheel('wheelCanvas3', 'wheelCursor3', 'hexLabel3', 'previewSwatch3', '#ffd700', 'brightnessSlider3', 'brightnessVal3');
+            const wheel3 = initCanvasColorWheel('wheelCanvas3', 'wheelCursor3', 'hexLabel3', 'previewSwatch3', defaultHex3, 'brightnessSlider3', 'brightnessVal3');
 
             // Wire up Enable / Disable for Color 2 (Background Tint)
             let color2Enabled = false;

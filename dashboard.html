@@ -72,7 +72,7 @@
         }
 
         .stat-pill {
-            background: rgba(255,255,255,0.02);
+            background: var(--bg-card);
             border: 1px solid var(--border-main);
             border-radius: 1.5rem;
             display: flex;
@@ -137,7 +137,7 @@
             align-items: center;
             gap: 1rem;
             padding: 1.25rem;
-            background: rgba(255,255,255,0.02);
+            background: var(--bg-page);
             border: 1px solid var(--border-main);
             border-radius: 24px;
             transition: all 0.2s;
@@ -146,7 +146,7 @@
             z-index: 1;
         }
         .page-btn:hover {
-            background: var(--bg-card);
+            background: var(--btn-bg);
             border-color: var(--accent-color);
             transform: scale(1.02) translateX(4px);
             box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
@@ -156,13 +156,13 @@
             width: 3rem;
             height: 3rem;
             border-radius: 16px;
-            background: rgba(255,255,255,0.05);
+            background: var(--btn-bg);
             display: flex;
             align-items: center;
             justify-content: center;
             color: var(--accent-color);
             font-size: 1.25rem;
-            border: 1px solid rgba(255,255,255,0.05);
+            border: 1px solid var(--border-main);
         }
 
         .custom-scroll::-webkit-scrollbar { width: 0; }
@@ -177,18 +177,18 @@
         <section class="flex-1 min-w-0 p-6 md:p-12 lg:p-16 pt-10 overflow-y-auto custom-scroll flex flex-col justify-between">
             <div class="max-w-[1200px] w-full mx-auto pb-6">
                 
-                <div class="mb-10 flex flex-col xl:flex-row justify-between items-start xl:items-end gap-8 border-b border-white/5 pb-8">
+                <div class="mb-10 flex flex-col xl:flex-row justify-between items-start xl:items-end gap-8 border-b pb-8" style="border-color: var(--border-main);">
                     <div>
-                        <p id="clock-date" class="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--accent-color,#818cf8)] mb-4 opacity-80">--------</p>
+                        <p id="clock-date" class="text-[10px] font-black uppercase tracking-[0.3em] mb-4 opacity-80" style="color: var(--accent-color);">--------</p>
                         <h2 id="clock-time" class="text-6xl md:text-8xl font-light tracking-tight mb-2 select-none cursor-pointer transition-transform duration-200 hover:scale-[1.01] active:scale-[0.99]" style="color: var(--text-main); user-select: none; -webkit-user-select: none;" title="Click for fullscreen clock" onclick="openFullscreenClock()">00:00:00<span class="text-2xl md:text-4xl ml-3 opacity-30 uppercase font-light">--</span></h2>
-                        <p class="text-xl md:text-2xl mt-4" style="color: var(--text-muted); opacity: 0.7;">Good day, <span id="user-name-display" class="font-medium text-white opacity-100">User</span>.</p>
+                        <p class="text-xl md:text-2xl mt-4" style="color: var(--text-muted); opacity: 0.7;">Good day, <span id="user-name-display" class="font-medium opacity-100" style="color: var(--accent-color);">User</span>.</p>
                     </div>
 
                     <div class="flex flex-col sm:flex-row gap-4 w-full xl:w-auto shrink-0 mb-2">
                         <div class="stat-pill flex-1 xl:w-56 px-6 py-5">
                             <div>
                                 <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-2">Highest Streak</p>
-                                <div id="stat-highest-streak" class="text-3xl font-light text-orange-400">0 🔥</div>
+                                <div id="stat-highest-streak" class="text-3xl font-light flex items-center gap-2" style="color: var(--accent-color);">0 <i class="fa-solid fa-fire text-2xl ml-1" style="color: var(--accent-color);"></i></div>
                             </div>
                             <p class="text-[10px] mt-4 opacity-40 uppercase tracking-widest" style="color: var(--text-muted);">Active DailyPhoto</p>
                         </div>
@@ -205,13 +205,13 @@
 
                 <div class="flex flex-col gap-8">
                     <div class="feature-card p-8 md:p-10 no-hover">
-                        <div class="flex justify-between items-end mb-8 border-b border-white/5 pb-6">
+                        <div class="flex justify-between items-end mb-8 border-b pb-6" style="border-color: var(--border-main);">
                             <div>
                                 <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-30 mb-2">Frequently Used</p>
                                 <h3 class="text-3xl font-light tracking-tight" style="color: var(--text-main);">Recent Pages</h3>
                             </div>
                             <div class="text-right">
-                                <div id="stat-pageviews" class="text-4xl font-light opacity-60 text-indigo-400">0</div>
+                                <div id="stat-pageviews" class="text-4xl font-light opacity-80" style="color: var(--accent-color);">0</div>
                                 <span class="text-[10px] uppercase tracking-widest text-[var(--text-muted)] opacity-40">Total Views</span>
                             </div>
                         </div>
@@ -342,7 +342,7 @@
                     }
                 } catch(e) {}
 
-                streakEl.textContent = `${data.count || 1} 🔥`;
+                streakEl.innerHTML = `${data.count || 1} <i class="fa-solid fa-fire text-2xl ml-1" style="color: var(--accent-color);"></i>`;
             }
 
             // 4. Local Experience Time Tracker
@@ -420,19 +420,19 @@
                 }
 
                 listEl.innerHTML = sorted.map(p => `
-                    <a href="${p.url}" class="page-btn flex items-center justify-between p-4 rounded-2xl border border-white/5 hover:border-purple-500/40 bg-black/40 hover:bg-white/[0.03] transition-all group">
+                    <a href="${p.url}" class="page-btn flex items-center justify-between p-4 rounded-2xl transition-all group">
                         <div class="flex items-center gap-3.5 min-w-0">
                             <div class="icon-box shrink-0 group-hover:scale-105 transition-transform">
-                                <i class="fa-solid ${p.icon} text-purple-400"></i>
+                                <i class="fa-solid ${p.icon}" style="color: var(--accent-color);"></i>
                             </div>
                             <div class="min-w-0">
-                                <p class="text-sm font-medium text-white truncate">${p.name}</p>
-                                <p class="text-[11px] text-[var(--text-muted)] opacity-60 truncate">${p.desc}</p>
+                                <p class="text-sm font-medium truncate" style="color: var(--text-main);">${p.name}</p>
+                                <p class="text-[11px] opacity-60 truncate" style="color: var(--text-muted);">${p.desc}</p>
                             </div>
                         </div>
                         <div class="text-right shrink-0 pl-2">
-                            <span class="text-sm font-semibold text-purple-400">${p.count}</span>
-                            <span class="text-[10px] block opacity-40 uppercase tracking-widest text-[var(--text-muted)]">views</span>
+                            <span class="text-sm font-semibold" style="color: var(--accent-color);">${p.count}</span>
+                            <span class="text-[10px] block opacity-40 uppercase tracking-widest" style="color: var(--text-muted);">views</span>
                         </div>
                     </a>
                 `).join('');

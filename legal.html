@@ -27,7 +27,8 @@
             --accent-color: var(--accent-primary, #ff8800);
             --accent-glow: var(--accent-secondary, rgba(255, 136, 0, 0.4));
             --border-main: var(--border-primary, rgba(255, 140, 0, 0.2));
-            --border-hover: rgba(255, 140, 0, 0.35);
+            --border-hover: var(--accent-glow, var(--border-primary));
+            --btn-bg: var(--button-bg, rgba(255, 136, 0, 0.12));
         }
 
         html { scroll-behavior: smooth; }
@@ -50,7 +51,7 @@
         }
 
         .gradient-text {
-            background: linear-gradient(90deg, #ff8800, #ffd700, #ea580c);
+            background: linear-gradient(90deg, var(--accent-color), var(--tab-active-text, var(--text-muted)), var(--accent-color));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -93,8 +94,8 @@
             font-weight: 500;
         }
         .sidebar-link:hover, .sidebar-link.active {
-            color: #ffffff;
-            background: rgba(255, 136, 0, 0.12);
+            color: var(--text-main);
+            background: var(--tab-active-bg, var(--btn-bg));
             border-left: 2px solid var(--accent-color);
         }
     </style>
@@ -131,7 +132,7 @@
                 <!-- Quick Navigation Sidebar -->
                 <aside class="hidden lg:block lg:col-span-1">
                     <div class="sticky top-24 space-y-1">
-                        <p class="px-4 text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3">Contents</p>
+                        <p class="px-4 text-xs font-bold text-[var(--text-muted)] opacity-70 uppercase tracking-widest mb-3">Contents</p>
                         <a href="#terms" class="sidebar-link active">1. Terms of Service</a>
                         <a href="#device-auth" class="sidebar-link">2. Device Authentication</a>
                         <a href="#privacy" class="sidebar-link">3. Privacy & Storage</a>
@@ -147,14 +148,14 @@
                     <!-- Section 1 -->
                     <section id="terms" class="legal-card">
                         <span class="text-xs font-medium text-[var(--accent-color)] tracking-widest uppercase mb-2 block">Section 1.0</span>
-                        <h2 class="text-2xl text-white font-medium mb-4">Terms of Service Acceptance</h2>
-                        <p class="text-zinc-300 leading-relaxed mb-4">
+                        <h2 class="text-2xl text-[var(--text-main)] font-medium mb-4">Terms of Service Acceptance</h2>
+                        <p class="text-[var(--text-main)] opacity-90 leading-relaxed mb-4">
                             By visiting, launching, or using 12AM and its integrated portals (Games, Movies, Music, Messenger, Notes, Lexicon, AI, and Proxy utilities), you agree to comply with and be bound by these Terms of Service.
                         </p>
-                        <p class="text-zinc-400 text-sm leading-relaxed mb-4">
+                        <p class="text-[var(--text-muted)] text-sm leading-relaxed mb-4">
                             12AM operates as an independent, optimized media and productivity hub. Access is granted for personal, non-commercial educational and leisure use.
                         </p>
-                        <ul class="space-y-2 text-sm text-zinc-400">
+                        <ul class="space-y-2 text-sm text-[var(--text-muted)]">
                             <li class="legal-list-item"><strong>1.1 Eligibility:</strong> You must use 12AM in compliance with applicable local laws and institutional regulations.</li>
                             <li class="legal-list-item"><strong>1.2 Modifications:</strong> 12AM reserves the right to adapt or update these terms as platform utilities evolve. Continued use constitutes acceptance.</li>
                         </ul>
@@ -163,11 +164,11 @@
                     <!-- Section 2 -->
                     <section id="device-auth" class="legal-card">
                         <span class="text-xs font-medium text-[var(--accent-color)] tracking-widest uppercase mb-2 block">Section 2.0</span>
-                        <h2 class="text-2xl text-white font-medium mb-4">Single Device Account &amp; Anti-Spam Policy</h2>
-                        <p class="text-zinc-300 leading-relaxed mb-4">
+                        <h2 class="text-2xl text-[var(--text-main)] font-medium mb-4">Single Device Account &amp; Anti-Spam Policy</h2>
+                        <p class="text-[var(--text-main)] opacity-90 leading-relaxed mb-4">
                             12AM enforces a strict policy of <strong>one account per physical device/browser profile</strong>. This architecture ensures platform stability and prevents abusive multi-profile spamming.
                         </p>
-                        <ul class="space-y-2 text-sm text-zinc-400">
+                        <ul class="space-y-2 text-sm text-[var(--text-muted)]">
                             <li class="legal-list-item"><strong>2.1 Dual Persistence:</strong> Accounts are secured via dual-tier client storage (localStorage and IndexedDB). Attempting to clear tokens via developer consoles to duplicate profiles triggers anti-glitch protection.</li>
                             <li class="legal-list-item"><strong>2.2 Security PIN:</strong> Your 4–6 digit PIN is stored with client-side hashing to protect your local notes and profile state.</li>
                             <li class="legal-list-item"><strong>2.3 Resetting:</strong> Users may voluntarily execute a complete device reset from the authentication portal to wipe local storage and register a fresh profile.</li>
@@ -177,11 +178,11 @@
                     <!-- Section 3 -->
                     <section id="privacy" class="legal-card">
                         <span class="text-xs font-medium text-[var(--accent-color)] tracking-widest uppercase mb-2 block">Section 3.0</span>
-                        <h2 class="text-2xl text-white font-medium mb-4">Privacy &amp; Data Minimization</h2>
-                        <p class="text-zinc-300 leading-relaxed mb-4">
+                        <h2 class="text-2xl text-[var(--text-main)] font-medium mb-4">Privacy &amp; Data Minimization</h2>
+                        <p class="text-[var(--text-main)] opacity-90 leading-relaxed mb-4">
                             12AM believes your browsing and study data belongs to you. We practice strict data minimization.
                         </p>
-                        <ul class="space-y-2 text-sm text-zinc-400">
+                        <ul class="space-y-2 text-sm text-[var(--text-muted)]">
                             <li class="legal-list-item"><strong>3.1 No Third-Party Trackers:</strong> We do not sell, rent, or monetize personal telemetry or browsing habits.</li>
                             <li class="legal-list-item"><strong>3.2 Local-First Storage:</strong> Personal notes, game save files, watch history, and playlists remain inside your device's browser sandbox.</li>
                             <li class="legal-list-item"><strong>3.3 Supabase Connection:</strong> Anonymous peer room messages and verified device metadata communicate securely with our encrypted Supabase endpoint (<code class="text-[var(--accent-color)] font-mono text-xs">gsihkocouoigddbpahxd.supabase.co</code>).</li>
@@ -191,11 +192,11 @@
                     <!-- Section 4 -->
                     <section id="entertainment" class="legal-card">
                         <span class="text-xs font-medium text-[var(--accent-color)] tracking-widest uppercase mb-2 block">Section 4.0</span>
-                        <h2 class="text-2xl text-white font-medium mb-4">Games, Streaming &amp; Media Disclaimers</h2>
-                        <p class="text-zinc-300 leading-relaxed mb-4">
+                        <h2 class="text-2xl text-[var(--text-main)] font-medium mb-4">Games, Streaming &amp; Media Disclaimers</h2>
+                        <p class="text-[var(--text-main)] opacity-90 leading-relaxed mb-4">
                             12AM provides unblocked educational games, streaming players, focus audio, and proxy browsers for user convenience.
                         </p>
-                        <ul class="space-y-2 text-sm text-zinc-400">
+                        <ul class="space-y-2 text-sm text-[var(--text-muted)]">
                             <li class="legal-list-item"><strong>4.1 Third-Party Hosting:</strong> 12AM does not host, upload, or own video streams or copyrighted game ROMs. Content is fetched from public APIs (such as TMDB, YouTube Music, and public mirrors).</li>
                             <li class="legal-list-item"><strong>4.2 Copyright Inquiries:</strong> Copyright holders may request mirror link disassociation by contacting 12AM maintainers.</li>
                         </ul>
@@ -204,11 +205,11 @@
                     <!-- Section 5 -->
                     <section id="conduct" class="legal-card">
                         <span class="text-xs font-medium text-[var(--accent-color)] tracking-widest uppercase mb-2 block">Section 5.0</span>
-                        <h2 class="text-2xl text-white font-medium mb-4">User Conduct &amp; Institutional Responsibility</h2>
-                        <p class="text-zinc-300 leading-relaxed mb-4">
+                        <h2 class="text-2xl text-[var(--text-main)] font-medium mb-4">User Conduct &amp; Institutional Responsibility</h2>
+                        <p class="text-[var(--text-main)] opacity-90 leading-relaxed mb-4">
                             Users are responsible for exercising discretion when using 12AM in workplace or school environments.
                         </p>
-                        <ul class="space-y-2 text-sm text-zinc-400">
+                        <ul class="space-y-2 text-sm text-[var(--text-muted)]">
                             <li class="legal-list-item"><strong>5.1 Instructional Time:</strong> 12AM is not responsible for disciplinary action resulting from using games or entertainment during mandatory classroom instruction.</li>
                             <li class="legal-list-item"><strong>5.2 Panic Key:</strong> The emergency cloaking key (<kbd class="px-1.5 py-0.5 rounded-lg bg-[var(--bg-page)] border border-[var(--border-main)] text-[var(--accent-color)] font-mono text-xs">]</kbd>) is provided as an accessibility shortcut.</li>
                         </ul>
@@ -217,8 +218,8 @@
                     <!-- Section 6 -->
                     <section id="disclaimer" class="legal-card">
                         <span class="text-xs font-medium text-[var(--accent-color)] tracking-widest uppercase mb-2 block">Section 6.0</span>
-                        <h2 class="text-2xl text-white font-medium mb-4">Limitation of Liability &amp; Warranty</h2>
-                        <p class="text-zinc-300 leading-relaxed mb-4 text-sm">
+                        <h2 class="text-2xl text-[var(--text-main)] font-medium mb-4">Limitation of Liability &amp; Warranty</h2>
+                        <p class="text-[var(--text-main)] opacity-90 leading-relaxed mb-4 text-sm">
                             12AM IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED. UNDER NO CIRCUMSTANCES SHALL 12AM MAINTAINERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE SERVICE.
                         </p>
                     </section>
@@ -242,5 +243,40 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const links = document.querySelectorAll('.sidebar-link');
+            const sections = Array.from(links)
+                .map(link => document.querySelector(link.getAttribute('href')))
+                .filter(Boolean);
+
+            const setActive = (id) => {
+                links.forEach(link => {
+                    link.classList.toggle('active', link.getAttribute('href') === `#${id}`);
+                });
+            };
+
+            links.forEach(link => {
+                link.addEventListener('click', () => {
+                    const href = link.getAttribute('href');
+                    if (href && href.startsWith('#')) {
+                        setActive(href.slice(1));
+                    }
+                });
+            });
+
+            window.addEventListener('scroll', () => {
+                let currentId = sections[0]?.id;
+                const scrollPos = window.scrollY + 180;
+                for (const sec of sections) {
+                    if (sec.offsetTop <= scrollPos) {
+                        currentId = sec.id;
+                    }
+                }
+                if (currentId) setActive(currentId);
+            }, { passive: true });
+        });
+    </script>
 </body>
 </html>
