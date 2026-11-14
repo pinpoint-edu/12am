@@ -952,7 +952,7 @@
             pat.id = 'themeBgPattern';
             if (fxType === 'camo') {
                 pat.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:-1;opacity:0.34;';
-                pat.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" preserveAspectRatio="none" style="display:block;width:100%;height:100%;"><filter id="12am-woodland-camo" x="0%" y="0%" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.013" numOctaves="4" seed="5" stitchTiles="stitch" result="noise"/><feComponentTransfer in="noise" result="thresholds"><feFuncR type="discrete" tableValues="0 0.2 0.2 0.5 0.5 1"/><feFuncG type="discrete" tableValues="0 0 0.6 0.6 1 1"/><feFuncB type="discrete" tableValues="0.3 0.3 0 0.8 0.2 0.9"/></feComponentTransfer><feColorMatrix in="thresholds" type="matrix" values="0.2 1.2 -0.4 0 0.05 0.1 0.8 0.1 0 0.15 -0.2 0.5 0.3 0 0.08 0 0 0 1 0"/></filter><rect width="100%" height="100%" filter="url(#12am-woodland-camo)"/></svg>';
+                pat.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" preserveAspectRatio="none" style="display:block;width:100%;height:100%;"><filter id="12am-woodland-camo" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.0085" numOctaves="2" seed="11" stitchTiles="stitch" result="noise"/><feColorMatrix in="noise" type="matrix" values="2.6 0 0 0 -0.8 2.6 0 0 0 -0.8 2.6 0 0 0 -0.8 0 0 0 0 1" result="stretched"/><feComponentTransfer in="stretched" result="camo"><feFuncR type="discrete" tableValues="0.08 0.14 0.30 0.40 0.22 0.58"/><feFuncG type="discrete" tableValues="0.22 0.36 0.50 0.64 0.56 0.68"/><feFuncB type="discrete" tableValues="0.14 0.20 0.08 0.06 0.38 0.28"/></feComponentTransfer></filter><rect width="100%" height="100%" filter="url(#12am-woodland-camo)"/></svg>';
             } else {
                 pat.style.cssText = `position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:-1;opacity:0.5;background-color:transparent;background-image:url("${SPRINKLES_BG_SVG}"),linear-gradient(135deg,rgba(147,197,253,0.34) 0%,rgba(249,168,212,0.32) 100%);background-size:180px 180px,100% 100%;background-repeat:repeat,no-repeat;`;
             }
@@ -1258,10 +1258,20 @@
                 }
             `;
         } else {
+            const fourthOfJulyDockCss = theme.name === '4th of July' ? `
+                /* Faint star pattern behind main dock buttons */
+                html #floating-sidebar {
+                    background-color: var(--navbar-bg, rgba(14, 34, 82, 0.92)) !important;
+                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpolygon points='6,2.8 6.76,4.95 9.04,5.01 7.24,6.4 7.88,8.59 6,7.3 4.12,8.59 4.76,6.4 2.96,5.01 5.24,4.95' fill='%23ffffff' fill-opacity='0.12'/%3E%3Cpolygon points='18,14.8 18.76,16.95 21.04,17.01 19.24,18.4 19.88,20.59 18,19.3 16.12,20.59 16.76,18.4 14.96,17.01 17.24,16.95' fill='%23ffffff' fill-opacity='0.12'/%3E%3C/svg%3E") !important;
+                    background-repeat: repeat !important;
+                    background-size: 24px 24px !important;
+                }
+            ` : '';
             fixStyle.textContent = `
                 /* Dark surface contrast defaults */
                 .sidebar-btn { color: #a1a1aa; }
                 .sidebar-btn:hover { color: #ffffff; }
+                ${fourthOfJulyDockCss}
             `;
         }
 
