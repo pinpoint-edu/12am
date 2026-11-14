@@ -2402,22 +2402,16 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 clearTimeout(searchTimeout);
                 currentSearchQuery = '';
+                document.body.classList.remove('is-searching');
+                const ps = document.getElementById('page-search');
+                if (ps) ps.scrollTop = 0;
+                window.scrollTo(0, 0);
+                if (searchTabsContainer) {
+                    searchTabsContainer.classList.add('hidden');
+                    searchTabsContainer.classList.remove('flex');
+                }
+                if (searchResults) searchResults.innerHTML = '';
                 showRecentSearches();
-                // 1.2s delay before collapsing back to center hero mode, allowing user to type something else
-                clearCollapseTimeout = setTimeout(() => {
-                    if (searchInput && !searchInput.value.trim()) {
-                        document.body.classList.remove('is-searching');
-                        const ps = document.getElementById('page-search');
-                        if (ps) ps.scrollTop = 0;
-                        window.scrollTo(0, 0);
-                        if (searchTabsContainer) {
-                            searchTabsContainer.classList.add('hidden');
-                            searchTabsContainer.classList.remove('flex');
-                        }
-                        if (searchResults) searchResults.innerHTML = '';
-                        showRecentSearches();
-                    }
-                }, 1200);
             }
         });
 

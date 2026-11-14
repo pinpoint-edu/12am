@@ -2709,31 +2709,54 @@
             font-weight: 650 !important;
         }
 
+        #page-search,
+        body.is-searching #page-search {
+            mask-image: none !important;
+            -webkit-mask-image: none !important;
+        }
+
+        #search-block {
+            transition: top 0.55s var(--parabola-ease),
+                        transform 0.55s var(--parabola-ease),
+                        width 0.55s var(--parabola-ease),
+                        max-width 0.55s var(--parabola-ease),
+                        opacity 0.55s var(--parabola-ease) !important;
+        }
+
         /* =====================================================================
            Dock-Safe Squeezing, Conditional Search Width & Centered Bottom Bar
            ===================================================================== */
         @media (min-width: 640px) {
+            #page-library-scroll,
+            #page-artist-scroll,
+            #page-album-scroll,
+            #page-settings-scroll {
+                mask-image: none !important;
+                -webkit-mask-image: none !important;
+            }
+
             body.is-loaded:not(.is-searching) #search-block {
                 top: calc(50% + 14px) !important;
                 left: 50% !important;
                 transform: translate(-50%, -50%) !important;
                 width: min(51rem, calc(100vw - 48px)) !important;
-                max-width: 51rem !important;
+                max-width: none !important;
                 margin: 0 !important;
                 padding-left: 0 !important;
                 padding-right: 0 !important;
             }
 
             body.is-loaded:not(.is-searching):not(.sidebar-collapsed) #search-block {
-                max-width: min(51rem, calc(100vw - 208px)) !important;
+                width: min(51rem, calc(100vw - 208px)) !important;
+                max-width: none !important;
             }
 
             body.is-searching:not(.search-on-dock-yaxis) #search-block {
                 top: 1.5rem !important;
                 left: 50% !important;
                 transform: translate(-50%, 0) !important;
-                width: calc(100vw - 48px) !important;
-                max-width: min(1440px, calc(100vw - 48px)) !important;
+                width: min(90rem, calc(100vw - 48px)) !important;
+                max-width: none !important;
                 margin: 0 !important;
                 padding-left: 0 !important;
                 padding-right: 0 !important;
@@ -2760,7 +2783,7 @@
                 left: 50% !important;
                 transform: translate(-50%, 0) !important;
                 width: min(51rem, calc(100vw - 48px)) !important;
-                max-width: 51rem !important;
+                max-width: none !important;
                 margin: 0 !important;
                 padding-left: 0 !important;
                 padding-right: 0 !important;
@@ -2769,7 +2792,8 @@
             }
 
             body.is-searching.search-on-dock-yaxis:not(.sidebar-collapsed) #search-block {
-                max-width: min(51rem, calc(100vw - 208px)) !important;
+                width: min(51rem, calc(100vw - 208px)) !important;
+                max-width: none !important;
             }
 
             body:not(.dock-right):not(.sidebar-collapsed) #page-library-scroll,
@@ -2899,12 +2923,21 @@
                     return;
                 }
                 const dockRect = dock.getBoundingClientRect();
-                const inputRect = searchInput.getBoundingClientRect();
-                if (dockRect.height <= 0 || dockRect.width <= 0 || inputRect.height <= 0) {
+                if (dockRect.height <= 0 || dockRect.width <= 0) {
                     body.classList.remove('search-on-dock-yaxis');
                     return;
                 }
-                const onSameYAxis = inputRect.bottom > dockRect.top - 6 && inputRect.top < dockRect.bottom + 6;
+                if (!body.classList.contains('is-searching')) {
+                    body.classList.add('search-on-dock-yaxis');
+                    return;
+                }
+                const pageSearch = document.getElementById('page-search');
+                const scrollOffset = pageSearch ? pageSearch.scrollTop : 0;
+                const rootRem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+                const targetTop = (1.5 * rootRem) - scrollOffset;
+                const inputHeight = searchInput.offsetHeight || 56;
+                const targetBottom = targetTop + inputHeight;
+                const onSameYAxis = targetBottom > dockRect.top - 6 && targetTop < dockRect.bottom + 6;
                 body.classList.toggle('search-on-dock-yaxis', onSameYAxis);
             }
 
@@ -2926,23 +2959,15 @@
                     syncTheme(window.getCurrentTheme());
                 }
                 updateSearchDockYAxisAlignment();
-                requestAnimationFrame(updateSearchDockYAxisAlignment);
 
-                const searchBlock = document.getElementById('search-block');
-                if (searchBlock) {
-                    searchBlock.addEventListener('transitionend', updateSearchDockYAxisAlignment);
+                const pageSearch = document.getElementById('page-search');
+                if (pageSearch) {
+                    pageSearch.addEventListener('scroll', updateSearchDockYAxisAlignment, { passive: true });
                 }
 
                 if (document.body && typeof MutationObserver === 'function') {
-                    let prevSearching = document.body.classList.contains('is-searching');
                     const obs = new MutationObserver(() => {
-                        const nowSearching = document.body.classList.contains('is-searching');
-                        requestAnimationFrame(updateSearchDockYAxisAlignment);
-                        if (nowSearching !== prevSearching) {
-                            prevSearching = nowSearching;
-                            setTimeout(updateSearchDockYAxisAlignment, 150);
-                            setTimeout(updateSearchDockYAxisAlignment, 650);
-                        }
+                        updateSearchDockYAxisAlignment();
                     });
                     obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
                 }

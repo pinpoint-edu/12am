@@ -1003,13 +1003,13 @@ body.dock-right.sidebar-collapsed .messenger-frame#app-container {
   bottom: auto;
   width: auto !important;
   z-index: 9999;
-  background: transparent !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: none !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-  box-shadow: none !important;
+  background: var(--navbar-bg, var(--bg-secondary, rgba(14, 14, 18, 0.92))) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border: 1px solid var(--navbar-border, var(--border-main, rgba(255, 255, 255, 0.1))) !important;
+  border-radius: 18px !important;
+  padding: 6px !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 0, 0, 0.22) !important;
   color: var(--text-main, #ffffff);
   opacity: 0;
   visibility: hidden;
@@ -1053,64 +1053,57 @@ body.dock-right .music-mini-menu-container.open {
 .music-mini-ctrl-btn,
 .music-mini-play-btn,
 .music-mini-redirect-btn {
-  width: 40px !important;
-  height: 40px !important;
-  min-width: 40px !important;
-  min-height: 40px !important;
-  border-radius: 50% !important;
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  min-height: 38px !important;
+  border-radius: 12px !important;
   padding: 0 !important;
   flex-shrink: 0;
-  border: 1px solid var(--navbar-border, rgba(255, 255, 255, 0.16));
-  background: var(--navbar-bg, rgba(14, 14, 18, 0.94));
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  color: var(--text-main, #ffffff);
+  background: var(--bg-secondary, var(--card-bg, rgba(255, 255, 255, 0.06))) !important;
+  border: 1px solid var(--border-main, var(--navbar-border, rgba(255, 255, 255, 0.1))) !important;
+  color: var(--text-main, var(--text-primary, #e5e7eb)) !important;
   font-size: 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
-  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+  box-shadow: none !important;
+  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
 }
 
 .music-mini-ctrl-btn:hover,
 .music-mini-play-btn:hover,
 .music-mini-redirect-btn:hover {
-  transform: scale(1.09);
-  border-color: var(--tab-active-border, var(--accent-color, #f59e0b));
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5), 0 0 14px var(--accent-glow, rgba(245, 158, 11, 0.3));
+  transform: scale(1.05);
+  background: var(--tab-hover-bg, var(--bg-primary, rgba(255, 255, 255, 0.12))) !important;
+  border-color: var(--tab-hover-border, var(--border-main, rgba(255, 255, 255, 0.18))) !important;
+  color: var(--tab-hover-text, var(--text-main, #ffffff)) !important;
+  box-shadow: none !important;
 }
 
-.music-mini-play-btn {
-  background: var(--accent-color, #f59e0b);
-  border-color: var(--accent-color, #f59e0b);
-  color: #ffffff;
+html.light .music-mini-menu-container {
+  background: var(--navbar-bg, rgba(255, 255, 255, 0.92)) !important;
+  border-color: var(--navbar-border, rgba(15, 23, 42, 0.12)) !important;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12) !important;
 }
 
-.music-mini-redirect-btn {
-  background: var(--tab-active-bg, rgba(245, 158, 11, 0.22));
-  border-color: var(--tab-active-border, var(--accent-color, #f59e0b));
-  color: var(--tab-active-text, var(--accent-color, #f59e0b));
-}
-
-html.light .music-mini-ctrl-btn {
-  color: #0f172a !important;
-  background: rgba(255, 255, 255, 0.92) !important;
-  border-color: rgba(15, 23, 42, 0.14) !important;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.16) !important;
-}
-
-html.light .music-mini-play-btn {
-  background: var(--accent-color, #0f172a) !important;
-  border-color: var(--accent-color, #0f172a) !important;
-  color: #ffffff !important;
-}
-
+html.light .music-mini-ctrl-btn,
+html.light .music-mini-play-btn,
 html.light .music-mini-redirect-btn {
-  background: var(--tab-active-bg, rgba(124, 58, 237, 0.14)) !important;
-  border-color: var(--tab-active-border, var(--accent-color, #7c3aed)) !important;
-  color: var(--tab-active-text, var(--accent-color, #7c3aed)) !important;
+  background: var(--bg-secondary, rgba(15, 23, 42, 0.05)) !important;
+  border-color: var(--border-main, rgba(15, 23, 42, 0.1)) !important;
+  color: var(--text-main, #0f172a) !important;
+  box-shadow: none !important;
+}
+
+html.light .music-mini-ctrl-btn:hover,
+html.light .music-mini-play-btn:hover,
+html.light .music-mini-redirect-btn:hover {
+  background: var(--bg-primary, rgba(15, 23, 42, 0.1)) !important;
+  border-color: rgba(15, 23, 42, 0.18) !important;
+  color: #0f172a !important;
+  box-shadow: none !important;
 }
 
 @media (max-width: 640px) {
