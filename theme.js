@@ -198,202 +198,202 @@
     },
     {
         "name": "Valentine's Day",
-        "description": "Romantic velvet rose-crimson, blush pink, and candy heart magenta.",
-        "bg-primary": "#14060b",
-        "bg-secondary": "#210a13",
+        "description": "Vibrant velvet raspberry-rose, hot candy pink, and romantic magenta glow.",
+        "bg-primary": "#240714",
+        "bg-secondary": "#360c20",
         "text-primary": "#fff1f2",
-        "text-secondary": "#fda4af",
-        "accent-primary": "#f43f5e",
-        "accent-secondary": "rgba(244, 63, 94, 0.42)",
-        "accent-glow": "rgba(236, 72, 153, 0.34)",
-        "navbar-bg": "rgba(26, 8, 16, 0.9)",
-        "navbar-border": "rgba(244, 63, 94, 0.28)",
+        "text-secondary": "#ff9ebb",
+        "accent-primary": "#ff3b7f",
+        "accent-secondary": "rgba(255, 59, 127, 0.55)",
+        "accent-glow": "rgba(255, 77, 148, 0.48)",
+        "navbar-bg": "rgba(46, 10, 27, 0.9)",
+        "navbar-border": "rgba(255, 59, 127, 0.4)",
         "navbar-text": "#fff1f2",
-        "tab-active-bg": "rgba(244, 63, 94, 0.2)",
+        "tab-active-bg": "rgba(255, 59, 127, 0.25)",
         "tab-active-text": "#fbcfe8",
-        "tab-active-border": "#f43f5e",
-        "tab-hover-bg": "rgba(244, 63, 94, 0.1)",
+        "tab-active-border": "#ff3b7f",
+        "tab-hover-bg": "rgba(255, 59, 127, 0.14)",
         "tab-hover-text": "#fecdd3",
-        "button-bg": "#240a15",
-        "button-text": "#fb7185",
-        "border-primary": "#3d1222",
-        "border-secondary": "rgba(255, 255, 255, 0.06)",
-        "avatar-gradient": "linear-gradient(135deg, #f43f5e 0%, #ec4899 55%, #fda4af 100%)",
+        "button-bg": "#3d0e24",
+        "button-text": "#ff85b3",
+        "border-primary": "#6b183d",
+        "border-secondary": "rgba(255, 255, 255, 0.08)",
+        "avatar-gradient": "linear-gradient(135deg, #ff3b7f 0%, #f472b6 50%, #fb7185 100%)",
         "logo-src": "/images/logo.png"
     },
     {
         "name": "St. Patrick's Day",
-        "description": "Shamrock clover green, radiant emerald, and lucky pot-of-gold accents.",
-        "bg-primary": "#041109",
-        "bg-secondary": "#0a1f12",
+        "description": "Vibrant emerald shamrock green, bright kelly clover, and lucky pot-of-gold.",
+        "bg-primary": "#062412",
+        "bg-secondary": "#0c381d",
         "text-primary": "#ecfdf5",
         "text-secondary": "#fde047",
-        "accent-primary": "#16a34a",
-        "accent-secondary": "rgba(22, 163, 74, 0.44)",
-        "accent-glow": "rgba(34, 197, 94, 0.32)",
-        "navbar-bg": "rgba(7, 25, 14, 0.9)",
-        "navbar-border": "rgba(22, 163, 74, 0.3)",
+        "accent-primary": "#22c55e",
+        "accent-secondary": "rgba(34, 197, 94, 0.52)",
+        "accent-glow": "rgba(250, 204, 21, 0.38)",
+        "navbar-bg": "rgba(10, 44, 23, 0.9)",
+        "navbar-border": "rgba(34, 197, 94, 0.42)",
         "navbar-text": "#ecfdf5",
-        "tab-active-bg": "rgba(22, 163, 74, 0.2)",
+        "tab-active-bg": "rgba(34, 197, 94, 0.26)",
         "tab-active-text": "#fde047",
-        "tab-active-border": "#22c55e",
-        "tab-hover-bg": "rgba(22, 163, 74, 0.1)",
+        "tab-active-border": "#4ade80",
+        "tab-hover-bg": "rgba(34, 197, 94, 0.14)",
         "tab-hover-text": "#86efac",
-        "button-bg": "#091c10",
+        "button-bg": "#0f4222",
         "button-text": "#facc15",
-        "border-primary": "#163d24",
-        "border-secondary": "rgba(255, 255, 255, 0.06)",
-        "avatar-gradient": "linear-gradient(135deg, #22c55e 0%, #15803d 65%, #facc15 100%)",
+        "border-primary": "#1a5c32",
+        "border-secondary": "rgba(255, 255, 255, 0.08)",
+        "avatar-gradient": "linear-gradient(135deg, #4ade80 0%, #16a34a 55%, #facc15 100%)",
         "logo-src": "/images/logo.png"
     },
     {
         "name": "Easter",
-        "description": "Pastel lavender-lilac, robin's egg blue, and springtime buttercup yellow.",
-        "bg-primary": "#120f1d",
-        "bg-secondary": "#1c172e",
+        "description": "Colorful springtime twilight violet with pastel orchid, sky cyan, and buttercup gold.",
+        "bg-primary": "#1c1438",
+        "bg-secondary": "#2a1e52",
         "text-primary": "#faf5ff",
-        "text-secondary": "#bae6fd",
-        "accent-primary": "#d8b4fe",
-        "accent-secondary": "rgba(216, 180, 254, 0.38)",
-        "accent-glow": "rgba(186, 230, 253, 0.32)",
-        "navbar-bg": "rgba(22, 18, 38, 0.9)",
-        "navbar-border": "rgba(216, 180, 254, 0.28)",
+        "text-secondary": "#7dd3fc",
+        "accent-primary": "#e879f9",
+        "accent-secondary": "rgba(232, 121, 249, 0.48)",
+        "accent-glow": "rgba(125, 211, 252, 0.44)",
+        "navbar-bg": "rgba(34, 24, 68, 0.9)",
+        "navbar-border": "rgba(232, 121, 249, 0.4)",
         "navbar-text": "#faf5ff",
-        "tab-active-bg": "rgba(216, 180, 254, 0.2)",
-        "tab-active-text": "#fde68a",
-        "tab-active-border": "#d8b4fe",
-        "tab-hover-bg": "rgba(186, 230, 253, 0.1)",
+        "tab-active-bg": "rgba(232, 121, 249, 0.24)",
+        "tab-active-text": "#fde047",
+        "tab-active-border": "#e879f9",
+        "tab-hover-bg": "rgba(125, 211, 252, 0.16)",
         "tab-hover-text": "#bae6fd",
-        "button-bg": "#1f1936",
-        "button-text": "#fde68a",
-        "border-primary": "#332954",
-        "border-secondary": "rgba(255, 255, 255, 0.07)",
-        "avatar-gradient": "linear-gradient(135deg, #d8b4fe 0%, #7dd3fc 50%, #fde68a 100%)",
+        "button-bg": "#312361",
+        "button-text": "#fde047",
+        "border-primary": "#4c3585",
+        "border-secondary": "rgba(255, 255, 255, 0.09)",
+        "avatar-gradient": "linear-gradient(135deg, #f472b6 0%, #7dd3fc 50%, #fde047 100%)",
         "logo-src": "/images/logo.png"
     },
     {
         "name": "4th of July",
-        "description": "Independence Day patriotic deep liberty navy, crimson red, and firework white & blue.",
-        "bg-primary": "#050a18",
-        "bg-secondary": "#0a152e",
+        "description": "Bold, colorful Independence Day royal navy, blazing liberty red, and electric starlight blue.",
+        "bg-primary": "#09183d",
+        "bg-secondary": "#11285e",
         "text-primary": "#ffffff",
-        "text-secondary": "#93c5fd",
-        "accent-primary": "#ef4444",
-        "accent-secondary": "rgba(239, 68, 68, 0.42)",
-        "accent-glow": "rgba(59, 130, 246, 0.35)",
-        "navbar-bg": "rgba(8, 17, 38, 0.9)",
-        "navbar-border": "rgba(59, 130, 246, 0.3)",
+        "text-secondary": "#7dd3fc",
+        "accent-primary": "#ff334b",
+        "accent-secondary": "rgba(255, 51, 75, 0.55)",
+        "accent-glow": "rgba(59, 130, 246, 0.52)",
+        "navbar-bg": "rgba(14, 34, 82, 0.92)",
+        "navbar-border": "rgba(255, 51, 75, 0.45)",
         "navbar-text": "#ffffff",
-        "tab-active-bg": "rgba(239, 68, 68, 0.2)",
+        "tab-active-bg": "rgba(255, 51, 75, 0.28)",
         "tab-active-text": "#ffffff",
-        "tab-active-border": "#ef4444",
-        "tab-hover-bg": "rgba(59, 130, 246, 0.14)",
+        "tab-active-border": "#ff334b",
+        "tab-hover-bg": "rgba(59, 130, 246, 0.25)",
         "tab-hover-text": "#bfdbfe",
-        "button-bg": "#0d1a38",
-        "button-text": "#f87171",
-        "border-primary": "#1e3a6e",
-        "border-secondary": "rgba(255, 255, 255, 0.08)",
-        "avatar-gradient": "linear-gradient(135deg, #ef4444 0%, #ffffff 50%, #2563eb 100%)",
+        "button-bg": "#153275",
+        "button-text": "#ff6b7d",
+        "border-primary": "#2750a8",
+        "border-secondary": "rgba(255, 255, 255, 0.1)",
+        "avatar-gradient": "linear-gradient(135deg, #ff334b 0%, #ffffff 50%, #2563eb 100%)",
         "logo-src": "/images/logo.png"
     },
     {
         "name": "Halloween",
-        "description": "Spooky midnight obsidian with glowing jack-o'-lantern pumpkin orange and eerie violet.",
-        "bg-primary": "#0a060e",
-        "bg-secondary": "#160d1f",
+        "description": "Electric haunted violet with glowing neon jack-o'-lantern orange and toxic green.",
+        "bg-primary": "#180926",
+        "bg-secondary": "#26103b",
         "text-primary": "#fff7ed",
-        "text-secondary": "#c084fc",
-        "accent-primary": "#f97316",
-        "accent-secondary": "rgba(249, 115, 22, 0.45)",
-        "accent-glow": "rgba(168, 85, 247, 0.34)",
-        "navbar-bg": "rgba(18, 10, 26, 0.9)",
-        "navbar-border": "rgba(249, 115, 22, 0.3)",
+        "text-secondary": "#d8b4fe",
+        "accent-primary": "#ff7a1a",
+        "accent-secondary": "rgba(255, 122, 26, 0.55)",
+        "accent-glow": "rgba(168, 85, 247, 0.48)",
+        "navbar-bg": "rgba(31, 13, 48, 0.9)",
+        "navbar-border": "rgba(255, 122, 26, 0.45)",
         "navbar-text": "#fff7ed",
-        "tab-active-bg": "rgba(249, 115, 22, 0.2)",
-        "tab-active-text": "#fdba74",
-        "tab-active-border": "#f97316",
-        "tab-hover-bg": "rgba(168, 85, 247, 0.12)",
+        "tab-active-bg": "rgba(255, 122, 26, 0.26)",
+        "tab-active-text": "#fed7aa",
+        "tab-active-border": "#ff7a1a",
+        "tab-hover-bg": "rgba(168, 85, 247, 0.18)",
         "tab-hover-text": "#e9d5ff",
-        "button-bg": "#1d1024",
-        "button-text": "#fb923c",
-        "border-primary": "#381c45",
-        "border-secondary": "rgba(255, 255, 255, 0.06)",
-        "avatar-gradient": "linear-gradient(135deg, #f97316 0%, #9333ea 100%)",
+        "button-bg": "#2e1447",
+        "button-text": "#ff9248",
+        "border-primary": "#52237a",
+        "border-secondary": "rgba(255, 255, 255, 0.08)",
+        "avatar-gradient": "linear-gradient(135deg, #ff7a1a 0%, #a855f7 55%, #22c55e 100%)",
         "logo-src": "/images/logo.png"
     },
     {
         "name": "Thanksgiving",
-        "description": "Warm harvest roasted chestnut brown, cranberry red, spiced pumpkin, and golden wheat.",
-        "bg-primary": "#120905",
-        "bg-secondary": "#1f1009",
+        "description": "Rich harvest spiced auburn, glowing amber pumpkin, cranberry red, and golden wheat.",
+        "bg-primary": "#241006",
+        "bg-secondary": "#36190b",
         "text-primary": "#fef3c7",
-        "text-secondary": "#fbbf24",
-        "accent-primary": "#d97706",
-        "accent-secondary": "rgba(217, 119, 6, 0.44)",
-        "accent-glow": "rgba(185, 28, 28, 0.3)",
-        "navbar-bg": "rgba(26, 13, 8, 0.9)",
-        "navbar-border": "rgba(217, 119, 6, 0.3)",
+        "text-secondary": "#fcd34d",
+        "accent-primary": "#f59e0b",
+        "accent-secondary": "rgba(245, 158, 11, 0.54)",
+        "accent-glow": "rgba(220, 38, 38, 0.42)",
+        "navbar-bg": "rgba(43, 20, 9, 0.9)",
+        "navbar-border": "rgba(245, 158, 11, 0.42)",
         "navbar-text": "#fef3c7",
-        "tab-active-bg": "rgba(217, 119, 6, 0.2)",
+        "tab-active-bg": "rgba(245, 158, 11, 0.25)",
         "tab-active-text": "#fde68a",
-        "tab-active-border": "#d97706",
-        "tab-hover-bg": "rgba(185, 28, 28, 0.12)",
+        "tab-active-border": "#f59e0b",
+        "tab-hover-bg": "rgba(220, 38, 38, 0.18)",
         "tab-hover-text": "#fed7aa",
-        "button-bg": "#21120a",
-        "button-text": "#f59e0b",
-        "border-primary": "#3d2214",
-        "border-secondary": "rgba(255, 255, 255, 0.06)",
-        "avatar-gradient": "linear-gradient(135deg, #d97706 0%, #b91c1c 55%, #eab308 100%)",
+        "button-bg": "#3d1c0c",
+        "button-text": "#fbbf24",
+        "border-primary": "#632f15",
+        "border-secondary": "rgba(255, 255, 255, 0.08)",
+        "avatar-gradient": "linear-gradient(135deg, #f59e0b 0%, #dc2626 55%, #facc15 100%)",
         "logo-src": "/images/logo.png"
     },
     {
         "name": "Christmas",
-        "description": "Festive pine forest green with warm holly berry red, ornament gold, and live falling snow.",
-        "bg-primary": "#05130b",
-        "bg-secondary": "#0c2416",
+        "description": "Vibrant evergreen pine with bright holly berry red, ornament gold, and live falling snow.",
+        "bg-primary": "#082414",
+        "bg-secondary": "#113821",
         "text-primary": "#ffffff",
-        "text-secondary": "#fca5a5",
-        "accent-primary": "#ef4444",
-        "accent-secondary": "rgba(239, 68, 68, 0.4)",
-        "accent-glow": "rgba(239, 68, 68, 0.3)",
-        "navbar-bg": "rgba(9, 29, 17, 0.88)",
-        "navbar-border": "rgba(239, 68, 68, 0.25)",
+        "text-secondary": "#fde047",
+        "accent-primary": "#ff334b",
+        "accent-secondary": "rgba(255, 51, 75, 0.52)",
+        "accent-glow": "rgba(250, 204, 21, 0.42)",
+        "navbar-bg": "rgba(13, 44, 26, 0.9)",
+        "navbar-border": "rgba(255, 51, 75, 0.42)",
         "navbar-text": "#ffffff",
-        "tab-active-bg": "rgba(239, 68, 68, 0.2)",
+        "tab-active-bg": "rgba(255, 51, 75, 0.26)",
         "tab-active-text": "#ffd700",
-        "tab-active-border": "#ef4444",
-        "tab-hover-bg": "rgba(255, 255, 255, 0.06)",
+        "tab-active-border": "#ff334b",
+        "tab-hover-bg": "rgba(250, 204, 21, 0.12)",
         "tab-hover-text": "#fecaca",
-        "button-bg": "#0d2014",
+        "button-bg": "#154227",
         "button-text": "#ffd700",
-        "border-primary": "#194229",
-        "border-secondary": "rgba(255, 255, 255, 0.08)",
-        "avatar-gradient": "linear-gradient(135deg, #ef4444 0%, #15803d 100%)",
+        "border-primary": "#1d5e37",
+        "border-secondary": "rgba(255, 255, 255, 0.1)",
+        "avatar-gradient": "linear-gradient(135deg, #ff334b 0%, #16a34a 55%, #facc15 100%)",
         "logo-src": "/images/logo.png"
     },
     {
         "name": "New Year's",
-        "description": "Sparkling champagne gold on midnight onyx celebrating new beginnings.",
-        "bg-primary": "#08080c",
-        "bg-secondary": "#111119",
+        "description": "Celebratory midnight indigo with dazzling champagne gold and live animated fireworks.",
+        "bg-primary": "#0c0b1d",
+        "bg-secondary": "#161433",
         "text-primary": "#ffffff",
         "text-secondary": "#fef08a",
-        "accent-primary": "#eab308",
-        "accent-secondary": "rgba(234, 179, 8, 0.42)",
-        "accent-glow": "rgba(254, 240, 138, 0.32)",
-        "navbar-bg": "rgba(15, 15, 22, 0.9)",
-        "navbar-border": "rgba(234, 179, 8, 0.28)",
+        "accent-primary": "#facc15",
+        "accent-secondary": "rgba(250, 204, 21, 0.52)",
+        "accent-glow": "rgba(236, 72, 153, 0.42)",
+        "navbar-bg": "rgba(18, 16, 42, 0.9)",
+        "navbar-border": "rgba(250, 204, 21, 0.4)",
         "navbar-text": "#ffffff",
-        "tab-active-bg": "rgba(234, 179, 8, 0.2)",
+        "tab-active-bg": "rgba(250, 204, 21, 0.24)",
         "tab-active-text": "#fef08a",
-        "tab-active-border": "#eab308",
-        "tab-hover-bg": "rgba(234, 179, 8, 0.1)",
+        "tab-active-border": "#facc15",
+        "tab-hover-bg": "rgba(236, 72, 153, 0.16)",
         "tab-hover-text": "#fde047",
-        "button-bg": "#17160c",
+        "button-bg": "#1d1a42",
         "button-text": "#facc15",
-        "border-primary": "#292836",
-        "border-secondary": "rgba(255, 255, 255, 0.07)",
-        "avatar-gradient": "linear-gradient(135deg, #fef08a 0%, #eab308 55%, #ca8a04 100%)",
+        "border-primary": "#332f6b",
+        "border-secondary": "rgba(255, 255, 255, 0.09)",
+        "avatar-gradient": "linear-gradient(135deg, #fef08a 0%, #facc15 45%, #ec4899 100%)",
         "logo-src": "/images/logo.png"
     },
     {
@@ -835,10 +835,41 @@
         return "Original";
     }
 
-    // Theme Background Effects Engine (Snow, Camo, Ocean Waves, Galaxy Stars, Birthday Sprinkles)
-    const __snowState = { raf: null, canvas: null, pattern: null, resizeFn: null, activeTheme: '' };
-    const CAMO_BG_SVG = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240"><rect width="240" height="240" fill="#182010"/><path d="M18 12c22-16 62-8 76 14 12 20-10 48-34 52-26 4-54-12-56-36-1-12 4-22 14-30zm130 8c28-14 70 4 74 30 4 24-22 46-52 44-28-2-48-24-44-46 2-12 10-22 22-28zM24 148c26-18 68-8 82 18 12 22-14 54-44 54-28 0-52-20-52-44 0-12 6-22 14-28zm132 10c24-14 66-2 72 24 6 26-22 48-50 44-28-4-44-26-38-48 4-10 8-14 16-20z" fill="#3a4a23"/><path d="M64 46c20-12 52-2 60 18 8 20-12 42-36 42-22 0-42-16-40-36 1-10 8-18 16-24zm98 56c22-10 50 4 52 24 2 22-20 38-44 36-22-2-36-20-32-38 2-10 12-16 24-22zM10 92c18-10 46 0 50 20 4 20-14 38-34 36-20-2-32-18-30-34 1-10 6-16 14-22z" fill="#6b5e3e"/><path d="M106 8c16-6 36 6 38 22 2 16-14 30-32 28-18-2-28-16-24-30 2-8 10-16 18-20zm-6 122c18-8 42 4 44 22 2 18-16 34-36 32-20-2-32-18-28-34 2-10 10-16 20-20zm104-12c14-6 30 4 32 18 2 14-12 26-28 24-16-2-24-14-20-26 2-8 8-12 16-16z" fill="#232c16"/></svg>');
+    // Theme Background Effects Engine (Snow, Woodland Camo SVG Filter, Ocean Waves, Galaxy Stars, Birthday Sprinkles, New Year's Fireworks)
+    const __snowState = { raf: null, canvas: null, pattern: null, fireworksEl: null, fireworks: null, resizeFn: null, activeTheme: '' };
+    const FIREWORKS_CDN_URL = 'https://cdn.jsdelivr.net/npm/fireworks-js@2.10.8/dist/index.umd.min.js';
     const SPRINKLES_BG_SVG = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180"><g stroke-linecap="round" stroke-width="5.5"><line x1="20" y1="24" x2="34" y2="16" stroke="#f472b6"/><line x1="78" y1="18" x2="90" y2="28" stroke="#60a5fa"/><line x1="140" y1="26" x2="154" y2="18" stroke="#fbbf24"/><line x1="48" y1="68" x2="60" y2="56" stroke="#34d399"/><line x1="112" y1="64" x2="128" y2="70" stroke="#c084fc"/><line x1="162" y1="78" x2="170" y2="92" stroke="#f472b6"/><line x1="18" y1="114" x2="32" y2="122" stroke="#60a5fa"/><line x1="74" y1="108" x2="86" y2="96" stroke="#fbbf24"/><line x1="126" y1="118" x2="138" y2="108" stroke="#f472b6"/><line x1="42" y1="154" x2="58" y2="158" stroke="#c084fc"/><line x1="100" y1="152" x2="112" y2="164" stroke="#34d399"/><line x1="152" y1="146" x2="164" y2="136" stroke="#60a5fa"/></g></svg>');
+
+    function startFireworksInContainer(container) {
+        const FW = (typeof window.Fireworks === 'function')
+            ? window.Fireworks
+            : (window.Fireworks && (window.Fireworks.Fireworks || window.Fireworks.default));
+        if (typeof FW !== 'function' || !container) return false;
+        try {
+            const fw = new FW(container, {
+                autoresize: true,
+                opacity: 0.45,
+                acceleration: 1.03,
+                friction: 0.97,
+                gravity: 1.4,
+                particles: 60,
+                traceLength: 3,
+                traceSpeed: 8,
+                explosion: 5,
+                intensity: 18,
+                flickering: 45,
+                hue: { min: 0, max: 360 },
+                delay: { min: 35, max: 70 },
+                brightness: { min: 55, max: 85 },
+                decay: { min: 0.015, max: 0.03 }
+            });
+            fw.start();
+            __snowState.fireworks = fw;
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
 
     function clearThemeEffects() {
         if (__snowState.raf) {
@@ -848,6 +879,14 @@
         if (__snowState.resizeFn && typeof window !== 'undefined') {
             window.removeEventListener('resize', __snowState.resizeFn);
             __snowState.resizeFn = null;
+        }
+        if (__snowState.fireworks) {
+            try { __snowState.fireworks.stop(true); } catch (e) {}
+            __snowState.fireworks = null;
+        }
+        if (__snowState.fireworksEl) {
+            __snowState.fireworksEl.remove();
+            __snowState.fireworksEl = null;
         }
         if (__snowState.canvas) {
             __snowState.canvas.remove();
@@ -867,22 +906,53 @@
             : (tn === 'ocean') ? 'ocean'
             : (tn === 'galaxy') ? 'galaxy'
             : (tn === 'birthday') ? 'birthday'
+            : (tn === "new year's" || tn === 'new year') ? 'fireworks'
             : '';
 
         if (!fxType) {
             clearThemeEffects();
             return;
         }
-        if (__snowState.activeTheme === fxType && (__snowState.canvas || __snowState.pattern)) return;
+        if (__snowState.activeTheme === fxType && (__snowState.canvas || __snowState.pattern || __snowState.fireworksEl)) return;
         clearThemeEffects();
         if (typeof document === 'undefined' || !document.body) return;
         __snowState.activeTheme = fxType;
+
+        if (fxType === 'fireworks') {
+            const fwWrap = document.createElement('div');
+            fwWrap.id = 'fireworksContainer';
+            fwWrap.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:-1;opacity:0.78;';
+            document.body.prepend(fwWrap);
+            __snowState.fireworksEl = fwWrap;
+            if (!startFireworksInContainer(fwWrap)) {
+                let script = document.querySelector(`script[src="${FIREWORKS_CDN_URL}"]`);
+                if (!script && document.head) {
+                    script = document.createElement('script');
+                    script.src = FIREWORKS_CDN_URL;
+                    script.async = true;
+                    script.onload = () => {
+                        if (__snowState.activeTheme === 'fireworks' && __snowState.fireworksEl) {
+                            startFireworksInContainer(__snowState.fireworksEl);
+                        }
+                    };
+                    document.head.appendChild(script);
+                } else if (script) {
+                    script.addEventListener('load', () => {
+                        if (__snowState.activeTheme === 'fireworks' && __snowState.fireworksEl) {
+                            startFireworksInContainer(__snowState.fireworksEl);
+                        }
+                    }, { once: true });
+                }
+            }
+            return;
+        }
 
         if (fxType === 'camo' || fxType === 'birthday') {
             const pat = document.createElement('div');
             pat.id = 'themeBgPattern';
             if (fxType === 'camo') {
-                pat.style.cssText = `position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:-1;opacity:0.32;background-image:url("${CAMO_BG_SVG}");background-size:260px 260px;background-repeat:repeat;`;
+                pat.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:-1;opacity:0.34;';
+                pat.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" preserveAspectRatio="none" style="display:block;width:100%;height:100%;"><filter id="12am-woodland-camo" x="0%" y="0%" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.013" numOctaves="4" seed="5" stitchTiles="stitch" result="noise"/><feComponentTransfer in="noise" result="thresholds"><feFuncR type="discrete" tableValues="0 0.2 0.2 0.5 0.5 1"/><feFuncG type="discrete" tableValues="0 0 0.6 0.6 1 1"/><feFuncB type="discrete" tableValues="0.3 0.3 0 0.8 0.2 0.9"/></feComponentTransfer><feColorMatrix in="thresholds" type="matrix" values="0.2 1.2 -0.4 0 0.05 0.1 0.8 0.1 0 0.15 -0.2 0.5 0.3 0 0.08 0 0 0 1 0"/></filter><rect width="100%" height="100%" filter="url(#12am-woodland-camo)"/></svg>';
             } else {
                 pat.style.cssText = `position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:-1;opacity:0.5;background-color:transparent;background-image:url("${SPRINKLES_BG_SVG}"),linear-gradient(135deg,rgba(147,197,253,0.34) 0%,rgba(249,168,212,0.32) 100%);background-size:180px 180px,100% 100%;background-repeat:repeat,no-repeat;`;
             }
@@ -1171,6 +1241,20 @@
                 .text-gray-400, .text-zinc-400 { color: #475569 !important; }
                 i, .material-symbols-sharp, .material-symbols-rounded {
                     /* Inherit text contrast dynamically */
+                }
+                /* Lower, softer UI shadows for light themes */
+                .floating-sidebar, .sidebar-nav, .auth-menu-container, .minimal-footer-cluster,
+                .dock-music-menu, .dock-music-menu-container, .dict-card, .bento-card,
+                .glass-card, .hero-card, .game-card, .card, .modal-content, .auth-card,
+                .legal-card, .error-card, .search-bar, .search-box, .search-dropdown,
+                .chat-input-box, .message-bubble {
+                    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+                }
+                .game-card:hover, .bento-card:hover, .hero-card:hover, .search-box:focus-within {
+                    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.09), 0 2px 6px rgba(15, 23, 42, 0.05) !important;
+                }
+                .btn-primary-sharp, .search-btn, .pill-slider-indicator {
+                    box-shadow: 0 2px 10px var(--accent-glow, rgba(79, 70, 229, 0.16)) !important;
                 }
             `;
         } else {
