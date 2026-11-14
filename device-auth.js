@@ -51,17 +51,17 @@
             </div>`;
         }
 
-        if (type === 'image' && imgUrl) {
+        if ((type === 'image' || type === 'custom') && imgUrl) {
             const fallbackInitial = escapeHtml(((user.firstName || user.nickname || 'U')[0] || 'U').toUpperCase());
             return `<img src="${escapeHtml(imgUrl)}" alt="Avatar" class="pfp-squircle" style="width:${size}px; height:${size}px; border-radius:${radius}; object-fit:cover; display:block; border:1px solid rgba(255,255,255,0.16);" onerror="this.outerHTML='<div class=\\'pfp-squircle\\' style=\\'width:${size}px; height:${size}px; border-radius:${radius}; background:#000000; color:#ffffff; border:1px solid rgba(255,255,255,0.16); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize};\\'>${fallbackInitial}</div>'">`;
         }
 
         const rawLetters = user.avatar_letter || user.pfp_letter_char || user.letterAvatarText || (user.firstName || user.nickname || 'U')[0] || 'U';
-        const letters = escapeHtml(String(rawLetters).slice(0, 3).toUpperCase());
+        const letters = escapeHtml(String(rawLetters).slice(0, 3));
         const bg = escapeHtml(user.avatar_bg || user.pfpLetterBg || user.pfp_letter_bg || '#000000');
         const color = escapeHtml(user.avatar_color || '#ffffff');
 
-        return `<div class="pfp-squircle" style="width:${size}px; height:${size}px; border-radius:${radius}; background:${bg}; color:${color}; border:1px solid rgba(255,255,255,0.16); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize}; text-transform:uppercase; letter-spacing:0.5px; user-select:none; flex-shrink:0;">${letters}</div>`;
+        return `<div class="pfp-squircle" style="width:${size}px; height:${size}px; border-radius:${radius}; background:${bg}; color:${color}; border:1px solid rgba(255,255,255,0.16); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize}; letter-spacing:0.5px; user-select:none; flex-shrink:0;">${letters}</div>`;
     }
     window.render12AMAvatar = render12AMAvatar;
 

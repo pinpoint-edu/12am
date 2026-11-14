@@ -208,17 +208,17 @@
             </div>`;
         }
 
-        if (type === 'image' && imgUrl) {
+        if ((type === 'image' || type === 'custom') && imgUrl) {
             const fallbackInitial = escapeHtml(((user.firstName || user.nickname || 'U')[0] || 'U').toUpperCase());
             return `<img src="${escapeHtml(imgUrl)}" alt="Avatar" style="width:${size}px; height:${size}px; border-radius:${radius}; object-fit:cover; display:block; border:1px solid rgba(255,255,255,0.15);" onerror="this.outerHTML='<div style=\\'width:${size}px; height:${size}px; border-radius:${radius}; background:#000000; color:#ffffff; border:1px solid rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize};\\'>${fallbackInitial}</div>'">`;
         }
 
         const rawLetters = user.avatar_letter || user.pfp_letter_char || user.letterAvatarText || (user.firstName || user.nickname || 'U')[0] || 'U';
-        const letters = escapeHtml(String(rawLetters).slice(0, 3).toUpperCase());
+        const letters = escapeHtml(String(rawLetters).slice(0, 3));
         const bg = escapeHtml(user.avatar_bg || user.pfpLetterBg || user.pfp_letter_bg || '#000000');
         const color = escapeHtml(user.avatar_color || '#ffffff');
 
-        return `<div style="width:${size}px; height:${size}px; border-radius:${radius}; background:${bg}; color:${color}; border:1px solid rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize}; text-transform:uppercase; letter-spacing:0.5px; user-select:none; flex-shrink:0;">${letters}</div>`;
+        return `<div style="width:${size}px; height:${size}px; border-radius:${radius}; background:${bg}; color:${color}; border:1px solid rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize}; letter-spacing:0.5px; user-select:none; flex-shrink:0;">${letters}</div>`;
     }
 
     function renderAuthSectionHtml(prefix, activeId) {
@@ -248,7 +248,6 @@
                 <div class="sidebar-auth-wrapper" id="sidebarAuthWrapper">
                     <button type="button" class="sidebar-btn sidebar-avatar-btn auth-toggle-btn" id="sidebarAuthToggle" aria-label="Account Menu">
                         ${avatarHtml}
-                        <span class="sidebar-tooltip">@${escapeHtml(handle)}</span>
                     </button>
                     <div id="auth-menu-container" class="auth-menu-container closed">
                         <div class="auth-menu-header" style="display: flex; align-items: center; gap: 12px; padding: 6px 4px 10px;">
@@ -351,6 +350,23 @@
             });
             toggleBtn.addEventListener('mouseenter', () => {
                 clearTimeout(authMenuHoverTimer);
+                const moreMenu = document.getElementById('more-menu-container');
+                const moreToggle = document.getElementById('sidebarMoreToggle');
+                if (moreMenu && moreMenu.classList.contains('open')) {
+                    moreMenu.classList.remove('open');
+                    moreMenu.classList.add('closed');
+                    if (moreToggle) moreToggle.classList.remove('active');
+                }
+                const musicMenu = document.getElementById('music-mini-menu-container');
+                const musicToggle = document.getElementById('sidebarMusicToggle');
+                if (musicMenu && musicMenu.classList.contains('open')) {
+                    musicMenu.classList.remove('open');
+                    musicMenu.classList.add('closed');
+                    if (musicToggle) musicToggle.classList.remove('active');
+                }
+                menu.classList.remove('closed');
+                menu.classList.add('open');
+                toggleBtn.classList.add('active');
             });
 
             document.addEventListener('click', (e) => {
@@ -405,7 +421,6 @@
             <div class="sidebar-more-wrapper" id="sidebarMoreWrapper">
                 <button type="button" class="sidebar-btn nav-tab ${isMoreActive ? 'active' : ''}" id="sidebarMoreToggle" aria-label="More Apps">
                     <i class="fa-solid fa-ellipsis"></i>
-                    <span class="sidebar-tooltip">More</span>
                 </button>
                 <div id="more-menu-container" class="more-menu-container closed">
                     <div class="more-menu-header" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 6px;">
@@ -482,7 +497,24 @@
             };
 
             moreToggle.addEventListener('mouseleave', closeMoreIfHoverAway);
-            moreToggle.addEventListener('mouseenter', () => clearTimeout(moreHoverTimer));
+            moreToggle.addEventListener('mouseenter', () => {
+                clearTimeout(moreHoverTimer);
+                if (authMenu && authMenu.classList.contains('open')) {
+                    authMenu.classList.remove('open');
+                    authMenu.classList.add('closed');
+                    if (authToggle) authToggle.classList.remove('active');
+                }
+                const musicMenu = document.getElementById('music-mini-menu-container');
+                const musicToggle = document.getElementById('sidebarMusicToggle');
+                if (musicMenu && musicMenu.classList.contains('open')) {
+                    musicMenu.classList.remove('open');
+                    musicMenu.classList.add('closed');
+                    if (musicToggle) musicToggle.classList.remove('active');
+                }
+                moreMenu.classList.remove('closed');
+                moreMenu.classList.add('open');
+                moreToggle.classList.add('active');
+            });
         }
 
         document.addEventListener('click', (e) => {
@@ -717,6 +749,7 @@
             try {
                 localStorage.setItem(MUSIC_STATE_KEY, JSON.stringify(stateObj));
             } catch (e) {}
+            window.dispatchEvent(new CustomEvent('12am:music-state-updated', { detail: stateObj }));
         }
 
         function resolveDockTrackUid(track) {
@@ -1717,10 +1750,29 @@
 
         logos.forEach(logo => {
             if (!logo) return;
-            logo.src = `${prefix}images/logo-white.png`;
-            logo.style.transition = 'filter 0.2s ease';
-            logo.style.transform = 'translateX(-100px)';
-            logo.style.filter = `drop-shadow(100px 0 0 ${tintColor})`;
+            const logoUrl = `${prefix}images/logo-white.png`;
+            logo.src = logoUrl;
+            if (logo.parentElement && logo.parentElement.classList && logo.parentElement.classList.contains('sidebar-logo-inner')) {
+                const maskUrl = `url("${logoUrl}")`;
+                const wrap = logo.parentElement;
+                wrap.style.backgroundColor = tintColor;
+                wrap.style.transition = 'background-color 0.2s ease';
+                wrap.style.webkitMaskImage = maskUrl;
+                wrap.style.maskImage = maskUrl;
+                wrap.style.webkitMaskSize = 'contain';
+                wrap.style.maskSize = 'contain';
+                wrap.style.webkitMaskRepeat = 'no-repeat';
+                wrap.style.maskRepeat = 'no-repeat';
+                wrap.style.webkitMaskPosition = 'center';
+                wrap.style.maskPosition = 'center';
+                logo.style.opacity = '0';
+                logo.style.transform = 'none';
+                logo.style.filter = 'none';
+            } else {
+                logo.style.transition = 'filter 0.2s ease';
+                logo.style.transform = 'translateX(-100px)';
+                logo.style.filter = `drop-shadow(100px 0 0 ${tintColor})`;
+            }
         });
     };
 

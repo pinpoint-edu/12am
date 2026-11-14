@@ -1349,10 +1349,29 @@
 
         logos.forEach(img => {
             if (!img) return;
-            img.src = prefix + "images/logo-white.png";
-            img.style.transition = "filter 0.2s ease";
-            img.style.transform = "translateX(-100px)";
-            img.style.filter = `drop-shadow(100px 0 0 ${tintColor})`;
+            const logoUrl = prefix + "images/logo-white.png";
+            img.src = logoUrl;
+            if (img.parentElement && img.parentElement.classList && img.parentElement.classList.contains("sidebar-logo-inner")) {
+                const maskUrl = `url("${logoUrl}")`;
+                const wrap = img.parentElement;
+                wrap.style.backgroundColor = tintColor;
+                wrap.style.transition = "background-color 0.2s ease";
+                wrap.style.webkitMaskImage = maskUrl;
+                wrap.style.maskImage = maskUrl;
+                wrap.style.webkitMaskSize = "contain";
+                wrap.style.maskSize = "contain";
+                wrap.style.webkitMaskRepeat = "no-repeat";
+                wrap.style.maskRepeat = "no-repeat";
+                wrap.style.webkitMaskPosition = "center";
+                wrap.style.maskPosition = "center";
+                img.style.opacity = "0";
+                img.style.transform = "none";
+                img.style.filter = "none";
+            } else {
+                img.style.transition = "filter 0.2s ease";
+                img.style.transform = "translateX(-100px)";
+                img.style.filter = `drop-shadow(100px 0 0 ${tintColor})`;
+            }
         });
 
         // Winter Theme Snowfall Engine
