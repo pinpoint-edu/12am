@@ -418,12 +418,24 @@ function prepareGameHtml(html, fileUrl) {
   }
   html = html.replace(/<base\b[^>]*>/gi, '');
 
+  // Resolve relative Flash <embed src> / <object data> URLs to absolute base URLs so Ruffle never logs "relative URL without a base"
+  html = html.replace(/(<(?:embed|object)\b[^>]*\b(?:src|data)\s*=\s*)(["'])([^"']+)\2/gi, (m, pre, q, val) => {
+    if (/^(?:https?:|data:|blob:|\/\/|#)/i.test(val)) return m;
+    try {
+      return pre + q + new URL(val, base).href + q;
+    } catch (e) {
+      return m;
+    }
+  });
+
   const baseTag = `<base href="${base}">`;
   const needsJquery = !/jquery(?:\.min|\.slim(?:\.min)?)?\.js/i.test(html) &&
     (/\bjQuery\b/.test(html) || /\$\s*\(/.test(html) || /\$\s*\.\s*(?:ajax|get|getJSON|post|ready|each|extend|isFunction)/i.test(html));
   const jqueryTag = needsJquery ? '<script src="https://code.jquery.com/jquery-3.7.1.min.js"><\/script>' : '';
 
-  if (/<head\b[^>]*>/i.test(html)) {
+  const headMatch = html.match(/<head\b[^>]*>/i);
+  const firstScriptIdx = html.search(/<script\b/i);
+  if (headMatch && (firstScriptIdx === -1 || headMatch.index < firstScriptIdx)) {
     html = html.replace(/<head([^>]*)>/i, `<head$1>${baseTag}${jqueryTag}`);
   } else {
     html = `${baseTag}${jqueryTag}` + html;
@@ -439,7 +451,15 @@ function prepareGameHtml(html, fileUrl) {
     'var _rufflePublicPath = HOST_ORIGIN ? (HOST_ORIGIN + "/textbooks/ruffle/") : "https://raw.githubusercontent.com/pinpoint-edu/12am/main/textbooks/ruffle/";',
     'try {',
     '  window.RufflePlayer = window.RufflePlayer || {};',
-    '  window.RufflePlayer.config = Object.assign({ publicPath: _rufflePublicPath, autoplay: "on", unmuteOverlay: "visible" }, window.RufflePlayer.config || {});',
+    '  window.RufflePlayer.config = Object.assign({ publicPath: _rufflePublicPath, base: _gameBaseHref, autoplay: "on", unmuteOverlay: "visible" }, window.RufflePlayer.config || {});',
+    '} catch(e){}',
+    'try {',
+    '  if (!document.xURL) {',
+    '    Object.defineProperty(document, "xURL", {',
+    '      get: function() { return (window.location && window.location.href && window.location.href !== "about:blank") ? window.location.href : _gameBaseHref; },',
+    '      configurable: true',
+    '    });',
+    '  }',
     '} catch(e){}',
     'try { Object.defineProperty(window, "top", { get: function() { return window; } }); } catch(e){}',
     'try {',
@@ -593,11 +613,23 @@ function prepareGameHtml(html, fileUrl) {
     'try {',
     '  var _origXHROpen = XMLHttpRequest.prototype.open;',
     '  var _origXHRSend = XMLHttpRequest.prototype.send;',
+    '  var _xhrRespUrlDesc = Object.getOwnPropertyDescriptor(XMLHttpRequest.prototype, "responseURL");',
+    '  if (_xhrRespUrlDesc && _xhrRespUrlDesc.get && _xhrRespUrlDesc.configurable) {',
+    '    Object.defineProperty(XMLHttpRequest.prototype, "responseURL", {',
+    '      configurable: true,',
+    '      get: function() {',
+    '        var nativeUrl = "";',
+    '        try { nativeUrl = _xhrRespUrlDesc.get.call(this); } catch(e) {}',
+    '        return nativeUrl || this._tbAbsUrl || "";',
+    '      }',
+    '    });',
+    '  }',
     '  XMLHttpRequest.prototype.open = function(method, url) {',
     '    var rest = Array.prototype.slice.call(arguments, 2);',
     '    this._tbFakeJson = false;',
     '    try {',
     '      var abs = new URL(url, document.baseURI || window.location.href).href;',
+    '      this._tbAbsUrl = abs;',
     '      if (_isDeadFlashAdUrl(abs)) {',
     '        this._tbFakeJson = true;',
     '        var fakeFlashUri = /\\.swf(?:$|[?#])/i.test(abs) ? _emptySwfDataUri : "data:application/json,%7B%7D";',

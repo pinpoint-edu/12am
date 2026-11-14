@@ -90,7 +90,7 @@
         // --- NEW: Constant for Theme Storage ---
         // (Copied from navigation.js)
         const THEME_STORAGE_KEY = 'user-navbar-theme';
-        const lightThemeNames = ['Light', 'Lavender', 'Rose Gold', 'Mint', 'Pink'];
+        const lightThemeNames = ['Light', 'Birthday', 'Cloud', 'Cream', 'Mint'];
 
         const isLightTheme = () => {
             try {
@@ -4036,7 +4036,7 @@
             const themeMessage = document.getElementById('themeMessage');
             if (!themePickerContainer) return;
 
-            const lightThemeNames = ['Light'];
+            const lightThemeNames = ['Light', 'Birthday', 'Cloud', 'Cream', 'Mint'];
 
             function renderThemesGrid() {
                 const allAvail = window.getThemes ? window.getThemes() : [];

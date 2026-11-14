@@ -16,9 +16,9 @@
     const THEME_STORAGE_KEY = "12am-theme";
     const LEGACY_STORAGE_KEY = "user-navbar-theme";
     const CUSTOM_THEMES_KEY = "12am-custom-themes";
-    const lightThemeNames = ["Light"];
+    const lightThemeNames = ["Light", "Birthday", "Cloud", "Cream", "Mint"];
 
-    // Embedded 25 Curated Themes with "Original" as default
+    // Embedded 28 Curated Themes with "Original" as default
     const EMBEDDED_THEMES = [
     {
         "name": "Original",
@@ -94,6 +94,106 @@
         "border-primary": "#e2e8f0",
         "border-secondary": "rgba(0, 0, 0, 0.04)",
         "avatar-gradient": "linear-gradient(135deg, #6366f1 0%, #4338ca 100%)",
+        "logo-src": "/images/logo-dark.png"
+    },
+    {
+        "name": "Birthday",
+        "description": "Festive pastel blue and pink light theme with colorful sprinkles in the background.",
+        "bg-primary": "#f2f8ff",
+        "bg-secondary": "#ffffff",
+        "text-primary": "#1e1b4b",
+        "text-secondary": "#64748b",
+        "accent-primary": "#ec4899",
+        "accent-secondary": "rgba(236, 72, 153, 0.22)",
+        "accent-glow": "rgba(56, 189, 248, 0.22)",
+        "navbar-bg": "rgba(255, 255, 255, 0.92)",
+        "navbar-border": "rgba(236, 72, 153, 0.2)",
+        "navbar-text": "#1e1b4b",
+        "tab-active-bg": "rgba(236, 72, 153, 0.12)",
+        "tab-active-text": "#db2777",
+        "tab-active-border": "#ec4899",
+        "tab-hover-bg": "rgba(56, 189, 248, 0.1)",
+        "tab-hover-text": "#0284c7",
+        "button-bg": "rgba(236, 72, 153, 0.1)",
+        "button-text": "#db2777",
+        "border-primary": "#fbcfe8",
+        "border-secondary": "rgba(56, 189, 248, 0.15)",
+        "avatar-gradient": "linear-gradient(135deg, #93c5fd 0%, #f9a8d4 55%, #f472b6 100%)",
+        "logo-src": "/images/logo-dark.png"
+    },
+    {
+        "name": "Cloud",
+        "description": "Airy daylight sky-white palette with soft horizon blue accents.",
+        "bg-primary": "#f0f9ff",
+        "bg-secondary": "#ffffff",
+        "text-primary": "#0c4a6e",
+        "text-secondary": "#0369a1",
+        "accent-primary": "#0284c7",
+        "accent-secondary": "rgba(2, 132, 199, 0.2)",
+        "accent-glow": "rgba(56, 189, 248, 0.2)",
+        "navbar-bg": "rgba(255, 255, 255, 0.92)",
+        "navbar-border": "rgba(2, 132, 199, 0.14)",
+        "navbar-text": "#0c4a6e",
+        "tab-active-bg": "rgba(2, 132, 199, 0.12)",
+        "tab-active-text": "#0284c7",
+        "tab-active-border": "#0284c7",
+        "tab-hover-bg": "rgba(2, 132, 199, 0.06)",
+        "tab-hover-text": "#0369a1",
+        "button-bg": "rgba(2, 132, 199, 0.1)",
+        "button-text": "#0284c7",
+        "border-primary": "#bae6fd",
+        "border-secondary": "rgba(12, 74, 110, 0.06)",
+        "avatar-gradient": "linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)",
+        "logo-src": "/images/logo-dark.png"
+    },
+    {
+        "name": "Cream",
+        "description": "Warm vanilla parchment light theme with roasted caramel and amber ink.",
+        "bg-primary": "#fefce8",
+        "bg-secondary": "#ffffff",
+        "text-primary": "#451a03",
+        "text-secondary": "#78350f",
+        "accent-primary": "#d97706",
+        "accent-secondary": "rgba(217, 119, 6, 0.2)",
+        "accent-glow": "rgba(245, 158, 11, 0.2)",
+        "navbar-bg": "rgba(255, 253, 244, 0.92)",
+        "navbar-border": "rgba(217, 119, 6, 0.16)",
+        "navbar-text": "#451a03",
+        "tab-active-bg": "rgba(217, 119, 6, 0.12)",
+        "tab-active-text": "#b45309",
+        "tab-active-border": "#d97706",
+        "tab-hover-bg": "rgba(217, 119, 6, 0.06)",
+        "tab-hover-text": "#92400e",
+        "button-bg": "rgba(217, 119, 6, 0.1)",
+        "button-text": "#b45309",
+        "border-primary": "#fde68a",
+        "border-secondary": "rgba(69, 26, 3, 0.06)",
+        "avatar-gradient": "linear-gradient(135deg, #fbbf24 0%, #b45309 100%)",
+        "logo-src": "/images/logo-dark.png"
+    },
+    {
+        "name": "Mint",
+        "description": "Crisp botanical spearmint frost light theme with deep emerald-teal ink.",
+        "bg-primary": "#f0fdfa",
+        "bg-secondary": "#ffffff",
+        "text-primary": "#0f3f3c",
+        "text-secondary": "#115e59",
+        "accent-primary": "#0d9488",
+        "accent-secondary": "rgba(13, 148, 136, 0.2)",
+        "accent-glow": "rgba(20, 184, 166, 0.2)",
+        "navbar-bg": "rgba(255, 255, 255, 0.92)",
+        "navbar-border": "rgba(13, 148, 136, 0.15)",
+        "navbar-text": "#0f3f3c",
+        "tab-active-bg": "rgba(13, 148, 136, 0.12)",
+        "tab-active-text": "#0f766e",
+        "tab-active-border": "#0d9488",
+        "tab-hover-bg": "rgba(13, 148, 136, 0.06)",
+        "tab-hover-text": "#115e59",
+        "button-bg": "rgba(13, 148, 136, 0.1)",
+        "button-text": "#0f766e",
+        "border-primary": "#99f6e4",
+        "border-secondary": "rgba(15, 63, 60, 0.06)",
+        "avatar-gradient": "linear-gradient(135deg, #2dd4bf 0%, #0f766e 100%)",
         "logo-src": "/images/logo-dark.png"
     },
     {
@@ -298,7 +398,7 @@
     },
     {
         "name": "Camo",
-        "description": "Tactical woodland olive drab, army moss green, khaki tan, and rugged bark brown.",
+        "description": "Tactical woodland camo pattern background with olive drab, moss green, and khaki tan.",
         "bg-primary": "#0b0e08",
         "bg-secondary": "#14190e",
         "text-primary": "#ecfccb",
@@ -319,31 +419,6 @@
         "border-primary": "#2c361e",
         "border-secondary": "rgba(255, 255, 255, 0.06)",
         "avatar-gradient": "linear-gradient(135deg, #65a30d 0%, #a1885f 55%, #4d5d33 100%)",
-        "logo-src": "/images/logo.png"
-    },
-    {
-        "name": "Birthday",
-        "description": "Festive party midnight and frosting cream with confetti magenta, balloon cyan, and candle gold.",
-        "bg-primary": "#12081c",
-        "bg-secondary": "#1e0e2e",
-        "text-primary": "#fff1f2",
-        "text-secondary": "#38bdf8",
-        "accent-primary": "#ec4899",
-        "accent-secondary": "rgba(236, 72, 153, 0.44)",
-        "accent-glow": "rgba(56, 189, 248, 0.34)",
-        "navbar-bg": "rgba(25, 11, 39, 0.9)",
-        "navbar-border": "rgba(236, 72, 153, 0.3)",
-        "navbar-text": "#fff1f2",
-        "tab-active-bg": "rgba(236, 72, 153, 0.2)",
-        "tab-active-text": "#facc15",
-        "tab-active-border": "#ec4899",
-        "tab-hover-bg": "rgba(56, 189, 248, 0.12)",
-        "tab-hover-text": "#7dd3fc",
-        "button-bg": "#241136",
-        "button-text": "#f472b6",
-        "border-primary": "#3c1c57",
-        "border-secondary": "rgba(255, 255, 255, 0.07)",
-        "avatar-gradient": "linear-gradient(135deg, #ec4899 0%, #38bdf8 50%, #facc15 100%)",
         "logo-src": "/images/logo.png"
     },
     {
@@ -523,7 +598,7 @@
     },
     {
         "name": "Galaxy",
-        "description": "Deep space nebula violet draped in starlight amethyst and cosmic dust.",
+        "description": "Deep space nebula violet with small glistening stars across the cosmos.",
         "bg-primary": "#090616",
         "bg-secondary": "#120d28",
         "text-primary": "#ffffff",
@@ -598,7 +673,7 @@
     },
     {
         "name": "Ocean",
-        "description": "Abyssal trench navy with bioluminescent electric cyan accents.",
+        "description": "Abyssal trench navy with slow-moving underwater waves and electric cyan.",
         "bg-primary": "#030814",
         "bg-secondary": "#071124",
         "text-primary": "#ecfeff",
@@ -760,58 +835,162 @@
         return "Original";
     }
 
-    // Winter & Christmas Snowfall Engine
-    const __snowState = { raf: null, canvas: null };
+    // Theme Background Effects Engine (Snow, Camo, Ocean Waves, Galaxy Stars, Birthday Sprinkles)
+    const __snowState = { raf: null, canvas: null, pattern: null, resizeFn: null, activeTheme: '' };
+    const CAMO_BG_SVG = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240"><rect width="240" height="240" fill="#182010"/><path d="M18 12c22-16 62-8 76 14 12 20-10 48-34 52-26 4-54-12-56-36-1-12 4-22 14-30zm130 8c28-14 70 4 74 30 4 24-22 46-52 44-28-2-48-24-44-46 2-12 10-22 22-28zM24 148c26-18 68-8 82 18 12 22-14 54-44 54-28 0-52-20-52-44 0-12 6-22 14-28zm132 10c24-14 66-2 72 24 6 26-22 48-50 44-28-4-44-26-38-48 4-10 8-14 16-20z" fill="#3a4a23"/><path d="M64 46c20-12 52-2 60 18 8 20-12 42-36 42-22 0-42-16-40-36 1-10 8-18 16-24zm98 56c22-10 50 4 52 24 2 22-20 38-44 36-22-2-36-20-32-38 2-10 12-16 24-22zM10 92c18-10 46 0 50 20 4 20-14 38-34 36-20-2-32-18-30-34 1-10 6-16 14-22z" fill="#6b5e3e"/><path d="M106 8c16-6 36 6 38 22 2 16-14 30-32 28-18-2-28-16-24-30 2-8 10-16 18-20zm-6 122c18-8 42 4 44 22 2 18-16 34-36 32-20-2-32-18-28-34 2-10 10-16 20-20zm104-12c14-6 30 4 32 18 2 14-12 26-28 24-16-2-24-14-20-26 2-8 8-12 16-16z" fill="#232c16"/></svg>');
+    const SPRINKLES_BG_SVG = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180"><g stroke-linecap="round" stroke-width="5.5"><line x1="20" y1="24" x2="34" y2="16" stroke="#f472b6"/><line x1="78" y1="18" x2="90" y2="28" stroke="#60a5fa"/><line x1="140" y1="26" x2="154" y2="18" stroke="#fbbf24"/><line x1="48" y1="68" x2="60" y2="56" stroke="#34d399"/><line x1="112" y1="64" x2="128" y2="70" stroke="#c084fc"/><line x1="162" y1="78" x2="170" y2="92" stroke="#f472b6"/><line x1="18" y1="114" x2="32" y2="122" stroke="#60a5fa"/><line x1="74" y1="108" x2="86" y2="96" stroke="#fbbf24"/><line x1="126" y1="118" x2="138" y2="108" stroke="#f472b6"/><line x1="42" y1="154" x2="58" y2="158" stroke="#c084fc"/><line x1="100" y1="152" x2="112" y2="164" stroke="#34d399"/><line x1="152" y1="146" x2="164" y2="136" stroke="#60a5fa"/></g></svg>');
+
+    function clearThemeEffects() {
+        if (__snowState.raf) {
+            cancelAnimationFrame(__snowState.raf);
+            __snowState.raf = null;
+        }
+        if (__snowState.resizeFn && typeof window !== 'undefined') {
+            window.removeEventListener('resize', __snowState.resizeFn);
+            __snowState.resizeFn = null;
+        }
+        if (__snowState.canvas) {
+            __snowState.canvas.remove();
+            __snowState.canvas = null;
+        }
+        if (__snowState.pattern) {
+            __snowState.pattern.remove();
+            __snowState.pattern = null;
+        }
+        __snowState.activeTheme = '';
+    }
+
     function updateWinterSnow(themeName) {
         const tn = (themeName || '').toLowerCase();
-        const wantSnow = tn === 'winter' || tn === 'christmas';
-        if (!wantSnow) {
-            if (__snowState.canvas) {
-                cancelAnimationFrame(__snowState.raf);
-                __snowState.canvas.remove();
-                __snowState.canvas = null;
-            }
+        const fxType = (tn === 'winter' || tn === 'christmas') ? 'snow'
+            : (tn === 'camo') ? 'camo'
+            : (tn === 'ocean') ? 'ocean'
+            : (tn === 'galaxy') ? 'galaxy'
+            : (tn === 'birthday') ? 'birthday'
+            : '';
+
+        if (!fxType) {
+            clearThemeEffects();
             return;
         }
-        if (__snowState.canvas || typeof document === 'undefined' || !document.body) return;
+        if (__snowState.activeTheme === fxType && (__snowState.canvas || __snowState.pattern)) return;
+        clearThemeEffects();
+        if (typeof document === 'undefined' || !document.body) return;
+        __snowState.activeTheme = fxType;
+
+        if (fxType === 'camo' || fxType === 'birthday') {
+            const pat = document.createElement('div');
+            pat.id = 'themeBgPattern';
+            if (fxType === 'camo') {
+                pat.style.cssText = `position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:-1;opacity:0.32;background-image:url("${CAMO_BG_SVG}");background-size:260px 260px;background-repeat:repeat;`;
+            } else {
+                pat.style.cssText = `position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:-1;opacity:0.5;background-color:transparent;background-image:url("${SPRINKLES_BG_SVG}"),linear-gradient(135deg,rgba(147,197,253,0.34) 0%,rgba(249,168,212,0.32) 100%);background-size:180px 180px,100% 100%;background-repeat:repeat,no-repeat;`;
+            }
+            document.body.prepend(pat);
+            __snowState.pattern = pat;
+            return;
+        }
 
         const cv = document.createElement('canvas');
-        cv.id = 'snowCanvas';
-        cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:-1;opacity:0.55;';
+        cv.id = fxType === 'snow' ? 'snowCanvas' : 'themeBgCanvas';
+        cv.style.cssText = `position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:-1;opacity:${fxType === 'snow' ? '0.55' : '0.85'};`;
         document.body.prepend(cv);
         __snowState.canvas = cv;
 
         const ctx = cv.getContext('2d');
         const resize = () => { cv.width = window.innerWidth; cv.height = window.innerHeight; };
         resize();
+        __snowState.resizeFn = resize;
         window.addEventListener('resize', resize);
-        const count = Math.min(130, Math.floor(window.innerWidth / 9));
-        const flakes = Array.from({ length: count }, () => ({
-            x: Math.random() * cv.width,
-            y: Math.random() * cv.height,
-            r: Math.random() * 2.2 + 0.8,
-            v: Math.random() * 0.8 + 0.35,
-            d: Math.random() * Math.PI * 2,
-            o: Math.random() * 0.30 + 0.18
-        }));
 
-        const frame = () => {
-            ctx.clearRect(0, 0, cv.width, cv.height);
-            for (const f of flakes) {
-                f.d += 0.012;
-                f.y += f.v;
-                f.x += Math.sin(f.d) * 0.5;
-                if (f.y > cv.height + 5) { f.y = -5; f.x = Math.random() * cv.width; }
-                if (f.x > cv.width + 5) f.x = -5;
-                if (f.x < -5) f.x = cv.width + 5;
-                ctx.beginPath();
-                ctx.fillStyle = `rgba(224, 242, 254, ${f.o})`;
-                ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            __snowState.raf = requestAnimationFrame(frame);
-        };
-        frame();
+        if (fxType === 'snow') {
+            const count = Math.min(130, Math.floor(window.innerWidth / 9));
+            const flakes = Array.from({ length: count }, () => ({
+                x: Math.random() * cv.width,
+                y: Math.random() * cv.height,
+                r: Math.random() * 2.2 + 0.8,
+                v: Math.random() * 0.8 + 0.35,
+                d: Math.random() * Math.PI * 2,
+                o: Math.random() * 0.30 + 0.18
+            }));
+            const frame = () => {
+                ctx.clearRect(0, 0, cv.width, cv.height);
+                for (const f of flakes) {
+                    f.d += 0.012;
+                    f.y += f.v;
+                    f.x += Math.sin(f.d) * 0.5;
+                    if (f.y > cv.height + 5) { f.y = -5; f.x = Math.random() * cv.width; }
+                    if (f.x > cv.width + 5) f.x = -5;
+                    if (f.x < -5) f.x = cv.width + 5;
+                    ctx.beginPath();
+                    ctx.fillStyle = `rgba(224, 242, 254, ${f.o})`;
+                    ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                __snowState.raf = requestAnimationFrame(frame);
+            };
+            frame();
+        } else if (fxType === 'ocean') {
+            let t = 0;
+            const waves = [
+                { yRatio: 0.72, amp: 18, freq: 0.0038, speed: 0.7, color: 'rgba(6, 182, 212, 0.11)' },
+                { yRatio: 0.80, amp: 22, freq: 0.0030, speed: -0.5, color: 'rgba(14, 165, 233, 0.13)' },
+                { yRatio: 0.88, amp: 14, freq: 0.0048, speed: 0.9, color: 'rgba(56, 189, 248, 0.10)' }
+            ];
+            const frame = () => {
+                t += 0.012;
+                ctx.clearRect(0, 0, cv.width, cv.height);
+                for (const w of waves) {
+                    ctx.beginPath();
+                    const baseY = cv.height * w.yRatio;
+                    ctx.moveTo(0, cv.height);
+                    for (let x = 0; x <= cv.width; x += 24) {
+                        const y = baseY + Math.sin(x * w.freq + t * w.speed) * w.amp + Math.cos(x * w.freq * 0.6 - t * 0.4) * (w.amp * 0.4);
+                        ctx.lineTo(x, y);
+                    }
+                    ctx.lineTo(cv.width, cv.height);
+                    ctx.closePath();
+                    ctx.fillStyle = w.color;
+                    ctx.fill();
+                }
+                __snowState.raf = requestAnimationFrame(frame);
+            };
+            frame();
+        } else if (fxType === 'galaxy') {
+            const starCount = Math.min(115, Math.max(55, Math.floor((window.innerWidth * window.innerHeight) / 14000)));
+            const colors = ['255,255,255', '233,213,255', '186,230,253'];
+            const stars = Array.from({ length: starCount }, (_, i) => ({
+                x: Math.random() * cv.width,
+                y: Math.random() * cv.height,
+                r: Math.random() * 1.3 + 0.5,
+                phase: Math.random() * Math.PI * 2,
+                speed: Math.random() * 0.025 + 0.008,
+                glint: i % 7 === 0,
+                rgb: colors[i % colors.length]
+            }));
+            const frame = () => {
+                ctx.clearRect(0, 0, cv.width, cv.height);
+                for (const s of stars) {
+                    s.phase += s.speed;
+                    const alpha = 0.2 + 0.65 * (0.5 + 0.5 * Math.sin(s.phase));
+                    ctx.beginPath();
+                    ctx.fillStyle = `rgba(${s.rgb}, ${alpha.toFixed(3)})`;
+                    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                    ctx.fill();
+                    if (s.glint && alpha > 0.65) {
+                        const len = s.r * 3.4;
+                        ctx.strokeStyle = `rgba(${s.rgb}, ${(alpha * 0.55).toFixed(3)})`;
+                        ctx.lineWidth = 0.8;
+                        ctx.beginPath();
+                        ctx.moveTo(s.x - len, s.y); ctx.lineTo(s.x + len, s.y);
+                        ctx.moveTo(s.x, s.y - len); ctx.lineTo(s.x, s.y + len);
+                        ctx.stroke();
+                    }
+                }
+                __snowState.raf = requestAnimationFrame(frame);
+            };
+            frame();
+        }
     }
 
     function applyTheme(theme, save = true) {
