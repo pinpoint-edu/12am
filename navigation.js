@@ -683,7 +683,747 @@
             topSectionHtml = `${logoBtnHtml}${appButtonsHtml}${moreBtnHtml}`;
         }
 
-        // Bottom section: Auth section (auth toggle with menu when logged in, or direct buttons when logged out)
+        // Cross-App Music Mini-Player, Persistent Background Audio & Background Cache Helpers
+        const MUSIC_STATE_KEY = '12am_music_playback_state';
+        const MUSIC_IDB_NAME = 'yolk_offline_storage';
+        const MUSIC_IDB_STORE = 'tracks';
+        const MUSIC_CACHE_STORAGE = '12am-music-cache-v1';
+
+        function readSavedMusicState() {
+            try {
+                const raw = localStorage.getItem(MUSIC_STATE_KEY);
+                return raw ? JSON.parse(raw) : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function writeSavedMusicState(stateObj) {
+            if (!stateObj) return;
+            try {
+                localStorage.setItem(MUSIC_STATE_KEY, JSON.stringify(stateObj));
+            } catch (e) {}
+        }
+
+        function resolveDockTrackUid(track) {
+            if (!track) return '';
+            if (track.uid) return String(track.uid);
+            return String(track.youtube_id || track.videoId || track.id || '');
+        }
+
+        function resolveDockCoverUrl(track) {
+            if (!track) return '';
+            const raw = track.artwork_url || track.image || '';
+            if (raw) {
+                return String(raw).replace('100x100bb', '300x300bb').replace('50x50bb', '300x300bb');
+            }
+            const ytId = track.youtube_id || track.videoId || (track.id && String(track.id).startsWith('ytm-') ? String(track.id).slice(4) : '');
+            if (ytId) return `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`;
+            return '';
+        }
+
+        function getSupportedBgAudioFormat() {
+            try {
+                const dummy = document.createElement('audio');
+                const canMp4 = !!(dummy.canPlayType && dummy.canPlayType('audio/mp4; codecs="mp4a.40.2"').replace(/no/, ''));
+                const canWebm = !!(dummy.canPlayType && dummy.canPlayType('audio/webm; codecs="opus"').replace(/no/, ''));
+                if (!canMp4 && canWebm) return 'webm';
+                if (canMp4) return 'mp4';
+                return canWebm ? 'webm' : 'auto';
+            } catch (_) {
+                return 'auto';
+            }
+        }
+
+        function openMusicOfflineDB() {
+            return new Promise((resolve, reject) => {
+                if (!window.indexedDB) return reject(new Error('IndexedDB unavailable'));
+                const req = indexedDB.open(MUSIC_IDB_NAME, 1);
+                req.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(MUSIC_IDB_STORE)) {
+                        db.createObjectStore(MUSIC_IDB_STORE, { keyPath: 'uid' });
+                    }
+                };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function getCachedTrackFromIDB(uid) {
+            if (!uid) return null;
+            try {
+                const db = await openMusicOfflineDB();
+                return await new Promise((resolve) => {
+                    const tx = db.transaction(MUSIC_IDB_STORE, 'readonly');
+                    const store = tx.objectStore(MUSIC_IDB_STORE);
+                    const req = store.get(uid);
+                    req.onsuccess = () => resolve(req.result || null);
+                    req.onerror = () => resolve(null);
+                });
+            } catch (_) {
+                return null;
+            }
+        }
+
+        async function saveTrackBlobToIDB(track, ytId, audioBlob, artworkBlob) {
+            if (!track || !audioBlob) return false;
+            try {
+                const db = await openMusicOfflineDB();
+                const uid = resolveDockTrackUid(track) || ytId;
+                if (!uid) return false;
+                const record = {
+                    uid,
+                    id: track.id || (ytId ? `ytm-${ytId}` : uid),
+                    youtube_id: ytId || track.youtube_id || track.videoId || '',
+                    videoId: ytId || track.videoId || track.youtube_id || '',
+                    title: track.title || 'Unknown Title',
+                    artist_name: track.artist_name || 'Unknown Artist',
+                    album_name: track.album_name || '',
+                    artwork_url: track.artwork_url || '',
+                    duration: track.duration || 0,
+                    audioBlob,
+                    artworkBlob: artworkBlob || null,
+                    lyrics: null,
+                    downloadedAt: Date.now(),
+                    size: audioBlob.size || 0
+                };
+                return await new Promise((resolve) => {
+                    const tx = db.transaction(MUSIC_IDB_STORE, 'readwrite');
+                    tx.objectStore(MUSIC_IDB_STORE).put(record);
+                    tx.oncomplete = () => resolve(true);
+                    tx.onerror = () => resolve(false);
+                });
+            } catch (_) {
+                return false;
+            }
+        }
+
+        async function resolveYoutubeIdForTrack(track) {
+            if (!track) return '';
+            const direct = track.youtube_id || track.videoId || '';
+            if (direct && /^[a-zA-Z0-9_-]{11}$/.test(String(direct))) return String(direct);
+            if (track.id && String(track.id).startsWith('ytm-')) {
+                const stripped = String(track.id).slice(4);
+                if (/^[a-zA-Z0-9_-]{11}$/.test(stripped)) return stripped;
+            }
+            const q = `${track.title || ''} ${track.artist_name || ''}`.trim();
+            if (!q) return '';
+            try {
+                const res = await fetch(`${prefix}api/music-api?endpoint=youtube-search&q=${encodeURIComponent(q)}`);
+                if (!res.ok) return '';
+                const data = await res.json();
+                const found = data?.videoId || data?.results?.[0]?.videoId || '';
+                if (found) {
+                    track.youtube_id = found;
+                    track.videoId = found;
+                }
+                return found;
+            } catch (_) {
+                return '';
+            }
+        }
+
+        function launchMusicAppWithTransition(targetUrl, isFastRedirect) {
+            try {
+                const existing = document.getElementById('twelveam-music-launch-overlay');
+                if (existing) existing.remove();
+
+                const state = readSavedMusicState();
+                const coverUrl = resolveDockCoverUrl(state?.track);
+                const overlay = document.createElement('div');
+                overlay.id = 'twelveam-music-launch-overlay';
+                overlay.innerHTML = `
+                    <div class="twelveam-music-launch-disc">
+                        ${coverUrl
+                            ? `<img src="${escapeHtml(coverUrl)}" alt="" onerror="this.style.display='none';">`
+                            : `<i class="fa-solid fa-music" style="font-size:30px; color:#ffffff;"></i>`}
+                    </div>
+                    <div class="twelveam-music-launch-eq" aria-hidden="true">
+                        <span></span><span></span><span></span><span></span>
+                    </div>
+                    <div class="twelveam-music-launch-label">${escapeHtml(isFastRedirect && state?.track?.title ? `Returning to ${state.track.title}` : 'Opening 12AM Music…')}</div>
+                `;
+                document.body.appendChild(overlay);
+                overlay.offsetHeight; // force reflow for transition
+                overlay.classList.add('is-visible');
+
+                try {
+                    sessionStorage.setItem('12am_music_entry_transition', String(Date.now()));
+                    if (isFastRedirect) {
+                        sessionStorage.setItem('12am_music_fast_redirect', '1');
+                    } else {
+                        sessionStorage.removeItem('12am_music_fast_redirect');
+                    }
+                } catch (_) {}
+
+                setTimeout(() => {
+                    window.location.href = targetUrl;
+                }, 260);
+            } catch (_) {
+                window.location.href = targetUrl;
+            }
+        }
+
+        window.addEventListener('pageshow', (e) => {
+            if (e.persisted) {
+                const existing = document.getElementById('twelveam-music-launch-overlay');
+                if (existing) existing.remove();
+            }
+        });
+
+        function renderMusicMiniPlayerHtml() {
+            const state = readSavedMusicState();
+            const track = state?.track || null;
+            const hasTrack = Boolean(track && (track.title || track.id || track.youtube_id));
+            const isPlaying = Boolean(state?.isPlaying);
+            const cover = resolveDockCoverUrl(track);
+            const title = track?.title || 'Nothing Playing';
+            const artist = track?.artist_name || '12AM Music';
+            const dur = Number(state?.duration) || 0;
+            const cur = Number(state?.currentTime) || 0;
+            const pct = dur > 0 ? Math.max(0, Math.min(100, (cur / dur) * 100)) : 0;
+
+            return `
+                <div class="sidebar-music-wrapper ${hasTrack ? '' : 'is-empty'} ${isPlaying ? 'is-playing' : ''}" id="sidebarMusicWrapper">
+                    <button type="button" class="sidebar-btn sidebar-music-cover-btn" id="sidebarMusicToggle" aria-label="Music Mini Player">
+                        <div class="sidebar-music-cover-frame">
+                            <img id="sidebarMusicCoverImg" class="sidebar-music-cover-img" src="${escapeHtml(cover)}" alt="Album Cover" style="display:${cover ? 'block' : 'none'};" onerror="if(!this.dataset.proxied && this.src && !this.src.includes('proxy-image')){this.dataset.proxied='1';this.src='${prefix}api/music-api?endpoint=proxy-image&url='+encodeURIComponent(this.src);return;}this.style.display='none'; var fb=this.nextElementSibling; if(fb) fb.style.display='inline-flex';">
+                            <i id="sidebarMusicFallbackIcon" class="fa-solid fa-music" style="font-size:15px; color:#ffffff; display:${cover ? 'none' : 'inline-flex'}; align-items:center; justify-content:center;"></i>
+                        </div>
+                        <span class="sidebar-music-playing-dot" aria-hidden="true"></span>
+                        <span class="sidebar-tooltip" id="sidebarMusicTooltip">${escapeHtml(hasTrack ? `${title} — ${artist}` : 'Music Player')}</span>
+                    </button>
+                    <div class="music-mini-menu-container closed" id="music-mini-menu-container" role="dialog" aria-label="Music Player Controls">
+                        <div class="music-mini-header">
+                            <img id="dockMusicMenuArt" class="music-mini-art" src="${escapeHtml(cover)}" alt="" style="display:${cover ? 'block' : 'none'};" onerror="if(!this.dataset.proxied && this.src && !this.src.includes('proxy-image')){this.dataset.proxied='1';this.src='${prefix}api/music-api?endpoint=proxy-image&url='+encodeURIComponent(this.src);return;}this.style.display='none';">
+                            <div class="music-mini-meta">
+                                <div class="music-mini-title" id="dockMusicMenuTitle">${escapeHtml(title)}</div>
+                                <div class="music-mini-artist" id="dockMusicMenuArtist">${escapeHtml(artist)}</div>
+                                <div class="music-mini-status-badge" id="dockMusicMenuStatus">${isPlaying ? 'Playing' : 'Paused'}</div>
+                            </div>
+                        </div>
+                        <div class="music-mini-progress-track">
+                            <div class="music-mini-progress-fill" id="dockMusicProgressFill" style="width:${pct.toFixed(1)}%"></div>
+                        </div>
+                        <div class="music-mini-controls-row">
+                            <button type="button" class="music-mini-ctrl-btn" id="dockMusicPrevBtn" title="Skip Back" aria-label="Skip Back">
+                                <i class="fa-solid fa-backward-step"></i>
+                            </button>
+                            <button type="button" class="music-mini-play-btn" id="dockMusicPlayPauseBtn" title="Play / Pause" aria-label="Play or Pause">
+                                <i class="fa-solid ${isPlaying ? 'fa-pause' : 'fa-play'}" id="dockMusicPlayPauseIcon"></i>
+                            </button>
+                            <button type="button" class="music-mini-ctrl-btn" id="dockMusicNextBtn" title="Next Track" aria-label="Next Track">
+                                <i class="fa-solid fa-forward-step"></i>
+                            </button>
+                        </div>
+                        <button type="button" class="music-mini-redirect-btn" id="dockMusicRedirectBtn">
+                            <i class="fa-solid fa-bolt"></i>
+                            <span>Fast Redirect to Music</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function refreshDockMusicWidgetUI(overrideStatusText) {
+            const wrapper = document.getElementById('sidebarMusicWrapper');
+            if (!wrapper) return;
+            const state = readSavedMusicState();
+            const track = state?.track || null;
+            const hasTrack = Boolean(track && (track.title || track.id || track.youtube_id));
+            wrapper.classList.toggle('is-empty', !hasTrack);
+            if (!hasTrack) return;
+
+            const isMusicPage = activeId === 'music';
+            const bgAudio = document.getElementById('12am-bg-audio-player');
+            const livePlaying = isMusicPage
+                ? Boolean(state?.isPlaying)
+                : Boolean(bgAudio ? (!bgAudio.paused && !bgAudio.ended) : state?.isPlaying);
+
+            wrapper.classList.toggle('is-playing', livePlaying);
+
+            const cover = resolveDockCoverUrl(track);
+            const coverImg = document.getElementById('sidebarMusicCoverImg');
+            const fallbackIcon = document.getElementById('sidebarMusicFallbackIcon');
+            const menuArt = document.getElementById('dockMusicMenuArt');
+            if (coverImg) {
+                if (cover) {
+                    if (coverImg.getAttribute('src') !== cover) coverImg.src = cover;
+                    coverImg.style.display = 'block';
+                    if (fallbackIcon) fallbackIcon.style.display = 'none';
+                } else {
+                    coverImg.style.display = 'none';
+                    if (fallbackIcon) fallbackIcon.style.display = 'inline-flex';
+                }
+            }
+            if (menuArt) {
+                if (cover) {
+                    if (menuArt.getAttribute('src') !== cover) menuArt.src = cover;
+                    menuArt.style.display = 'block';
+                } else {
+                    menuArt.style.display = 'none';
+                }
+            }
+
+            const title = track.title || 'Unknown Title';
+            const artist = track.artist_name || '12AM Music';
+            const tooltip = document.getElementById('sidebarMusicTooltip');
+            const titleEl = document.getElementById('dockMusicMenuTitle');
+            const artistEl = document.getElementById('dockMusicMenuArtist');
+            const statusEl = document.getElementById('dockMusicMenuStatus');
+            const playIcon = document.getElementById('dockMusicPlayPauseIcon');
+            const fillEl = document.getElementById('dockMusicProgressFill');
+
+            if (tooltip) tooltip.textContent = `${title} — ${artist}`;
+            if (titleEl) titleEl.textContent = title;
+            if (artistEl) artistEl.textContent = artist;
+            if (playIcon) {
+                playIcon.className = `fa-solid ${livePlaying ? 'fa-pause' : 'fa-play'}`;
+            }
+
+            let curTime = Number(state?.currentTime) || 0;
+            let durTime = Number(state?.duration) || 0;
+            if (!isMusicPage && bgAudio && bgAudio.src) {
+                if (Number.isFinite(bgAudio.currentTime)) curTime = bgAudio.currentTime;
+                if (Number.isFinite(bgAudio.duration) && bgAudio.duration > 0) durTime = bgAudio.duration;
+            }
+            if (fillEl) {
+                const pct = durTime > 0 ? Math.max(0, Math.min(100, (curTime / durTime) * 100)) : 0;
+                fillEl.style.width = `${pct.toFixed(1)}%`;
+            }
+
+            if (statusEl) {
+                if (overrideStatusText) {
+                    statusEl.textContent = overrideStatusText;
+                } else if (window.__12amBgCachedStatus && activeId !== 'music') {
+                    statusEl.textContent = livePlaying ? `Playing • ${window.__12amBgCachedStatus}` : `Paused • ${window.__12amBgCachedStatus}`;
+                } else {
+                    statusEl.textContent = livePlaying ? 'Playing' : 'Paused';
+                }
+            }
+        }
+        window.__refreshDockMusicWidget = refreshDockMusicWidgetUI;
+
+        function initDockAndBackgroundMusic() {
+            const toggleBtn = document.getElementById('sidebarMusicToggle');
+            const menuEl = document.getElementById('music-mini-menu-container');
+            const prevBtn = document.getElementById('dockMusicPrevBtn');
+            const playBtn = document.getElementById('dockMusicPlayPauseBtn');
+            const nextBtn = document.getElementById('dockMusicNextBtn');
+            const redirectBtn = document.getElementById('dockMusicRedirectBtn');
+
+            const closeMusicMenu = () => {
+                if (menuEl) {
+                    menuEl.classList.remove('open');
+                    menuEl.classList.add('closed');
+                }
+            };
+
+            if (toggleBtn && menuEl) {
+                toggleBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    const isOpen = menuEl.classList.contains('open');
+                    const authMenu = document.getElementById('auth-menu-container');
+                    const moreMenu = document.getElementById('more-menu-container');
+                    if (authMenu) { authMenu.classList.remove('open'); authMenu.classList.add('closed'); }
+                    if (moreMenu) { moreMenu.classList.remove('open'); moreMenu.classList.add('closed'); }
+                    if (isOpen) {
+                        closeMusicMenu();
+                    } else {
+                        refreshDockMusicWidgetUI();
+                        menuEl.classList.remove('closed');
+                        menuEl.classList.add('open');
+                    }
+                };
+            }
+
+            const authToggle = document.getElementById('sidebarAuthToggle');
+            const moreToggle = document.getElementById('sidebarMoreToggle');
+            if (authToggle) authToggle.addEventListener('click', closeMusicMenu);
+            if (moreToggle) moreToggle.addEventListener('click', closeMusicMenu);
+
+            if (!window.__12amMusicDocListenersBound) {
+                window.__12amMusicDocListenersBound = true;
+                document.addEventListener('click', (e) => {
+                    const wrap = document.getElementById('sidebarMusicWrapper');
+                    const menu = document.getElementById('music-mini-menu-container');
+                    if (menu && wrap && !wrap.contains(e.target)) {
+                        menu.classList.remove('open');
+                        menu.classList.add('closed');
+                    }
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                    const link = e.target.closest('a[href]');
+                    if (!link) return;
+                    const href = link.getAttribute('href') || '';
+                    const isMusicLink = link.dataset.page === 'music' || /(?:^|\/)music\.html(?:[?#]|$)/i.test(href);
+                    if (!isMusicLink || link.target === '_blank') return;
+                    if (activeId === 'music') return;
+                    e.preventDefault();
+                    if (window.__saveBgAudioState) window.__saveBgAudioState();
+                    const bgEl = document.getElementById('12am-bg-audio-player');
+                    if (bgEl && !bgEl.paused) { try { bgEl.pause(); } catch (_) {} }
+                    launchMusicAppWithTransition(link.href || `${prefix}music.html`, false);
+                }, true);
+
+                window.addEventListener('12am:music-state-updated', () => refreshDockMusicWidgetUI());
+                window.addEventListener('storage', (e) => {
+                    if (e.key === MUSIC_STATE_KEY) refreshDockMusicWidgetUI();
+                });
+            }
+
+            if (activeId === 'music') {
+                try {
+                    if (document.body) document.body.classList.add('music-entry-anim');
+                } catch (_) {}
+            }
+
+            if (playBtn) {
+                playBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (activeId === 'music' && window.__twelveAmMusicController) {
+                        window.__twelveAmMusicController.togglePlayPause();
+                        setTimeout(() => refreshDockMusicWidgetUI(), 60);
+                    } else if (window.__toggleBgMusicPlayPause) {
+                        window.__toggleBgMusicPlayPause();
+                    }
+                };
+            }
+
+            if (nextBtn) {
+                nextBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (activeId === 'music' && window.__twelveAmMusicController) {
+                        window.__twelveAmMusicController.next();
+                        setTimeout(() => refreshDockMusicWidgetUI(), 100);
+                    } else if (window.__skipBgMusicTrack) {
+                        window.__skipBgMusicTrack(1);
+                    }
+                };
+            }
+
+            if (prevBtn) {
+                prevBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (activeId === 'music' && window.__twelveAmMusicController) {
+                        window.__twelveAmMusicController.prev();
+                        setTimeout(() => refreshDockMusicWidgetUI(), 100);
+                    } else if (window.__skipBgMusicTrack) {
+                        window.__skipBgMusicTrack(-1);
+                    }
+                };
+            }
+
+            if (redirectBtn) {
+                redirectBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    closeMusicMenu();
+                    if (activeId === 'music' && window.__twelveAmMusicController) {
+                        window.__twelveAmMusicController.openNowPlaying();
+                        return;
+                    }
+                    if (window.__saveBgAudioState) window.__saveBgAudioState();
+                    const bgEl = document.getElementById('12am-bg-audio-player');
+                    if (bgEl && !bgEl.paused) { try { bgEl.pause(); } catch (_) {} }
+                    launchMusicAppWithTransition(`${prefix}music.html#now-playing`, true);
+                };
+            }
+
+            // Initialize background audio player & cache downloader on NON-music pages
+            if (activeId !== 'music' && !window.__12amBgAudioInitialized) {
+                window.__12amBgAudioInitialized = true;
+                initGlobalBackgroundAudioPlayer();
+            }
+
+            refreshDockMusicWidgetUI();
+        }
+
+        async function initGlobalBackgroundAudioPlayer() {
+            const state = readSavedMusicState();
+            if (!state || !state.track) return;
+
+            let bgAudio = document.getElementById('12am-bg-audio-player');
+            if (!bgAudio) {
+                bgAudio = document.createElement('audio');
+                bgAudio.id = '12am-bg-audio-player';
+                bgAudio.preload = 'auto';
+                bgAudio.crossOrigin = 'anonymous';
+                bgAudio.style.display = 'none';
+                document.body.appendChild(bgAudio);
+            }
+
+            const inflightCacheDownloads = new Set();
+            let currentActiveObjectUrl = null;
+            let activeLoadedUid = '';
+            let desiredPlaying = Boolean(state.isPlaying);
+            let pendingSeekTime = Math.max(0, Number(state.currentTime) || 0);
+            let lastPersistAt = 0;
+
+            try {
+                const storedVol = parseFloat(localStorage.getItem('yolk_volume') ?? state.volume ?? '1');
+                bgAudio.volume = Number.isFinite(storedVol) ? Math.max(0, Math.min(1, storedVol)) : 1;
+            } catch (_) {
+                bgAudio.volume = 1;
+            }
+
+            function persistBgAudioState(forcePlayFlag) {
+                const latest = readSavedMusicState() || {};
+                const trackNow = latest.track || state.track;
+                if (!trackNow) return;
+                const cur = Number.isFinite(bgAudio.currentTime) ? bgAudio.currentTime : (Number(latest.currentTime) || 0);
+                const dur = Number.isFinite(bgAudio.duration) && bgAudio.duration > 0 ? bgAudio.duration : (Number(latest.duration) || 0);
+                const playingFlag = typeof forcePlayFlag === 'boolean'
+                    ? forcePlayFlag
+                    : (!bgAudio.paused && !bgAudio.ended ? true : desiredPlaying);
+                const nextState = {
+                    ...latest,
+                    track: trackNow,
+                    currentTime: Math.max(0, cur),
+                    duration: Math.max(0, dur),
+                    isPlaying: Boolean(playingFlag),
+                    updatedAt: Date.now(),
+                    source: 'dock'
+                };
+                writeSavedMusicState(nextState);
+                refreshDockMusicWidgetUI();
+            }
+            window.__saveBgAudioState = persistBgAudioState;
+
+            async function cacheSongInBackground(track, ytId, fmt) {
+                const uid = resolveDockTrackUid(track) || ytId;
+                if (!uid || !ytId || inflightCacheDownloads.has(uid)) return;
+                inflightCacheDownloads.add(uid);
+                try {
+                    const existing = await getCachedTrackFromIDB(uid);
+                    if (existing && existing.audioBlob) {
+                        window.__12amBgCachedStatus = 'Cached';
+                        refreshDockMusicWidgetUI();
+                        return;
+                    }
+                    window.__12amBgCachedStatus = 'Caching…';
+                    refreshDockMusicWidgetUI();
+
+                    const dlUrl = `${prefix}api/music-api?endpoint=download&id=${encodeURIComponent(ytId)}&format=${encodeURIComponent(fmt)}&v=2`;
+                    const audioRes = await fetch(dlUrl);
+                    if (!audioRes.ok) throw new Error(`HTTP ${audioRes.status}`);
+                    const audioBlob = await audioRes.blob();
+                    if (!audioBlob || audioBlob.size < 1024) throw new Error('Empty audio blob');
+
+                    let artworkBlob = null;
+                    const artUrl = resolveDockCoverUrl(track);
+                    if (artUrl) {
+                        try {
+                            const artRes = await fetch(`${prefix}api/music-api?endpoint=proxy-image&url=${encodeURIComponent(artUrl)}`);
+                            if (artRes.ok) artworkBlob = await artRes.blob();
+                        } catch (_) {}
+                    }
+
+                    const savedOk = await saveTrackBlobToIDB(track, ytId, audioBlob, artworkBlob);
+
+                    if (window.caches) {
+                        try {
+                            const cache = await caches.open(MUSIC_CACHE_STORAGE);
+                            await cache.put(
+                                `${prefix}api/music-api?endpoint=stream&id=${encodeURIComponent(ytId)}&format=${encodeURIComponent(fmt)}`,
+                                new Response(audioBlob, { headers: { 'Content-Type': audioBlob.type || 'audio/mp4' } })
+                            );
+                        } catch (_) {}
+                    }
+
+                    window.__12amBgCachedStatus = savedOk ? 'Cached' : '';
+                    refreshDockMusicWidgetUI();
+                } catch (_) {
+                    if (window.__12amBgCachedStatus === 'Caching…') {
+                        window.__12amBgCachedStatus = '';
+                        refreshDockMusicWidgetUI();
+                    }
+                } finally {
+                    inflightCacheDownloads.delete(uid);
+                }
+            }
+
+            async function loadTrackIntoBgPlayer(track, startTimeSec, shouldPlay) {
+                if (!track) return;
+                const uid = resolveDockTrackUid(track);
+                activeLoadedUid = uid;
+                pendingSeekTime = Math.max(0, Number(startTimeSec) || 0);
+                desiredPlaying = Boolean(shouldPlay);
+
+                if (currentActiveObjectUrl) {
+                    try { URL.revokeObjectURL(currentActiveObjectUrl); } catch (_) {}
+                    currentActiveObjectUrl = null;
+                }
+
+                const fmt = getSupportedBgAudioFormat();
+                let cached = await getCachedTrackFromIDB(uid);
+                if (activeLoadedUid !== uid) return;
+
+                if (cached && cached.audioBlob) {
+                    currentActiveObjectUrl = URL.createObjectURL(cached.audioBlob);
+                    bgAudio.src = currentActiveObjectUrl;
+                    window.__12amBgCachedStatus = 'Cached';
+                } else {
+                    window.__12amBgCachedStatus = '';
+                    const ytId = await resolveYoutubeIdForTrack(track);
+                    if (activeLoadedUid !== uid) return;
+                    if (!ytId) return;
+                    // Re-check IDB by ytId in case original uid differed from resolved ytId
+                    if (ytId !== uid) {
+                        const altCached = await getCachedTrackFromIDB(ytId);
+                        if (altCached && altCached.audioBlob) {
+                            currentActiveObjectUrl = URL.createObjectURL(altCached.audioBlob);
+                            bgAudio.src = currentActiveObjectUrl;
+                            window.__12amBgCachedStatus = 'Cached';
+                        } else {
+                            bgAudio.src = `${prefix}api/music-api?endpoint=stream&id=${encodeURIComponent(ytId)}&format=${encodeURIComponent(fmt)}&v=2`;
+                            if (desiredPlaying) {
+                                cacheSongInBackground(track, ytId, fmt);
+                            }
+                        }
+                    } else {
+                        bgAudio.src = `${prefix}api/music-api?endpoint=stream&id=${encodeURIComponent(ytId)}&format=${encodeURIComponent(fmt)}&v=2`;
+                        if (desiredPlaying) {
+                            cacheSongInBackground(track, ytId, fmt);
+                        }
+                    }
+                }
+
+                if (desiredPlaying) {
+                    bgAudio.play().then(() => {
+                        persistBgAudioState(true);
+                    }).catch(() => {
+                        const resumeOnInteraction = () => {
+                            if (desiredPlaying && bgAudio.paused) {
+                                bgAudio.play().then(() => persistBgAudioState(true)).catch(() => {});
+                            }
+                        };
+                        document.addEventListener('pointerdown', resumeOnInteraction, { once: true, capture: true });
+                        document.addEventListener('keydown', resumeOnInteraction, { once: true, capture: true });
+                        refreshDockMusicWidgetUI('Tap page to resume audio');
+                    });
+                } else {
+                    refreshDockMusicWidgetUI();
+                }
+            }
+
+            const applyPendingSeek = () => {
+                if (pendingSeekTime > 0.3) {
+                    const safeTarget = Number.isFinite(bgAudio.duration) && bgAudio.duration > 1
+                        ? Math.min(pendingSeekTime, Math.max(0, bgAudio.duration - 0.5))
+                        : pendingSeekTime;
+                    try {
+                        bgAudio.currentTime = safeTarget;
+                    } catch (_) {}
+                    if (bgAudio.readyState >= 1) {
+                        pendingSeekTime = 0;
+                    }
+                }
+            };
+
+            bgAudio.addEventListener('loadedmetadata', applyPendingSeek);
+            bgAudio.addEventListener('canplay', applyPendingSeek);
+            bgAudio.addEventListener('playing', async () => {
+                applyPendingSeek();
+                desiredPlaying = true;
+                persistBgAudioState(true);
+                // Ensure any playing track on a non-music page gets cached for faster loading
+                const curState = readSavedMusicState();
+                const tr = curState?.track || state.track;
+                if (tr) {
+                    const ytId = await resolveYoutubeIdForTrack(tr);
+                    if (ytId) cacheSongInBackground(tr, ytId, getSupportedBgAudioFormat());
+                }
+            });
+            bgAudio.addEventListener('pause', () => {
+                if (!bgAudio.ended) {
+                    persistBgAudioState(false);
+                }
+            });
+            bgAudio.addEventListener('timeupdate', () => {
+                const now = Date.now();
+                if (now - lastPersistAt >= 450 && (!bgAudio.paused || bgAudio.currentTime > 0)) {
+                    lastPersistAt = now;
+                    persistBgAudioState(!bgAudio.paused);
+                }
+            });
+            bgAudio.addEventListener('ended', () => {
+                window.__skipBgMusicTrack?.(1);
+            });
+
+            window.__toggleBgMusicPlayPause = async () => {
+                const latest = readSavedMusicState();
+                const tr = latest?.track || state.track;
+                if (!tr) return;
+                if (!bgAudio.src) {
+                    desiredPlaying = true;
+                    await loadTrackIntoBgPlayer(tr, Number(latest?.currentTime) || 0, true);
+                    persistBgAudioState(true);
+                    return;
+                }
+                if (bgAudio.paused) {
+                    desiredPlaying = true;
+                    try {
+                        await bgAudio.play();
+                        persistBgAudioState(true);
+                    } catch (_) {}
+                } else {
+                    desiredPlaying = false;
+                    bgAudio.pause();
+                    persistBgAudioState(false);
+                }
+            };
+
+            window.__skipBgMusicTrack = async (delta) => {
+                const latest = readSavedMusicState() || {};
+                const q = Array.isArray(latest.queue) && latest.queue.length ? latest.queue : (latest.track ? [latest.track] : []);
+                if (!q.length) return;
+                let idx = typeof latest.queueIndex === 'number' ? latest.queueIndex : 0;
+                if (delta < 0 && Number.isFinite(bgAudio.currentTime) && bgAudio.currentTime > 3) {
+                    bgAudio.currentTime = 0;
+                    persistBgAudioState(!bgAudio.paused);
+                    return;
+                }
+                idx = (idx + delta + q.length) % q.length;
+                const nextTrack = q[idx];
+                if (!nextTrack) return;
+                desiredPlaying = true;
+                writeSavedMusicState({
+                    ...latest,
+                    track: nextTrack,
+                    queue: q,
+                    queueIndex: idx,
+                    currentTime: 0,
+                    duration: (nextTrack.duration || 0) > 1000 ? nextTrack.duration / 1000 : (nextTrack.duration || 0),
+                    isPlaying: true,
+                    updatedAt: Date.now(),
+                    source: 'dock'
+                });
+                refreshDockMusicWidgetUI();
+                await loadTrackIntoBgPlayer(nextTrack, 0, true);
+            };
+
+            window.addEventListener('pagehide', () => persistBgAudioState(!bgAudio.paused));
+            window.addEventListener('beforeunload', () => persistBgAudioState(!bgAudio.paused));
+
+            if (state.isPlaying) {
+                loadTrackIntoBgPlayer(state.track, Number(state.currentTime) || 0, true);
+            } else {
+                // Pre-check cache status silently for UI badge
+                const uid = resolveDockTrackUid(state.track);
+                getCachedTrackFromIDB(uid).then((c) => {
+                    if (c && c.audioBlob) {
+                        window.__12amBgCachedStatus = 'Cached';
+                        refreshDockMusicWidgetUI();
+                    }
+                });
+            }
+        }
+
+        // Bottom section: Music Mini-Player cover right above Auth section
+        const musicMiniHtml = renderMusicMiniPlayerHtml();
         const authSectionHtml = renderAuthSectionHtml(prefix, activeId);
 
         container.innerHTML = `
@@ -692,9 +1432,14 @@
             </div>
             <div class="sidebar-divider"></div>
             <div class="sidebar-section sidebar-section-bottom">
+                ${musicMiniHtml}
                 ${authSectionHtml}
             </div>
         `;
+
+        queueMicrotask(() => {
+            try { initDockAndBackgroundMusic(); } catch (_) {}
+        });
 
         if (isSignedIn && localStorage.getItem('12am_sidebar_collapsed') === 'true') {
             document.body.classList.add('sidebar-collapsed');

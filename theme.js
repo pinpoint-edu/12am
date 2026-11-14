@@ -1017,7 +1017,25 @@
                 .auth-menu-collapse { color: #475569 !important; }
                 .minimal-footer-cluster { background: #ffffff !important; border-color: #e2e8f0 !important; color: #0f172a !important; }
                 .minimal-footer-copy { color: #64748b !important; }
-                .text-white { color: #0f172a !important; }
+                .text-white:where(:not(.bg-zinc-900, .bg-zinc-800, .bg-black, .bg-black\\/45, .bg-black\\/50, .bg-black\\/60, .bg-black\\/70, .bg-black\\/75, .bg-black\\/80, .bg-black\\/90, .yolk-active, #bottom-player-play-pause, #now-playing-play-pause, #lyrics-bar-play-pause, #playlist-play-all-btn, #artist-play-all-btn, #album-play-all-btn, #create-playlist-btn, #playlist-modal-save, #modal-cover-upload-btn, #full-desc-done-btn, #crop-apply-btn, #tint-wheel-apply, #yt-import-submit-btn, #share-native-btn, #page-now-playing *)) { color: #0f172a !important; }
+                .bg-zinc-900, .bg-zinc-900 .text-white, .bg-zinc-900 .material-symbols-rounded, .bg-zinc-900 svg,
+                .bg-zinc-800, .bg-zinc-800 .text-white, .bg-zinc-800 .material-symbols-rounded, .bg-zinc-800 svg,
+                .bg-black, .bg-black .text-white, .bg-black .material-symbols-rounded, .bg-black svg,
+                .bg-black\\/45, .bg-black\\/45 .text-white, .bg-black\\/45 .material-symbols-rounded, .bg-black\\/45 svg,
+                .bg-black\\/60, .bg-black\\/60 .text-white, .bg-black\\/60 .material-symbols-rounded, .bg-black\\/60 svg,
+                .bg-black\\/75, .bg-black\\/75 .text-white, .bg-black\\/75 .material-symbols-rounded, .bg-black\\/75 svg,
+                .bg-black\\/80, .bg-black\\/80 .text-white, .bg-black\\/80 .material-symbols-rounded, .bg-black\\/80 svg,
+                .bg-black\\/90, .bg-black\\/90 .text-white, .bg-black\\/90 .material-symbols-rounded, .bg-black\\/90 svg,
+                .yolk-active, .yolk-active .text-white, .yolk-active .material-symbols-rounded, .yolk-active svg,
+                #bottom-player-play-pause, #bottom-player-play-pause *,
+                #now-playing-play-pause, #now-playing-play-pause *,
+                #lyrics-bar-play-pause, #lyrics-bar-play-pause *,
+                #playlist-play-all-btn, #playlist-play-all-btn *,
+                #artist-play-all-btn, #artist-play-all-btn *,
+                #album-play-all-btn, #album-play-all-btn *,
+                #create-playlist-btn, #create-playlist-btn * {
+                    color: #ffffff !important;
+                }
                 .text-gray-400, .text-zinc-400 { color: #475569 !important; }
                 i, .material-symbols-sharp, .material-symbols-rounded {
                     /* Inherit text contrast dynamically */

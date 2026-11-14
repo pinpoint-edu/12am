@@ -4863,14 +4863,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const svg = npFavBtn.querySelector('svg');
         if (svg) {
-            const strokeCol = document.body.classList.contains('dark-mode') ? '#f4f4f5' : '#18181b';
-            svg.setAttribute('fill', fav ? strokeCol : 'none');
-            svg.setAttribute('stroke', strokeCol);
+            svg.setAttribute('fill', fav ? 'currentColor' : 'none');
+            svg.setAttribute('stroke', 'currentColor');
         }
         if (lyricsBarFavBtn) {
             lyricsBarFavBtn.classList.toggle('is-favorite', fav);
             const lIcon = lyricsBarFavBtn.querySelector('.material-symbols-rounded');
             if (lIcon) lIcon.classList.toggle('is-filled', fav);
+            const lSvg = lyricsBarFavBtn.querySelector('svg');
+            if (lSvg) {
+                lSvg.setAttribute('fill', fav ? 'currentColor' : 'none');
+                lSvg.setAttribute('stroke', 'currentColor');
+            }
         }
     }
 
@@ -4878,18 +4882,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentTrack) return;
         const fav = isFavorite(currentTrack.id);
         if (bpFavBtn) {
+            bpFavBtn.classList.toggle('is-favorite', fav);
             const icon = bpFavBtn.querySelector('.material-symbols-rounded');
             if (icon) icon.classList.toggle('is-filled', fav);
             const svg = bpFavBtn.querySelector('svg');
             if (svg) {
-                const strokeCol = document.body.classList.contains('dark-mode') ? '#f4f4f5' : '#18181b';
-                svg.setAttribute('fill', fav ? strokeCol : 'none');
-                svg.setAttribute('stroke', strokeCol);
+                svg.setAttribute('fill', fav ? 'currentColor' : 'none');
+                svg.setAttribute('stroke', 'currentColor');
             }
         }
         if (bpMoreFavBtn) {
+            bpMoreFavBtn.classList.toggle('is-favorite', fav);
             const mIcon = bpMoreFavBtn.querySelector('.material-symbols-rounded');
             if (mIcon) mIcon.classList.toggle('is-filled', fav);
+            const mSvg = bpMoreFavBtn.querySelector('svg');
+            if (mSvg) {
+                mSvg.setAttribute('fill', fav ? 'currentColor' : 'none');
+                mSvg.setAttribute('stroke', 'currentColor');
+            }
         }
     }
 
@@ -5164,6 +5174,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         updateBottomPlayerFavButton();
+        if (typeof window.__saveYolkPlaybackState === 'function' && !window.__yolkRestoringGlobalState) {
+            window.__saveYolkPlaybackState();
+        }
+        if (typeof window.__refreshDockMusicWidget === 'function') {
+            window.__refreshDockMusicWidget();
+        }
     }
 
     // Synced Lyrics Fetching & Clean Formatting
@@ -10512,6 +10528,289 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     };
+
+    // =========================================================
+    // 12AM Cross-App Playback State Persistence & Handoff
+    // =========================================================
+    const MUSIC_STATE_KEY = '12am_music_playback_state';
+    let lastGlobalSaveAt = 0;
+    let pendingRestoreSeekTime = 0;
+    let pendingRestoreTrackUid = '';
+    window.__yolkRestoringGlobalState = false;
+
+    function compactTrackForGlobalState(t) {
+        if (!t) return null;
+        return {
+            id: t.id || '',
+            uid: typeof getTrackUid === 'function' ? getTrackUid(t) : String(t.youtube_id || t.videoId || t.id || ''),
+            youtube_id: t.youtube_id || t.videoId || '',
+            videoId: t.videoId || t.youtube_id || '',
+            title: t.title || t.name || 'Unknown Title',
+            artist_name: t.artist_name || t.artist || 'Unknown Artist',
+            album_name: t.album_name || t.album || '',
+            artwork_url: t.artwork_url || t.image || '',
+            duration: t.duration || 0
+        };
+    }
+
+    function saveGlobalPlaybackState(forceIsPlaying) {
+        if (window.__yolkRestoringGlobalState) return;
+        if (!currentTrack) return;
+        try {
+            const activeAudio = currentAudio;
+            const rawTime = activeAudio && Number.isFinite(activeAudio.currentTime) ? activeAudio.currentTime : 0;
+            const rawDur = activeAudio && Number.isFinite(activeAudio.duration) && activeAudio.duration > 0
+                ? activeAudio.duration
+                : ((currentTrack.duration || 0) > 1000 ? currentTrack.duration / 1000 : (currentTrack.duration || 0));
+
+            let playingNow;
+            if (typeof forceIsPlaying === 'boolean') {
+                playingNow = forceIsPlaying;
+            } else {
+                const audioPlaying = Boolean(activeAudio && !activeAudio.paused && !activeAudio.ended);
+                const ytPlayingNow = Boolean(typeof window.isYtPlaying === 'boolean' && window.isYtPlaying);
+                playingNow = (audioPlaying || ytPlayingNow || Boolean(isPlaying)) && !userPausedIntentionally;
+            }
+
+            const serializedTrack = compactTrackForGlobalState(currentTrack);
+            const serializedQueue = Array.isArray(currentQueue)
+                ? currentQueue.slice(0, 60).map(compactTrackForGlobalState).filter(Boolean)
+                : [serializedTrack];
+
+            const statePayload = {
+                track: serializedTrack,
+                queue: serializedQueue.length ? serializedQueue : [serializedTrack],
+                queueIndex: typeof currentQueueIndex === 'number' ? currentQueueIndex : 0,
+                currentTime: Math.max(0, rawTime),
+                duration: Math.max(0, rawDur),
+                isPlaying: playingNow,
+                volume: typeof currentVolume === 'number' ? currentVolume : 1.0,
+                updatedAt: Date.now(),
+                source: 'music'
+            };
+
+            localStorage.setItem(MUSIC_STATE_KEY, JSON.stringify(statePayload));
+            window.dispatchEvent(new CustomEvent('12am:music-state-updated', { detail: statePayload }));
+            if (typeof window.__refreshDockMusicWidget === 'function') {
+                window.__refreshDockMusicWidget();
+            }
+        } catch (err) {}
+    }
+
+    window.__saveYolkPlaybackState = saveGlobalPlaybackState;
+
+    function attachGlobalSyncToAudioElement(audioEl) {
+        if (!audioEl || audioEl.__twelveAmSyncAttached) return;
+        audioEl.__twelveAmSyncAttached = true;
+
+        const applyPendingSeekIfReady = () => {
+            if (audioEl !== currentAudio) return;
+            if (pendingRestoreSeekTime > 0.5 && currentTrack) {
+                const uidNow = typeof getTrackUid === 'function' ? getTrackUid(currentTrack) : (currentTrack.id || '');
+                if (!pendingRestoreTrackUid || pendingRestoreTrackUid === uidNow) {
+                    const seekTarget = Number.isFinite(audioEl.duration) && audioEl.duration > 1
+                        ? Math.min(pendingRestoreSeekTime, Math.max(0, audioEl.duration - 0.5))
+                        : pendingRestoreSeekTime;
+                    try {
+                        audioEl.currentTime = seekTarget;
+                    } catch (_) {}
+                    if (audioEl.readyState >= 1) {
+                        pendingRestoreSeekTime = 0;
+                        pendingRestoreTrackUid = '';
+                        window.__yolkRestoringGlobalState = false;
+                        saveGlobalPlaybackState();
+                    }
+                }
+            }
+        };
+
+        audioEl.addEventListener('loadedmetadata', applyPendingSeekIfReady);
+        audioEl.addEventListener('canplay', applyPendingSeekIfReady);
+
+        audioEl.addEventListener('playing', () => {
+            if (audioEl !== currentAudio) return;
+            applyPendingSeekIfReady();
+            window.__yolkRestoringGlobalState = false;
+            saveGlobalPlaybackState(true);
+        });
+
+        audioEl.addEventListener('pause', () => {
+            if (audioEl !== currentAudio) return;
+            if (window.__yolkRestoringGlobalState) return;
+            saveGlobalPlaybackState(false);
+        });
+
+        audioEl.addEventListener('seeked', () => {
+            if (audioEl !== currentAudio) return;
+            if (window.__yolkRestoringGlobalState) return;
+            saveGlobalPlaybackState();
+        });
+
+        audioEl.addEventListener('ended', () => {
+            if (audioEl !== currentAudio) return;
+            saveGlobalPlaybackState(false);
+        });
+
+        audioEl.addEventListener('timeupdate', () => {
+            if (audioEl !== currentAudio) return;
+            if (window.__yolkRestoringGlobalState) return;
+            const now = Date.now();
+            if (now - lastGlobalSaveAt >= 450 && (!audioEl.paused || audioEl.currentTime > 0)) {
+                lastGlobalSaveAt = now;
+                saveGlobalPlaybackState();
+            }
+        });
+    }
+
+    attachGlobalSyncToAudioElement(currentAudio);
+    if (typeof preloadedNextAudio !== 'undefined') {
+        attachGlobalSyncToAudioElement(preloadedNextAudio);
+    }
+
+    window.addEventListener('pagehide', () => saveGlobalPlaybackState());
+    window.addEventListener('beforeunload', () => saveGlobalPlaybackState());
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+            saveGlobalPlaybackState();
+        }
+    });
+
+    window.__twelveAmMusicController = {
+        getState: () => {
+            try {
+                return JSON.parse(localStorage.getItem(MUSIC_STATE_KEY) || 'null');
+            } catch (_) {
+                return null;
+            }
+        },
+        togglePlayPause: () => {
+            if (typeof togglePlayPause === 'function') togglePlayPause();
+        },
+        next: () => {
+            if (typeof playNext === 'function') playNext();
+        },
+        prev: () => {
+            if (typeof playPrev === 'function') playPrev();
+        },
+        openNowPlaying: () => {
+            window.location.hash = '#now-playing';
+            if (typeof window._yolkNavigate === 'function') {
+                window._yolkNavigate();
+            }
+        }
+    };
+
+    (function initDistinctEntryAndRestore() {
+        try {
+            if (document.body) {
+                document.body.classList.add('music-entry-anim');
+            }
+            sessionStorage.removeItem('12am_music_entry_transition');
+        } catch (_) {}
+
+        let isFastRedirect = false;
+        try {
+            if (sessionStorage.getItem('12am_music_fast_redirect') === '1') {
+                isFastRedirect = true;
+                sessionStorage.removeItem('12am_music_fast_redirect');
+            }
+        } catch (_) {}
+
+        const rawHash = window.location.hash || '';
+        const rawSearch = window.location.search || '';
+        const hasExplicitDeepLink = rawHash.includes('song=') || rawSearch.includes('song=') || rawHash.includes('search=') || rawHash.includes('q=');
+
+        if (isFastRedirect) {
+            window.location.hash = '#now-playing';
+            if (typeof window._yolkNavigate === 'function') {
+                window._yolkNavigate();
+            }
+        }
+
+        if (hasExplicitDeepLink || currentTrack) return;
+
+        try {
+            const rawSaved = localStorage.getItem(MUSIC_STATE_KEY);
+            if (!rawSaved) return;
+            const saved = JSON.parse(rawSaved);
+            if (!saved || !saved.track || !(saved.track.title || saved.track.id || saved.track.youtube_id)) return;
+
+            window.__yolkRestoringGlobalState = true;
+            currentQueue = Array.isArray(saved.queue) && saved.queue.length ? saved.queue : [saved.track];
+            currentQueueIndex = (typeof saved.queueIndex === 'number' && saved.queueIndex >= 0 && saved.queueIndex < currentQueue.length)
+                ? saved.queueIndex
+                : 0;
+            currentTrack = currentQueue[currentQueueIndex] || saved.track;
+
+            const targetTime = Math.max(0, Number(saved.currentTime) || 0);
+            const targetUid = typeof getTrackUid === 'function' ? getTrackUid(currentTrack) : (currentTrack.id || '');
+            pendingRestoreSeekTime = targetTime;
+            pendingRestoreTrackUid = targetUid;
+
+            if (bottomPlayer) {
+                bottomPlayer.classList.remove('hidden-force', 'is-loading');
+            }
+            if (typeof updateBottomPlayerUI === 'function') {
+                updateBottomPlayerUI(currentTrack);
+            }
+            if (typeof updateNowPlayingUI === 'function') {
+                updateNowPlayingUI(currentTrack);
+            }
+
+            if (saved.isPlaying) {
+                userPausedIntentionally = false;
+                if (typeof playTrack === 'function') {
+                    Promise.resolve(playTrack(currentTrack)).catch(() => {
+                        window.__yolkRestoringGlobalState = false;
+                    });
+                }
+                setTimeout(() => {
+                    window.__yolkRestoringGlobalState = false;
+                    if (currentAudio && currentAudio.paused && !userPausedIntentionally && saved.isPlaying) {
+                        const resumeOnGesture = () => {
+                            if (currentAudio && currentAudio.paused && !userPausedIntentionally) {
+                                currentAudio.play().catch(() => {});
+                            }
+                        };
+                        document.addEventListener('pointerdown', resumeOnGesture, { once: true, capture: true });
+                        document.addEventListener('keydown', resumeOnGesture, { once: true, capture: true });
+                    }
+                }, 1400);
+            } else {
+                userPausedIntentionally = true;
+                isPlaying = false;
+                if (typeof updatePlayPauseButtons === 'function') {
+                    updatePlayPauseButtons();
+                }
+                const estDur = Number(saved.duration) || ((currentTrack.duration || 0) > 1000 ? currentTrack.duration / 1000 : (currentTrack.duration || 0));
+                if (estDur > 0 && targetTime >= 0) {
+                    const pct = Math.max(0, Math.min(100, (targetTime / estDur) * 100));
+                    const fmt = (sec) => {
+                        const m = Math.floor(sec / 60);
+                        const s = Math.floor(sec % 60);
+                        return `${m}:${s < 10 ? '0' : ''}${s}`;
+                    };
+                    const bpFill = document.getElementById('bottom-player-progress-fill');
+                    const npFill = document.getElementById('np-progress-fill');
+                    const bpCur = document.getElementById('bottom-player-current-time');
+                    const bpDur = document.getElementById('bottom-player-duration');
+                    const npCur = document.getElementById('np-current-time');
+                    const npDur = document.getElementById('np-duration');
+                    if (bpFill) bpFill.style.width = `${pct}%`;
+                    if (npFill) npFill.style.width = `${pct}%`;
+                    if (bpCur) bpCur.textContent = fmt(targetTime);
+                    if (bpDur) bpDur.textContent = fmt(estDur);
+                    if (npCur) npCur.textContent = fmt(targetTime);
+                    if (npDur) npDur.textContent = fmt(estDur);
+                }
+                setTimeout(() => {
+                    window.__yolkRestoringGlobalState = false;
+                }, 300);
+            }
+        } catch (err) {
+            window.__yolkRestoringGlobalState = false;
+        }
+    })();
 
     window.addEventListener('message', (e) => {
         if (e.data && (e.data.type === 'TRASHBIN_HOTLINK' || e.data.type === 'YOLK_HOTLINK')) {
