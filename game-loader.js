@@ -298,10 +298,28 @@ async function fetchGameHtml(file) {
       } catch (e) {}
     }
 
-    // 2. Fetch directly from GitHub Raw (pinpoint-edu/assets and pinpoint-edu/pinpoint-mini exceed jsDelivr 20MB 403 limit)
-    const urlsToTry = [
-      'https://raw.githubusercontent.com/pinpoint-edu/assets/main/' + fetchFile,
-      'https://raw.githubusercontent.com/pinpoint-edu/pinpoint-mini/main/' + fetchFile
+    // 2. Match pinpoint-mini's exact repo + multi-CDN mirror strategy for Originals (textbooks/, etc.)
+    const mirrors = [activeMirror, ...CDN_MIRRORS.filter(m => m !== activeMirror)];
+    const isMiniRepo = fetchFile.startsWith('yolk/') || fetchFile.startsWith('movies/') || fetchFile === 'ai.html' || fetchFile === 'web.html' || fetchFile.startsWith('pages/') || fetchFile.includes('Soundboard.html') || fetchFile.includes('happy-wheels') || fetchFile.includes('superhot') || fetchFile.includes('tetrominoes') || fetchFile.includes('tetris') || fetchFile.includes('retro-bowl');
+    const primaryRepo = isMiniRepo ? 'pinpoint-edu/pinpoint-mini@main/' : 'pinpoint-edu/assets@main/';
+    const fallbackRepo = isMiniRepo ? 'pinpoint-edu/assets@main/' : 'pinpoint-edu/pinpoint-mini@main/';
+
+    const isLargeGame = fetchFile.includes('happy-wheels') || fetchFile.includes('retro-bowl') || fetchFile.includes('gladihoppers') || fetchFile.includes('highway-traffic') || fetchFile.includes('drivemad') || fetchFile.includes('bloonsTD5') || fetchFile.includes('bloonsTD4');
+
+    const urlsToTry = (isLargeGame || isMiniRepo) ? [
+      'https://raw.githubusercontent.com/' + primaryRepo.replace(/@[^/]+\//, '/main/') + fetchFile,
+      'https://cdn.statically.io/gh/' + primaryRepo + fetchFile,
+      ...mirrors.map(m => m + '/gh/' + primaryRepo + fetchFile),
+      'https://raw.githubusercontent.com/' + fallbackRepo.replace(/@[^/]+\//, '/main/') + fetchFile,
+      'https://cdn.statically.io/gh/' + fallbackRepo + fetchFile,
+      ...mirrors.map(m => m + '/gh/' + fallbackRepo + fetchFile)
+    ] : [
+      ...mirrors.map(m => m + '/gh/' + primaryRepo + fetchFile),
+      'https://cdn.statically.io/gh/' + primaryRepo + fetchFile,
+      'https://raw.githubusercontent.com/' + primaryRepo.replace(/@[^/]+\//, '/main/') + fetchFile,
+      ...mirrors.map(m => m + '/gh/' + fallbackRepo + fetchFile),
+      'https://cdn.statically.io/gh/' + fallbackRepo + fetchFile,
+      'https://raw.githubusercontent.com/' + fallbackRepo.replace(/@[^/]+\//, '/main/') + fetchFile
     ];
 
     for (const url of urlsToTry) {
@@ -312,6 +330,12 @@ async function fetchGameHtml(file) {
         if (text.includes('Package size exceeded') || text.includes('limit of 20 MB') || text.includes('404: Not Found') || text.trim().startsWith('{"status": 4')) {
           continue;
         }
+        for (const m of CDN_MIRRORS) {
+          if (url.startsWith(m)) {
+            activeMirror = m;
+            break;
+          }
+        }
         return { html: text, resolvedUrl: url };
       } catch (e) {
         continue;
@@ -320,8 +344,8 @@ async function fetchGameHtml(file) {
 
     // 3. Fallback to our internal serverless proxy for school Chromebooks (preserve upstream resolvedUrl)
     const proxyFallbacks = [
-      'https://raw.githubusercontent.com/pinpoint-edu/assets/main/' + fetchFile,
-      'https://raw.githubusercontent.com/pinpoint-edu/pinpoint-mini/main/' + fetchFile
+      'https://raw.githubusercontent.com/' + primaryRepo.replace(/@[^/]+\//, '/main/') + fetchFile,
+      'https://raw.githubusercontent.com/' + fallbackRepo.replace(/@[^/]+\//, '/main/') + fetchFile
     ];
     for (const upstreamUrl of proxyFallbacks) {
       try {
@@ -341,14 +365,14 @@ async function fetchGameHtml(file) {
 
 function normalizeGitBaseUrl(url) {
   if (!url) return url;
-  // pinpoint-edu repos >20MB return 403 on jsDelivr; prefer GitHub Pages for pinpoint-edu raw URLs
-  const mPinpoint = url.match(/^https?:\/\/raw\.githubusercontent\.com\/pinpoint-edu\/([^/]+)\/(?:main|master)\/(.*)$/i);
-  if (mPinpoint) {
-    return `https://pinpoint-edu.github.io/${mPinpoint[1]}/${mPinpoint[2]}`;
+  // Keep GitHub Pages base for StrongdogXP repos, and match pinpoint-mini CDN mirror base for assets/pinpoint-mini
+  const mStrongdog = url.match(/^https?:\/\/raw\.githubusercontent\.com\/pinpoint-edu\/(strongdog[^/]*)\/(?:main|master)\/(.*)$/i);
+  if (mStrongdog) {
+    return `https://pinpoint-edu.github.io/${mStrongdog[1]}/${mStrongdog[2]}`;
   }
-  const mRaw = url.match(/^https?:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/(.*)$/i);
-  if (mRaw) {
-    return `${activeMirror}/gh/${mRaw[1]}/${mRaw[2]}@${mRaw[3]}/${mRaw[4]}`;
+  if (url.includes('raw.githubusercontent.com/')) {
+    return url
+      .replace(/^https?:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/(.*)$/i, `${activeMirror}/gh/$1/$2@$3/$4`);
   }
   return url;
 }
@@ -847,6 +871,10 @@ function writeGameIntoFrame(iframe, rawHtml, fileUrl) {
     if (win) {
       win.__initialQuery = hotlinkQuery;
       win.__HOTLINK_URL__ = fileUrl;
+      try { win.history.replaceState(null, '', cleanUrl + hotlinkQuery); } catch (e) {}
+      if (hotlinkQuery.includes('#')) {
+        try { win.location.hash = hotlinkQuery.substring(hotlinkQuery.indexOf('#')); } catch (e) {}
+      }
       setTimeout(() => {
         try {
           win.postMessage({ type: '12AM_HOTLINK', query: hotlinkQuery, url: fileUrl }, '*');
