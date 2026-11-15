@@ -8815,7 +8815,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         localStorage.setItem('yolk_theme_mode', mode);
 
-        const isDark = (mode === 'dark') || (mode === 'system' && isSystemDark());
+        const has12amTheme = document.documentElement.classList.contains('light') || document.documentElement.classList.contains('dark');
+        const isDark = has12amTheme
+            ? !document.documentElement.classList.contains('light')
+            : ((mode === 'dark') || (mode === 'system' && isSystemDark()));
         document.documentElement.classList.toggle('dark-mode', isDark);
         document.body.classList.toggle('dark-mode', isDark);
         document.documentElement.classList.toggle('dark', isDark);
@@ -8892,6 +8895,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    window.addEventListener('12am:theme-changed', () => {
+        applyThemeMode(document.documentElement.classList.contains('light') ? 'light' : 'dark', false);
+    });
 
     // ==== SETTINGS PAGE: REAL-TIME 5-BAND WEB AUDIO EQUALIZER (EQ) ====
     const EQ_PRESETS = {

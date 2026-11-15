@@ -1349,11 +1349,13 @@
         }
 
         if (isLightTheme) {
-            root.classList.remove("dark");
+            root.classList.remove("dark", "dark-mode");
             root.classList.add("light");
+            if (document.body && document.body.classList) document.body.classList.remove("dark", "dark-mode");
         } else {
             root.classList.remove("light");
-            root.classList.add("dark");
+            root.classList.add("dark", "dark-mode");
+            if (document.body && document.body.classList) document.body.classList.add("dark", "dark-mode");
         }
 
         // Dynamic contrast rules for Light/White surfaces

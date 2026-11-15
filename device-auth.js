@@ -33,7 +33,7 @@
         // Mibi Avatar Rendering
         if (type === 'mibi' && user.mibiConfig) {
             const m = user.mibiConfig;
-            const bg = escapeHtml(m.bgColor || '#3B82F6');
+            const bg = m.bgColor === 'theme' ? 'var(--accent-primary, var(--accent-color, #3B82F6))' : escapeHtml(m.bgColor || '#3B82F6');
             const scale = (m.size || 100) / 100;
             const rot = m.rotation || 0;
             const ox = m.offsetX || 0;
@@ -58,7 +58,8 @@
 
         const rawLetters = user.avatar_letter || user.pfp_letter_char || user.letterAvatarText || (user.firstName || user.nickname || 'U')[0] || 'U';
         const letters = escapeHtml(String(rawLetters).slice(0, 3));
-        const bg = escapeHtml(user.avatar_bg || user.pfpLetterBg || user.pfp_letter_bg || '#000000');
+        const rawBg = user.avatar_bg || user.pfpLetterBg || user.pfp_letter_bg || '#000000';
+        const bg = rawBg === 'theme' ? 'var(--accent-primary, var(--accent-color, #000000))' : escapeHtml(rawBg);
         const color = escapeHtml(user.avatar_color || '#ffffff');
 
         return `<div class="pfp-squircle" style="width:${size}px; height:${size}px; border-radius:${radius}; background:${bg}; color:${color}; border:1px solid rgba(255,255,255,0.16); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize}; letter-spacing:0.5px; user-select:none; flex-shrink:0;">${letters}</div>`;
