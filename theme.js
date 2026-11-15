@@ -1401,7 +1401,6 @@
                 .bg-black\\/80, .bg-black\\/80 .text-white, .bg-black\\/80 .material-symbols-rounded, .bg-black\\/80 svg,
                 .bg-black\\/90, .bg-black\\/90 .text-white, .bg-black\\/90 .material-symbols-rounded, .bg-black\\/90 svg,
                 .yolk-active, .yolk-active .text-white, .yolk-active .material-symbols-rounded, .yolk-active svg,
-                #bottom-player-play-pause, #bottom-player-play-pause *,
                 #now-playing-play-pause, #now-playing-play-pause *,
                 #lyrics-bar-play-pause, #lyrics-bar-play-pause *,
                 #playlist-play-all-btn, #playlist-play-all-btn *,

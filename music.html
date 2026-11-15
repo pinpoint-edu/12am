@@ -2733,12 +2733,12 @@
         html.light #yt-import-submit-btn *,
         html.light #share-native-btn,
         html.light #share-native-btn *,
-        html.light button.bg-zinc-900,
-        html.light button.bg-zinc-900 *,
-        html.light button.bg-zinc-800,
-        html.light button.bg-zinc-800 *,
-        html.light button.bg-black,
-        html.light button.bg-black * {
+        html.light button.bg-zinc-900:not(#bottom-player-play-pause),
+        html.light button.bg-zinc-900:not(#bottom-player-play-pause) *,
+        html.light button.bg-zinc-800:not(#bottom-player-play-pause),
+        html.light button.bg-zinc-800:not(#bottom-player-play-pause) *,
+        html.light button.bg-black:not(#bottom-player-play-pause),
+        html.light button.bg-black:not(#bottom-player-play-pause) * {
             color: #ffffff !important;
         }
 
@@ -3136,9 +3136,26 @@
 <body class="dark dark-mode h-screen w-screen overflow-hidden selection:bg-purple-500/30 selection:text-white relative" data-page="search">
     <script>
         (function() {
+            function isThemeLight(theme) {
+                if (!theme) return document.documentElement.classList.contains('light');
+                if (['Light', 'Birthday', 'Cloud', 'Cream', 'Mint'].includes(theme.name)) return true;
+                const bg = String(theme['bg-primary'] || '').trim();
+                const hexMatch = bg.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+                if (hexMatch) {
+                    let h = hexMatch[1];
+                    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+                    const r = parseInt(h.slice(0, 2), 16) / 255;
+                    const g = parseInt(h.slice(2, 4), 16) / 255;
+                    const b = parseInt(h.slice(4, 6), 16) / 255;
+                    const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+                    return lum > 0.65;
+                }
+                return document.documentElement.classList.contains('light');
+            }
+
             function syncTheme(theme) {
                 if (!theme) return;
-                const isLight = theme.name === 'Light';
+                const isLight = isThemeLight(theme);
                 document.documentElement.classList.toggle('light', isLight);
                 document.documentElement.classList.toggle('dark', !isLight);
                 document.documentElement.classList.toggle('dark-mode', !isLight);
