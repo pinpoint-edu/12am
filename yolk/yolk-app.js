@@ -6905,15 +6905,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (cropCancelBtn && cropModal) {
+        if (cropCancelBtn && cropModal) {
         cropCancelBtn.onclick = () => {
             closeCropperModal();
         };
     }
 
+    let cropPointerDownOnBackdrop = false;
     if (cropModal) {
+        cropModal.addEventListener('mousedown', (e) => {
+            cropPointerDownOnBackdrop = (e.target === cropModal);
+        });
         cropModal.addEventListener('click', (e) => {
-            if (e.target === cropModal) closeCropperModal();
+            if (e.target === cropModal && cropPointerDownOnBackdrop) closeCropperModal();
+            cropPointerDownOnBackdrop = false;
         });
     }
 
@@ -7034,157 +7039,209 @@ document.addEventListener('DOMContentLoaded', () => {
         const rgb = hexToRgbObj(tintHex || '#FFE600') || { r: 255, g: 230, b: 0 };
 
         if (preset === 'stripes') {
-            // 1. Clean bold vertical bars
+            // 1. Editorial Vertical Spectrum Bars
             const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
-            bgGrad.addColorStop(0, `rgb(${Math.round(rgb.r * 0.15 + 10)}, ${Math.round(rgb.g * 0.15 + 10)}, ${Math.round(rgb.b * 0.15 + 12)})`);
-            bgGrad.addColorStop(1, '#08080a');
+            bgGrad.addColorStop(0, `rgb(${Math.round(rgb.r * 0.22 + 10)}, ${Math.round(rgb.g * 0.22 + 10)}, ${Math.round(rgb.b * 0.22 + 14)})`);
+            bgGrad.addColorStop(1, '#07070a');
             ctx.fillStyle = bgGrad;
             ctx.fillRect(0, 0, w, h);
 
-            const numStripes = 7;
-            const stripeW = w / (numStripes * 2);
-            for (let i = 0; i < numStripes; i++) {
-                const x = i * stripeW * 2 + stripeW * 0.5;
-                const alpha = 0.25 + (i / numStripes) * 0.65;
-                ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha.toFixed(2)})`;
-                ctx.fillRect(x, 0, stripeW, h);
+            const numBars = 6;
+            const gap = 10;
+            const totalPad = 20;
+            const barW = (w - totalPad * 2 - gap * (numBars - 1)) / numBars;
+            const heights = [0.46, 0.72, 0.58, 0.84, 0.64, 0.50];
+            for (let i = 0; i < numBars; i++) {
+                const bx = totalPad + i * (barW + gap);
+                const bh = h * heights[i];
+                const by = h - bh + 12;
+                const barGrad = ctx.createLinearGradient(bx, by, bx, h);
+                barGrad.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.96)`);
+                barGrad.addColorStop(0.65, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.45)`);
+                barGrad.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`);
+                ctx.fillStyle = barGrad;
+                ctx.beginPath();
+                ctx.roundRect(bx, by, barW, bh, barW * 0.45);
+                ctx.fill();
             }
         } else if (preset === 'diagonal') {
-            // 2. High-contrast dynamic diagonal stripes
+            // 2. Layered Diagonal Geometric Ribbons
             const bgGrad = ctx.createLinearGradient(0, 0, w, h);
-            bgGrad.addColorStop(0, `rgb(${Math.round(rgb.r * 0.18 + 12)}, ${Math.round(rgb.g * 0.18 + 12)}, ${Math.round(rgb.b * 0.18 + 14)})`);
-            bgGrad.addColorStop(1, '#09090b');
+            bgGrad.addColorStop(0, `rgb(${Math.round(rgb.r * 0.20 + 12)}, ${Math.round(rgb.g * 0.20 + 12)}, ${Math.round(rgb.b * 0.20 + 16)})`);
+            bgGrad.addColorStop(1, '#08080c');
             ctx.fillStyle = bgGrad;
             ctx.fillRect(0, 0, w, h);
 
             ctx.save();
-            ctx.translate(w / 2, h / 2);
+            ctx.translate(w * 0.5, h * 0.52);
             ctx.rotate(-Math.PI / 4);
 
-            const stripeWidths = [18, 32, 14, 48, 22, 38, 16, 28, 42];
-            const opacities = [0.45, 0.85, 0.35, 0.95, 0.55, 0.75, 0.40, 0.90, 0.60];
-            let offset = -w * 1.2;
-            stripeWidths.forEach((sw, i) => {
-                const alpha = opacities[i % opacities.length];
-                ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
-                ctx.fillRect(offset, -h * 1.5, sw, h * 3);
-                offset += sw + 14;
+            const bands = [
+                { x: -165, w: 28, a: 0.28 },
+                { x: -124, w: 12, a: 0.65 },
+                { x: -96, w: 52, a: 0.92 },
+                { x: -30, w: 18, a: 0.42 },
+                { x: 4, w: 40, a: 0.78 },
+                { x: 58, w: 14, a: 0.95 },
+                { x: 86, w: 34, a: 0.50 },
+                { x: 132, w: 22, a: 0.30 }
+            ];
+            bands.forEach(b => {
+                const g = ctx.createLinearGradient(0, -180, 0, 180);
+                g.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${(b.a * 0.45).toFixed(2)})`);
+                g.addColorStop(0.5, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${b.a})`);
+                g.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${(b.a * 0.35).toFixed(2)})`);
+                ctx.fillStyle = g;
+                ctx.beginPath();
+                ctx.roundRect(b.x, -200, b.w, 400, 6);
+                ctx.fill();
             });
             ctx.restore();
         } else if (preset === 'circles') {
-            // 3. Concentric circles inside each other (modern geometric waves)
-            ctx.fillStyle = '#0a0a0e';
+            // 3. Luminous Ripples
+            const bgGrad = ctx.createRadialGradient(w * 0.62, h * 0.62, 8, w * 0.5, h * 0.5, w * 0.85);
+            bgGrad.addColorStop(0, `rgb(${Math.round(rgb.r * 0.28 + 10)}, ${Math.round(rgb.g * 0.28 + 10)}, ${Math.round(rgb.b * 0.28 + 16)})`);
+            bgGrad.addColorStop(1, '#07070b');
+            ctx.fillStyle = bgGrad;
             ctx.fillRect(0, 0, w, h);
 
-            const centerX = w * 0.5;
-            const centerY = h * 0.58;
-            const maxRadius = w * 0.65;
-
-            // Ambient background radial glow
-            const glow = ctx.createRadialGradient(centerX, centerY, 5, centerX, centerY, maxRadius);
-            glow.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`);
-            glow.addColorStop(0.6, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`);
+            const cx = w * 0.62;
+            const cy = h * 0.64;
+            const glow = ctx.createRadialGradient(cx, cy, 4, cx, cy, 110);
+            glow.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.85)`);
+            glow.addColorStop(0.35, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.28)`);
             glow.addColorStop(1, 'transparent');
             ctx.fillStyle = glow;
             ctx.fillRect(0, 0, w, h);
 
-            for (let r = 16; r <= maxRadius; r += 20) {
-                const norm = r / maxRadius;
+            [24, 44, 66, 90, 116, 144].forEach((r, idx) => {
                 ctx.beginPath();
-                ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
-                ctx.strokeStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${(0.85 - norm * 0.65).toFixed(2)})`;
-                ctx.lineWidth = 2.5;
+                ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${(0.92 - idx * 0.13).toFixed(2)})`;
+                ctx.lineWidth = idx % 2 === 0 ? 3.5 : 1.8;
                 ctx.stroke();
-            }
+            });
         } else if (preset === 'checker') {
-            // 4. Stylish modern checker pattern
-            ctx.fillStyle = '#0c0c10';
+            // 4. Rounded Mosaic Grid
+            ctx.fillStyle = '#09090e';
             ctx.fillRect(0, 0, w, h);
 
-            const gridSize = 6;
-            const tileSize = w / gridSize;
+            const gridSize = 5;
+            const pad = 14;
+            const gap = 8;
+            const tile = (w - pad * 2 - gap * (gridSize - 1)) / gridSize;
             for (let row = 0; row < gridSize; row++) {
                 for (let col = 0; col < gridSize; col++) {
-                    if ((row + col) % 2 === 0) {
-                        const alpha = 0.55 + ((row + col) / (gridSize * 2)) * 0.4;
-                        ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha.toFixed(2)})`;
-                        ctx.fillRect(col * tileSize, row * tileSize, tileSize, tileSize);
-                    }
+                    const isEven = (row + col) % 2 === 0;
+                    const diag = (row + col) / ((gridSize - 1) * 2);
+                    const x = pad + col * (tile + gap);
+                    const y = pad + row * (tile + gap);
+                    ctx.fillStyle = isEven
+                        ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${(0.35 + diag * 0.6).toFixed(2)})`
+                        : `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.08)`;
+                    ctx.beginPath();
+                    ctx.roundRect(x, y, tile, tile, 8);
+                    ctx.fill();
                 }
             }
-            // Vignette shading
-            const vignette = ctx.createRadialGradient(w * 0.5, h * 0.5, w * 0.2, w * 0.5, h * 0.5, w * 0.7);
-            vignette.addColorStop(0, 'rgba(0, 0, 0, 0.1)');
-            vignette.addColorStop(1, 'rgba(0, 0, 0, 0.75)');
+            const vignette = ctx.createLinearGradient(0, 0, 0, h * 0.55);
+            vignette.addColorStop(0, 'rgba(0, 0, 0, 0.55)');
+            vignette.addColorStop(1, 'rgba(0, 0, 0, 0)');
             ctx.fillStyle = vignette;
             ctx.fillRect(0, 0, w, h);
         } else if (preset === 'vinyl') {
-            // 5. Circular Vinyl Graphic
-            const bgGrad = ctx.createRadialGradient(w * 0.5, h * 0.55, 10, w * 0.5, h * 0.55, w * 0.75);
-            bgGrad.addColorStop(0, `rgb(${Math.round(rgb.r * 0.25 + 24 * 0.75)}, ${Math.round(rgb.g * 0.25 + 24 * 0.75)}, ${Math.round(rgb.b * 0.25 + 28 * 0.75)})`);
-            bgGrad.addColorStop(1, '#09090b');
+            // 5. Sleek Vinyl Disc with Specular Sheen
+            const bgGrad = ctx.createRadialGradient(w * 0.56, h * 0.60, 12, w * 0.5, h * 0.5, w * 0.85);
+            bgGrad.addColorStop(0, `rgb(${Math.round(rgb.r * 0.30 + 18)}, ${Math.round(rgb.g * 0.30 + 18)}, ${Math.round(rgb.b * 0.30 + 24)})`);
+            bgGrad.addColorStop(1, '#07070a');
             ctx.fillStyle = bgGrad;
             ctx.fillRect(0, 0, w, h);
 
-            const centerX = w * 0.58;
-            const centerY = h * 0.62;
-            const maxRadius = w * 0.42;
+            const cx = w * 0.58;
+            const cy = h * 0.64;
+            const maxR = 94;
 
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+            ctx.shadowBlur = 18;
             ctx.beginPath();
-            ctx.arc(centerX, centerY, maxRadius, 0, Math.PI * 2);
-            ctx.fillStyle = '#111114';
+            ctx.arc(cx, cy, maxR, 0, Math.PI * 2);
+            ctx.fillStyle = '#101014';
             ctx.fill();
-            ctx.lineWidth = 1.5;
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-            ctx.stroke();
+            ctx.restore();
 
-            for (let r = maxRadius - 6; r > maxRadius * 0.38; r -= 5.5) {
+            for (let r = maxR - 5; r > maxR * 0.38; r -= 5) {
                 ctx.beginPath();
-                ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
-                ctx.strokeStyle = (r % 11 === 0) ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.035)';
+                ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                ctx.strokeStyle = (Math.round(r) % 10 === 0) ? 'rgba(255, 255, 255, 0.13)' : 'rgba(255, 255, 255, 0.04)';
                 ctx.lineWidth = 1;
                 ctx.stroke();
             }
 
-            const labelRadius = maxRadius * 0.34;
+            // Diagonal light sheen across grooves
+            ctx.save();
             ctx.beginPath();
-            ctx.arc(centerX, centerY, labelRadius, 0, Math.PI * 2);
+            ctx.arc(cx, cy, maxR, 0, Math.PI * 2);
+            ctx.clip();
+            const sheen = ctx.createLinearGradient(cx - maxR, cy - maxR, cx + maxR, cy + maxR);
+            sheen.addColorStop(0.35, 'rgba(255,255,255,0)');
+            sheen.addColorStop(0.5, 'rgba(255,255,255,0.12)');
+            sheen.addColorStop(0.65, 'rgba(255,255,255,0)');
+            ctx.fillStyle = sheen;
+            ctx.fillRect(cx - maxR, cy - maxR, maxR * 2, maxR * 2);
+            ctx.restore();
+
+            const labelR = maxR * 0.35;
+            ctx.beginPath();
+            ctx.arc(cx, cy, labelR, 0, Math.PI * 2);
             ctx.fillStyle = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
             ctx.fill();
             ctx.lineWidth = 2;
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
             ctx.stroke();
 
             ctx.beginPath();
-            ctx.arc(centerX, centerY, labelRadius * 0.22, 0, Math.PI * 2);
+            ctx.arc(cx, cy, labelR * 0.22, 0, Math.PI * 2);
             ctx.fillStyle = '#09090b';
             ctx.fill();
-            ctx.lineWidth = 1.5;
-            ctx.strokeStyle = '#d4d4d8';
-            ctx.stroke();
         } else {
-            // 6. Glowing Neon Cyber Ring
-            ctx.fillStyle = '#050508';
+            // 6. Neon Halo Prism
+            ctx.fillStyle = '#050509';
+            ctx.fillRect(0, 0, w, h);
+
+            const cx = w * 0.5;
+            const cy = h * 0.58;
+            const amb = ctx.createRadialGradient(cx, cy, 8, cx, cy, 110);
+            amb.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.35)`);
+            amb.addColorStop(0.6, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.08)`);
+            amb.addColorStop(1, 'transparent');
+            ctx.fillStyle = amb;
             ctx.fillRect(0, 0, w, h);
 
             ctx.save();
             ctx.shadowColor = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
-            ctx.shadowBlur = 24;
-
+            ctx.shadowBlur = 22;
             ctx.strokeStyle = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
-            ctx.lineWidth = 4;
+            ctx.lineWidth = 5;
             ctx.beginPath();
-            ctx.arc(w * 0.5, h * 0.54, w * 0.32, 0, Math.PI * 2);
+            ctx.arc(cx, cy, 66, 0, Math.PI * 2);
             ctx.stroke();
 
-            ctx.shadowBlur = 32;
+            ctx.shadowBlur = 12;
             ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 1.8;
+            ctx.lineWidth = 1.6;
             ctx.beginPath();
-            ctx.arc(w * 0.5, h * 0.54, w * 0.32, 0, Math.PI * 2);
+            ctx.arc(cx, cy, 66, 0, Math.PI * 2);
             ctx.stroke();
             ctx.restore();
         }
+
+        // Top subtle scrim for guaranteed title legibility
+        const topScrim = ctx.createLinearGradient(0, 0, 0, 96);
+        topScrim.addColorStop(0, 'rgba(0, 0, 0, 0.48)');
+        topScrim.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = topScrim;
+        ctx.fillRect(0, 0, w, 96);
 
         // Apple Music Editorial Typography: Bold, Large Playlist Title matching default styles
         const displayTitle = (title && title.trim()) ? title.trim() : 'Playlist';
