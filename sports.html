@@ -531,14 +531,22 @@
                 <h1 class="cinema-brand-title">Sports</h1>
             </div>
 
-            <div class="cinema-search-container">
-                <div class="cinema-search-box">
+            <div class="cinema-search-container" style="display:flex; align-items:center; gap:10px; max-width:680px;">
+                <div class="cinema-search-box" style="flex:1;">
                     <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted); font-size: 0.9rem;"></i>
-                    <input type="text" id="sportsSearchInput" class="cinema-search-input" placeholder="Search teams, leagues, or matches..." autocomplete="off">
+                    <input type="text" id="sportsSearchInput" class="cinema-search-input" placeholder="Search teams, leagues, channels, or matches..." autocomplete="off">
                     <button id="refreshStreamsBtn" type="button" title="Refresh streams" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; padding:4px 6px;">
                         <i class="fa-solid fa-rotate-right"></i>
                     </button>
                 </div>
+                <select id="providerSelect" class="select-dark" title="Select stream provider" style="height:44px; border-radius:16px; padding:0 12px;">
+                    <option value="all">All Sources</option>
+                    <option value="streamfree">StreamFree</option>
+                    <option value="dlhd">DaddyLiveHD</option>
+                </select>
+                <button id="dlhdKeyBtn" type="button" class="player-btn-squircle" title="Set DaddyLiveHD API Key" style="width:44px; height:44px; border-radius:16px;">
+                    <span class="material-symbols-sharp">key</span>
+                </button>
             </div>
         </header>
 
@@ -602,12 +610,16 @@
 
     <script>
         (function() {
-            const CACHE_KEY = '12am_sports_streams_cache_v1';
+            const CACHE_KEY = '12am_sports_streams_cache_v2';
+            const DLHD_KEY_STORAGE = '12am_dlhd_api_key';
             const CACHE_TTL_MS = 60 * 1000;
             const DIRECT_API = 'https://streamfree.top/api/v1';
+            const DLHD_BASE = 'https://thedaddy.li';
+            const DLHD_FOLDERS = ['stream', 'cast', 'watch', 'plus', 'casting', 'player'];
 
             let allStreams = [];
             let activeCategory = 'all';
+            let activeProvider = 'all';
             let searchQuery = '';
             let activeStream = null;
 
@@ -618,6 +630,8 @@
             const gridHeadingEl = document.getElementById('gridHeading');
             const searchInputEl = document.getElementById('sportsSearchInput');
             const refreshBtnEl = document.getElementById('refreshStreamsBtn');
+            const providerSelectEl = document.getElementById('providerSelect');
+            const dlhdKeyBtnEl = document.getElementById('dlhdKeyBtn');
 
             const spotlightBanner = document.getElementById('spotlightBanner');
             const spotlightBg = document.getElementById('spotlightBg');
@@ -694,6 +708,74 @@
                 }];
             }
 
+            function resolveDlhdLogo(logoUrl) {
+                if (!logoUrl) return '';
+                const s = String(logoUrl).trim();
+                if (/^https?:\/\//i.test(s)) return s;
+                return `${DLHD_BASE}/${s.replace(/^\/+/, '')}`;
+            }
+
+            function buildDlhdChannelSources(channels, channels2) {
+                const list = [...(Array.isArray(channels) ? channels : []), ...(Array.isArray(channels2) ? channels2 : [])];
+                const out = [];
+                list.forEach(ch => {
+                    if (!ch || !ch.channel_id) return;
+                    const cid = String(ch.channel_id).trim();
+                    const cname = ch.channel_name || `Channel ${cid}`;
+                    DLHD_FOLDERS.forEach(folder => {
+                        out.push({
+                            quality: `${cname} • /${folder}/`,
+                            url: `${DLHD_BASE}/${folder}/stream-${encodeURIComponent(cid)}.php`,
+                            live: true
+                        });
+                    });
+                });
+                return out;
+            }
+
+            function normalizeDlhdSchedule(scheduleData) {
+                const items = [];
+                if (!scheduleData || typeof scheduleData !== 'object') return items;
+                Object.entries(scheduleData).forEach(([dayLabel, catsObj]) => {
+                    if (!catsObj || typeof catsObj !== 'object') return;
+                    Object.entries(catsObj).forEach(([catName, events]) => {
+                        if (!Array.isArray(events)) return;
+                        events.forEach((ev, idx) => {
+                            const sources = buildDlhdChannelSources(ev.channels, ev.channels2);
+                            if (!sources.length) return;
+                            const firstCh = (ev.channels && ev.channels[0]) || (ev.channels2 && ev.channels2[0]) || {};
+                            items.push({
+                                provider: 'dlhd',
+                                name: ev.event || 'Live Event',
+                                category: catName.toLowerCase(),
+                                league: `${catName} • ${dayLabel.split(' - ')[0]}`,
+                                stream_key: `dlhd-${firstCh.channel_id || idx}`,
+                                match_time_label: ev.time ? `${ev.time} UK` : 'Live',
+                                match_timestamp: 0,
+                                sources,
+                                thumbnail_url: resolveDlhdLogo(firstCh.logo_url)
+                            });
+                        });
+                    });
+                });
+                return items;
+            }
+
+            function normalizeDlhdChannels(channelsArr) {
+                if (!Array.isArray(channelsArr)) return [];
+                return channelsArr.map(ch => ({
+                    provider: 'dlhd',
+                    name: ch.channel_name || `Channel ${ch.channel_id}`,
+                    category: '24/7 channels',
+                    league: 'DaddyLiveHD 24/7',
+                    stream_key: `dlhd-ch-${ch.channel_id}`,
+                    match_time_label: '24/7 Live',
+                    match_timestamp: 0,
+                    sources: buildDlhdChannelSources([ch], []),
+                    thumbnail_url: resolveDlhdLogo(ch.logo_url)
+                }));
+            }
+
             function renderCategories(categories) {
                 const list = ['all', ...categories];
                 categoryTabsEl.innerHTML = '';
@@ -728,7 +810,7 @@
                 spotlightBg.onload = () => { spotlightBg.style.display = 'block'; };
                 spotlightTitle.textContent = featured.name || 'Live Match';
                 spotlightLeague.textContent = `${featured.league || featured.category || 'Sports'}`;
-                spotlightTime.textContent = live ? 'Streaming Live' : formatMatchTime(featured.match_timestamp);
+                spotlightTime.textContent = featured.match_time_label || (live ? 'Streaming Live' : formatMatchTime(featured.match_timestamp));
                 spotlightBadge.classList.toggle('is-upcoming', !live);
                 spotlightBadgeText.textContent = live ? 'Live Now' : 'Upcoming';
                 spotlightPlayBtn.onclick = () => openStream(featured);
@@ -737,12 +819,13 @@
             function renderGrid() {
                 const q = searchQuery.trim().toLowerCase();
                 const filtered = allStreams.filter(s => {
+                    const provOk = activeProvider === 'all' || (s.provider || 'streamfree') === activeProvider;
                     const catOk = activeCategory === 'all' || (s.category || '').toLowerCase() === activeCategory;
                     const textOk = !q ||
                         (s.name || '').toLowerCase().includes(q) ||
                         (s.league || '').toLowerCase().includes(q) ||
                         (s.category || '').toLowerCase().includes(q);
-                    return catOk && textOk;
+                    return provOk && catOk && textOk;
                 });
 
                 filtered.sort((a, b) => Number(isStreamLive(b)) - Number(isStreamLive(a)) || (a.match_timestamp || 0) - (b.match_timestamp || 0));
@@ -764,6 +847,7 @@
                 filtered.forEach(stream => {
                     const live = isStreamLive(stream);
                     const quality = getBestQuality(stream);
+                    const isDlhd = stream.provider === 'dlhd';
                     const card = document.createElement('article');
                     card.className = 'sport-card';
                     card.onclick = () => openStream(stream);
@@ -774,13 +858,13 @@
                             <span class="sport-live-pill ${live ? 'is-live' : 'is-upcoming'}">
                                 ${live ? '<span class="live-dot"></span> Live' : 'Scheduled'}
                             </span>
-                            <span class="sport-quality-pill">${quality}</span>
+                            <span class="sport-quality-pill">${isDlhd ? 'DLHD' : quality}</span>
                         </div>
                         <div class="sport-card-body">
                             <span class="sport-card-league">${stream.league || stream.category || 'Sports'}</span>
                             <h3 class="sport-card-title">${stream.name || 'Stream'}</h3>
                             <div class="sport-card-meta">
-                                <span>${formatMatchTime(stream.match_timestamp)}</span>
+                                <span>${stream.match_time_label || formatMatchTime(stream.match_timestamp)}</span>
                                 <span>${getStreamSources(stream).length} ${getStreamSources(stream).length === 1 ? 'source' : 'sources'}</span>
                             </div>
                         </div>
@@ -798,17 +882,19 @@
                 let sources = getStreamSources(stream);
                 populateSources(sources);
 
-                // Refresh live sources for this specific stream key on open
-                try {
-                    const fresh = await fetchJsonWithFallback(
-                        `/api/sports?action=sources&key=${encodeURIComponent(stream.stream_key)}`,
-                        `${DIRECT_API}/sources/${encodeURIComponent(stream.stream_key)}`
-                    );
-                    if (fresh && Array.isArray(fresh.sources) && fresh.sources.length) {
-                        sources = fresh.sources;
-                        populateSources(sources);
-                    }
-                } catch (_) {}
+                // Refresh live sources for StreamFree streams on open
+                if (stream.provider !== 'dlhd') {
+                    try {
+                        const fresh = await fetchJsonWithFallback(
+                            `/api/sports?action=sources&key=${encodeURIComponent(stream.stream_key)}`,
+                            `${DIRECT_API}/sources/${encodeURIComponent(stream.stream_key)}`
+                        );
+                        if (fresh && Array.isArray(fresh.sources) && fresh.sources.length) {
+                            sources = fresh.sources;
+                            populateSources(sources);
+                        }
+                    } catch (_) {}
+                }
             }
 
             function populateSources(sources) {
@@ -846,6 +932,28 @@
                 renderGrid();
             });
 
+            if (providerSelectEl) {
+                providerSelectEl.onchange = () => {
+                    activeProvider = providerSelectEl.value || 'all';
+                    renderGrid();
+                };
+            }
+
+            if (dlhdKeyBtnEl) {
+                dlhdKeyBtnEl.onclick = () => {
+                    const current = localStorage.getItem(DLHD_KEY_STORAGE) || '';
+                    const next = prompt('Enter your DaddyLiveHD (thedaddy.li) API key (leave blank to clear):', current);
+                    if (next !== null) {
+                        if (next.trim()) {
+                            localStorage.setItem(DLHD_KEY_STORAGE, next.trim());
+                        } else {
+                            localStorage.removeItem(DLHD_KEY_STORAGE);
+                        }
+                        loadSportsData(true);
+                    }
+                };
+            }
+
             async function loadSportsData(forceRefresh = false) {
                 if (!forceRefresh) {
                     try {
@@ -860,13 +968,27 @@
                 }
 
                 streamCountLabelEl.textContent = 'Loading streams...';
+                const dlhdKey = localStorage.getItem(DLHD_KEY_STORAGE) || '';
+                const dlhdQuery = dlhdKey ? `&apikey=${encodeURIComponent(dlhdKey)}` : '';
+
                 try {
-                    const [catsData, streamsData] = await Promise.all([
-                        fetchJsonWithFallback('/api/sports?action=categories', `${DIRECT_API}/categories`),
-                        fetchJsonWithFallback('/api/sports?action=streams', `${DIRECT_API}/streams`)
+                    const [catsData, streamsData, dlhdSched, dlhdChans] = await Promise.all([
+                        fetchJsonWithFallback('/api/sports?action=categories', `${DIRECT_API}/categories`).catch(() => ({ categories: [] })),
+                        fetchJsonWithFallback('/api/sports?action=streams', `${DIRECT_API}/streams`).catch(() => ({ streams: [] })),
+                        fetch(`/api/sports?provider=dlhd&action=schedule${dlhdQuery}`).then(r => r.ok ? r.json() : null).catch(() => null),
+                        dlhdKey ? fetch(`/api/sports?provider=dlhd&action=channels${dlhdQuery}`).then(r => r.ok ? r.json() : null).catch(() => null) : Promise.resolve(null)
                     ]);
-                    const categories = Array.isArray(catsData?.categories) ? catsData.categories : [];
-                    allStreams = Array.isArray(streamsData?.streams) ? streamsData.streams : [];
+
+                    const sfStreams = (Array.isArray(streamsData?.streams) ? streamsData.streams : []).map(s => ({ ...s, provider: 'streamfree' }));
+                    const dlhdEvents = dlhdSched && dlhdSched.data ? normalizeDlhdSchedule(dlhdSched.data) : [];
+                    const dlhd247 = dlhdChans && Array.isArray(dlhdChans.data) ? normalizeDlhdChannels(dlhdChans.data) : [];
+
+                    allStreams = [...sfStreams, ...dlhdEvents, ...dlhd247];
+                    const catSet = new Set(Array.isArray(catsData?.categories) ? catsData.categories : []);
+                    dlhdEvents.forEach(e => { if (e.category) catSet.add(e.category); });
+                    if (dlhd247.length) catSet.add('24/7 channels');
+                    const categories = Array.from(catSet);
+
                     try {
                         localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), categories, streams: allStreams }));
                     } catch (_) {}
