@@ -512,6 +512,10 @@
             display: inline-block;
         }
 
+        .hidden {
+            display: none !important;
+        }
+
         @media (max-width: 640px) {
             .spotlight-banner { height: 300px; }
             .spotlight-content { padding: 1.5rem; }
@@ -692,15 +696,13 @@
 
             function loadStreamUrl(rawUrl, forceFallback = false) {
                 if (!rawUrl) return;
-                if (forceFallback) {
+                if (forceFallback || shieldMode === 'sandbox' || shieldMode === 'smart') {
+                    // Direct load with strict sandbox: blocks popups/redirects while preserving DAMITV's origin & dtk token
                     streamFrame.setAttribute('sandbox', SANDBOX_VALUE);
                     streamFrame.src = rawUrl;
                     return;
                 }
-                if (shieldMode === 'sandbox') {
-                    streamFrame.setAttribute('sandbox', SANDBOX_VALUE);
-                    streamFrame.src = rawUrl;
-                } else if (shieldMode === 'proxy' || shieldMode === 'smart') {
+                if (shieldMode === 'proxy') {
                     streamFrame.removeAttribute('sandbox');
                     streamFrame.src = `/api/sports?action=embed&url=${encodeURIComponent(rawUrl)}`;
                 } else {
