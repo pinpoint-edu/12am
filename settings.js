@@ -4077,7 +4077,7 @@
                     <div class="relative group" id="songCoverThemeCard">
                         <div class="w-full h-full min-h-[46px] flex items-stretch rounded-[14px] overflow-hidden transition-all" style="background-color: var(--bg-page); border: 2px solid ${isSongCoverActive ? 'var(--accent-color)' : 'var(--border-main)'};">
                             <button type="button" id="songCoverTuneBtn" class="flex-1 flex items-center justify-center py-2.5 hover:bg-[var(--tab-hover-bg)] transition-colors cursor-pointer text-[var(--text-main)]" title="Default theme when no song is playing: ${escapeHtml(fallbackThemeName)}">
-                                <span class="material-symbols-rounded text-[22px]">tune</span>
+                                <i class="fa-solid fa-sliders text-[18px]"></i>
                             </button>
                             <div class="w-[1px] bg-[var(--border-main)] my-1.5"></div>
                             <button type="button" id="songCoverApplyBtn" class="flex-1 flex items-center justify-center py-2.5 hover:bg-[var(--tab-hover-bg)] transition-colors cursor-pointer ${isSongCoverActive ? 'text-[var(--accent-color)]' : 'text-[var(--text-main)]'}" title="Use Song Cover Theme">

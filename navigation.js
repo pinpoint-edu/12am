@@ -906,7 +906,7 @@
                     <div class="twelveam-music-launch-disc">
                         ${coverUrl
                             ? `<img src="${escapeHtml(coverUrl)}" alt="" onerror="this.style.display='none';">`
-                            : `<i class="fa-solid fa-music" style="font-size:30px; color:#ffffff;"></i>`}
+                            : `<i class="fa-solid fa-music" style="font-size:48px; color: var(--accent-color, #ffffff);"></i>`}
                     </div>
                     <div class="twelveam-music-launch-eq" aria-hidden="true">
                         <span></span><span></span><span></span><span></span>

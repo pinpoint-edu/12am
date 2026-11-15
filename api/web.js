@@ -902,28 +902,38 @@ export default async function handler(req, res) {
     return res.redirect(302, `${webEndpoint}?mode=browse&url=${encodeURIComponent("https://www.bing.com/search?q=" + encodeURIComponent(qVal))}`);
   }
 
+  // Neutralize noisy third-party analytics/telemetry scripts that 404 under proxy
+  if (/users\.vidy\.st\/api\/script\.js/i.test(target) || (/vidy\.st\/.*\/track/i.test(target))) {
+    res.status(200).setHeader("Content-Type", "application/javascript; charset=utf-8");
+    return res.send("/* telemetry stubbed */");
+  }
+
   const reqBody = (req.method !== "GET" && req.method !== "HEAD") ? await readReqBody(req) : undefined;
 
-  const makeFetchOpts = (urlObj, customReferer) => {
+  const makeFetchOpts = (urlObj, customReferer, omitOriginAndRef = false) => {
     const effectiveRef = customReferer || refParam || (urlObj.origin + "/");
     const headers = {
       "User-Agent": req.headers["user-agent"] || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
       "Accept": req.headers["accept"] || "*/*",
-      "Accept-Language": "en-US,en;q=0.9",
-      "Referer": effectiveRef
+      "Accept-Language": "en-US,en;q=0.9"
     };
+    if (!omitOriginAndRef) {
+      headers["Referer"] = effectiveRef;
+    }
     if (req.headers["range"]) {
       headers["Range"] = req.headers["range"];
     }
     if (req.headers["content-type"]) {
       headers["Content-Type"] = req.headers["content-type"];
     }
-    try {
-      const refOrigin = new URL(effectiveRef).origin;
-      if (mode !== "browse" && refOrigin !== urlObj.origin) {
-        headers["Origin"] = refOrigin;
-      }
-    } catch (e) {}
+    if (!omitOriginAndRef) {
+      try {
+        const refOrigin = new URL(effectiveRef).origin;
+        if (mode !== "browse" && refOrigin !== urlObj.origin) {
+          headers["Origin"] = refOrigin;
+        }
+      } catch (e) {}
+    }
     const method = (req.method === "POST" || req.method === "PUT") ? req.method : (req.method === "HEAD" ? "HEAD" : "GET");
     const opts = {
       method,
@@ -943,6 +953,13 @@ export default async function handler(req, res) {
       const retryRes = await fetch(target, makeFetchOpts(parsed, parsed.origin + "/"));
       if (retryRes.ok || retryRes.status !== 403) {
         upstream = retryRes;
+      }
+    }
+
+    if (upstream.status === 403) {
+      const bareRetryRes = await fetch(target, makeFetchOpts(parsed, undefined, true));
+      if (bareRetryRes.ok || bareRetryRes.status !== 403) {
+        upstream = bareRetryRes;
       }
     }
 

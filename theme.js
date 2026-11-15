@@ -810,11 +810,15 @@
         mergeThemes(fetched);
 
         const saved = getSavedThemeName();
-        const matched = allThemes.find(t => t.name.toLowerCase() === saved.toLowerCase());
-        if (matched) {
-            applyTheme(matched, false);
+        if (saved && saved.toLowerCase() === 'song cover') {
+            activateSongCoverTheme(false);
         } else {
-            applyTheme(DEFAULT_THEME, false);
+            const matched = allThemes.find(t => t.name.toLowerCase() === saved.toLowerCase());
+            if (matched) {
+                applyTheme(matched, false);
+            } else {
+                applyTheme(DEFAULT_THEME, false);
+            }
         }
         window.dispatchEvent(new CustomEvent("12am:themes-ready", { detail: allThemes }));
     }

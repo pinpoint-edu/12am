@@ -418,37 +418,74 @@ body.sidebar-collapsed:has(#settings-floating-dock) #settings-container {
 }
 
 .more-menu-container {
+  top: 50% !important;
+  bottom: auto !important;
   width: auto !important;
   flex-direction: row !important;
   align-items: center !important;
-  padding: 0.45rem !important;
-  gap: 0.4rem !important;
+  padding: 6px !important;
+  gap: 6px !important;
   border-radius: 18px !important;
   overflow: visible !important;
+  transform-origin: left center !important;
+  transform: translateY(-50%) translateX(-8px) scale(0.95) !important;
+}
+
+.more-menu-container.closed {
+  transform: translateY(-50%) translateX(-8px) scale(0.95) !important;
+}
+
+.more-menu-container.open {
+  transform: translateY(-50%) translateX(0) scale(1) !important;
+}
+
+body.dock-right .more-menu-container {
+  transform-origin: right center !important;
+  transform: translateY(-50%) translateX(8px) scale(0.95) !important;
+}
+
+body.dock-right .more-menu-container.closed {
+  transform: translateY(-50%) translateX(8px) scale(0.95) !important;
+}
+
+body.dock-right .more-menu-container.open {
+  transform: translateY(-50%) translateX(0) scale(1) !important;
 }
 
 .more-menu-icon-btn {
   position: relative;
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-muted, #a1a1aa);
-  background: transparent;
-  border: 1px solid transparent;
+  color: var(--text-main, #e5e7eb);
+  background: var(--bg-secondary, var(--card-bg, rgba(255, 255, 255, 0.06)));
+  border: 1px solid var(--border-main, var(--navbar-border, rgba(255, 255, 255, 0.12)));
   text-decoration: none;
-  font-size: 1rem;
-  transition: all 0.16s ease;
+  font-size: 14px;
+  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
   cursor: pointer;
 }
 
 .more-menu-icon-btn:hover {
-  color: var(--text-main, #ffffff);
-  background: var(--tab-hover-bg, rgba(255, 255, 255, 0.08));
-  border-color: var(--border-main, rgba(255, 255, 255, 0.12));
-  transform: translateY(-1px);
+  transform: scale(1.05);
+  color: var(--tab-hover-text, var(--text-main, #ffffff));
+  background: var(--tab-hover-bg, var(--bg-primary, rgba(255, 255, 255, 0.12)));
+  border-color: var(--tab-hover-border, var(--border-main, rgba(255, 255, 255, 0.2)));
+}
+
+html.light .more-menu-icon-btn {
+  background: var(--bg-secondary, rgba(15, 23, 42, 0.05));
+  border-color: var(--border-main, rgba(15, 23, 42, 0.12));
+  color: var(--text-main, #0f172a);
+}
+
+html.light .more-menu-icon-btn:hover {
+  background: var(--bg-primary, rgba(15, 23, 42, 0.1));
+  border-color: rgba(15, 23, 42, 0.2);
+  color: #0f172a;
 }
 
 .more-menu-icon-btn.active {
@@ -1221,15 +1258,15 @@ html.light .music-mini-redirect-btn:hover {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  background: radial-gradient(circle at 50% 45%, var(--accent-glow, rgba(245, 158, 11, 0.35)), rgba(7, 7, 11, 0.97) 70%);
+  gap: 20px;
+  background: radial-gradient(circle at 50% 45%, var(--accent-glow, rgba(245, 158, 11, 0.24)), var(--bg-page, #060608) 72%);
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
   opacity: 0;
   transform: scale(1.03);
   transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.34s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: all;
-  color: #ffffff;
+  color: var(--text-main, #ffffff);
 }
 
 #twelveam-music-launch-overlay.is-visible {
@@ -1238,16 +1275,16 @@ html.light .music-mini-redirect-btn:hover {
 }
 
 .twelveam-music-launch-disc {
-  width: 84px;
-  height: 84px;
-  border-radius: 24px;
+  width: 152px;
+  height: 152px;
+  border-radius: 32px;
   overflow: hidden;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 0 36px var(--accent-glow, rgba(245, 158, 11, 0.5)), 0 18px 40px rgba(0, 0, 0, 0.55);
+  border: 2px solid var(--border-main, rgba(255, 255, 255, 0.22));
+  box-shadow: 0 0 42px var(--accent-glow, rgba(245, 158, 11, 0.45)), 0 20px 48px rgba(0, 0, 0, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03));
+  background: var(--bg-card, linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03)));
   animation: musicDiscFloat 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
@@ -1279,7 +1316,7 @@ html.light .music-mini-redirect-btn:hover {
   font-size: 14px;
   font-weight: 500;
   letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--text-main, rgba(255, 255, 255, 0.92));
 }
 
 @keyframes musicDiscFloat {
