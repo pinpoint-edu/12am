@@ -423,21 +423,17 @@
                     <i class="fa-solid fa-ellipsis"></i>
                 </button>
                 <div id="more-menu-container" class="more-menu-container closed">
-                    <div class="more-menu-header" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 6px;">
-                        <span style="font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted, #a1a1aa); font-weight: 500;">More Apps</span>
-                    </div>
-                    <div class="auth-menu-divider"></div>
-                    <a href="${prefix}notes.html" class="auth-menu-link ${activeId === 'notes' ? 'active' : ''}">
+                    <a href="${prefix}notes.html" class="more-menu-icon-btn ${activeId === 'notes' ? 'active' : ''}" aria-label="Notes">
                         <i class="fa-solid fa-note-sticky"></i>
-                        <span>Notes</span>
+                        <span class="more-menu-tooltip">Notes</span>
                     </a>
-                    <a href="${prefix}dictionary.html" class="auth-menu-link ${activeId === 'dictionary' ? 'active' : ''}">
+                    <a href="${prefix}dictionary.html" class="more-menu-icon-btn ${activeId === 'dictionary' ? 'active' : ''}" aria-label="Dictionary">
                         <i class="fa-solid fa-book-bookmark"></i>
-                        <span>Dictionary</span>
+                        <span class="more-menu-tooltip">Dictionary</span>
                     </a>
-                    <a href="${prefix}messenger.html" class="auth-menu-link ${activeId === 'messenger' ? 'active' : ''}">
+                    <a href="${prefix}messenger.html" class="more-menu-icon-btn ${activeId === 'messenger' ? 'active' : ''}" aria-label="Messenger">
                         <i class="fa-solid fa-comments"></i>
-                        <span>Messenger</span>
+                        <span class="more-menu-tooltip">Messenger</span>
                     </a>
                 </div>
             </div>

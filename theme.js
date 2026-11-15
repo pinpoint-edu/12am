@@ -1149,7 +1149,8 @@
     let selectedBaseTheme = null;
     let themeTransitionRaf = null;
     let lastAppliedCoverTintKey = '';
-    const SONG_COVER_TINT_KEY = '12am_song_cover_tint';
+    let isSongCoverThemeMode = false;
+    const SONG_COVER_FALLBACK_KEY = '12am_song_cover_fallback_theme';
     const MUSIC_STATE_KEY = '12am_music_playback_state';
     const coverPaletteCache = new Map();
 
@@ -1159,15 +1160,48 @@
         return lightThemeNames.includes(t.name) || bgLum > 0.65;
     }
 
-    function isSongCoverTintCurrentlyActive() {
+    function getFallbackThemeForSongCover() {
+        let name = 'Original';
         try {
-            if (localStorage.getItem(SONG_COVER_TINT_KEY) !== 'true') return false;
-            const raw = localStorage.getItem(MUSIC_STATE_KEY);
-            const ms = raw ? JSON.parse(raw) : null;
-            return Boolean(ms && ms.isPlaying && ms.track && resolveCoverUrlForTint(ms.track));
-        } catch (_) {
-            return false;
+            const stored = localStorage.getItem(SONG_COVER_FALLBACK_KEY);
+            if (stored && stored.trim()) name = stored.trim();
+        } catch (_) {}
+        const found = allThemes.find(t => t.name && t.name.toLowerCase() === name.toLowerCase() && !t.isSongCoverTheme);
+        return found || DEFAULT_THEME;
+    }
+
+    function activateSongCoverTheme(save = true) {
+        isSongCoverThemeMode = true;
+        const fallback = getFallbackThemeForSongCover();
+        selectedBaseTheme = fallback;
+        lastAppliedCoverTintKey = '';
+        if (save) {
+            try {
+                localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify({ name: 'Song Cover', isSongCoverTheme: true }));
+                localStorage.removeItem(LEGACY_STORAGE_KEY);
+            } catch (e) {}
         }
+        applyTheme(fallback, false, true);
+        syncSongCoverThemeTint(true);
+    }
+
+    function setSongCoverFallbackTheme(themeName) {
+        if (!themeName || typeof themeName !== 'string') return false;
+        const found = allThemes.find(t => t.name && t.name.toLowerCase() === themeName.toLowerCase() && !t.isSongCoverTheme);
+        if (!found) return false;
+        try {
+            localStorage.setItem(SONG_COVER_FALLBACK_KEY, found.name);
+        } catch (_) {}
+        if (isSongCoverThemeMode) {
+            const prevBase = selectedBaseTheme || DEFAULT_THEME;
+            selectedBaseTheme = found;
+            const polarityChanged = isThemeLight(prevBase) !== isThemeLight(found);
+            if (polarityChanged) {
+                lastAppliedCoverTintKey = '';
+            }
+            syncSongCoverThemeTint(true);
+        }
+        return true;
     }
 
     function applyTheme(theme, save = true, isInternalFrame = false) {
@@ -1176,37 +1210,15 @@
         }
 
         if (!isInternalFrame) {
-            const prevBase = selectedBaseTheme;
-            const sameThemeSelected = Boolean(
-                prevBase &&
-                prevBase.name &&
-                theme.name &&
-                prevBase.name.toLowerCase() === theme.name.toLowerCase() &&
-                !theme.isCustom
-            );
-            const tintActiveNow = Boolean(lastAppliedCoverTintKey) && isSongCoverTintCurrentlyActive();
-
-            if (tintActiveNow && prevBase) {
-                if (sameThemeSelected) {
-                    return;
-                }
-                const wasLight = isThemeLight(prevBase);
-                const willBeLight = isThemeLight(theme);
-                selectedBaseTheme = theme;
-                if (save) {
-                    try {
-                        localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(theme));
-                        localStorage.removeItem(LEGACY_STORAGE_KEY);
-                    } catch (e) {}
-                }
-                updateThemeBackgroundEffects(theme);
-                if (wasLight === willBeLight) {
-                    window.dispatchEvent(new CustomEvent("12am:theme-changed", { detail: currentTheme || theme }));
-                    return;
-                }
-                lastAppliedCoverTintKey = '';
-                syncSongCoverThemeTint();
+            if (theme.isSongCoverTheme || (theme.name && theme.name.toLowerCase() === 'song cover')) {
+                activateSongCoverTheme(save);
                 return;
+            }
+            isSongCoverThemeMode = false;
+            lastAppliedCoverTintKey = '';
+            if (themeTransitionRaf) {
+                cancelAnimationFrame(themeTransitionRaf);
+                themeTransitionRaf = null;
             }
             selectedBaseTheme = theme;
         }
@@ -1512,9 +1524,10 @@
     function createCustomTheme(name, color1, color2, color3) {
         if (!color1) return null;
         const bg1 = color2 || "#060608";
-        const bg2 = color2 ? adjustHex(color2, 14) : "#0d0d12";
+        const isLightBg = getLuminance(bg1) > 0.65;
+        const bg2 = color2 ? adjustHex(color2, isLightBg ? -4 : 3) : "#0d0d12";
         const sec = color3 || color1;
-        const btnBg = color2 ? adjustHex(color2, 8) : "#0e0e14";
+        const btnBg = color2 ? adjustHex(color2, isLightBg ? -6 : 4) : "#0e0e14";
         const themeName = name ? name.trim().slice(0, 20) : ("Custom " + (loadCustomThemes().length + 1));
 
         const theme = {
@@ -1523,25 +1536,25 @@
             isCustom: true,
             "bg-primary": bg1,
             "bg-secondary": bg2,
-            "text-primary": "#ffffff",
-            "text-secondary": adjustHex(color1, 40),
+            "text-primary": isLightBg ? "#0f172a" : "#ffffff",
+            "text-secondary": isLightBg ? "#475569" : adjustHex(color1, 40),
             "accent-primary": color1,
             "accent-secondary": hexToRgba(sec, 0.45),
             "accent-glow": hexToRgba(sec, 0.35),
-            "navbar-bg": hexToRgba(bg2, 0.88),
+            "navbar-bg": hexToRgba(bg2, 0.90),
             "navbar-border": hexToRgba(color1, 0.28),
-            "navbar-text": "#ffffff",
+            "navbar-text": isLightBg ? "#0f172a" : "#ffffff",
             "tab-active-bg": hexToRgba(color1, 0.18),
             "tab-active-text": color1,
             "tab-active-border": color1,
-            "tab-hover-bg": "rgba(255, 255, 255, 0.05)",
-            "tab-hover-text": "#ffffff",
+            "tab-hover-bg": isLightBg ? "rgba(15, 23, 42, 0.06)" : "rgba(255, 255, 255, 0.05)",
+            "tab-hover-text": isLightBg ? "#0f172a" : "#ffffff",
             "button-bg": btnBg,
             "button-text": color1,
             "border-primary": hexToRgba(color1, 0.22),
-            "border-secondary": "rgba(255, 255, 255, 0.06)",
+            "border-secondary": isLightBg ? "rgba(15, 23, 42, 0.08)" : "rgba(255, 255, 255, 0.06)",
             "avatar-gradient": `linear-gradient(135deg, ${color1} 0%, ${sec} 100%)`,
-            "logo-src": "/images/logo.png"
+            "logo-src": isLightBg ? "/images/logo-dark.png" : "/images/logo.png"
         };
         saveCustomTheme(theme);
         return theme;
@@ -1808,12 +1821,10 @@
         return '';
     }
 
-    function syncSongCoverThemeTint() {
-        const base = selectedBaseTheme || currentTheme || DEFAULT_THEME;
-        let enabled = false;
-        try {
-            enabled = localStorage.getItem(SONG_COVER_TINT_KEY) === 'true';
-        } catch (_) {}
+    function syncSongCoverThemeTint(forceImmediate = false) {
+        if (!isSongCoverThemeMode) return;
+        const base = getFallbackThemeForSongCover();
+        selectedBaseTheme = base;
 
         let musicState = null;
         try {
@@ -1825,10 +1836,12 @@
         const isPlaying = Boolean(musicState && musicState.isPlaying && track);
         const coverUrl = isPlaying ? resolveCoverUrlForTint(track) : '';
 
-        if (!enabled || !isPlaying || !coverUrl) {
+        if (!isPlaying || !coverUrl) {
             if (lastAppliedCoverTintKey !== '') {
                 lastAppliedCoverTintKey = '';
                 animateThemeTransition(currentTheme, base, 750);
+            } else if (forceImmediate) {
+                applyTheme(base, false, true);
             }
             return;
         }
@@ -1837,17 +1850,16 @@
         if (tintKey === lastAppliedCoverTintKey) return;
 
         extractCoverPalette(coverUrl, (palette) => {
-            // Re-check current state in case it stopped while loading image
-            let stillEnabled = false;
+            if (!isSongCoverThemeMode) return;
             let latestState = null;
             try {
-                stillEnabled = localStorage.getItem(SONG_COVER_TINT_KEY) === 'true';
                 const raw = localStorage.getItem(MUSIC_STATE_KEY);
                 latestState = raw ? JSON.parse(raw) : null;
             } catch (_) {}
-            if (!stillEnabled || !latestState || !latestState.isPlaying || !latestState.track) return;
+            if (!latestState || !latestState.isPlaying || !latestState.track) return;
             if (!palette) return;
-            const currentBase = selectedBaseTheme || base;
+            const currentBase = getFallbackThemeForSongCover();
+            selectedBaseTheme = currentBase;
             lastAppliedCoverTintKey = `${currentBase.name}::${coverUrl}`;
             const tinted = buildTintedTheme(currentBase, palette);
             animateThemeTransition(currentTheme, tinted, 750);
@@ -1859,15 +1871,16 @@
     window.addEventListener('12am:music-state-updated', () => {
         syncSongCoverThemeTint();
     });
-    window.addEventListener('12am:song-cover-tint-changed', () => {
-        syncSongCoverThemeTint();
-    });
 
     window.applyTheme = applyTheme;
     window.setThemeByName = setThemeByName;
     window.getThemes = () => allThemes;
     window.getCurrentTheme = () => currentTheme;
-    window.getSelectedBaseTheme = () => selectedBaseTheme || currentTheme;
+    window.getSelectedBaseTheme = () => isSongCoverThemeMode ? { name: 'Song Cover', isSongCoverTheme: true } : (selectedBaseTheme || currentTheme);
+    window.activateSongCoverTheme = activateSongCoverTheme;
+    window.isSongCoverThemeActive = () => isSongCoverThemeMode;
+    window.getSongCoverFallbackThemeName = () => getFallbackThemeForSongCover().name;
+    window.setSongCoverFallbackTheme = setSongCoverFallbackTheme;
     window.DEFAULT_THEME = DEFAULT_THEME;
     window.saveCustomTheme = saveCustomTheme;
     window.deleteCustomTheme = deleteCustomTheme;
@@ -1880,7 +1893,9 @@
         const raw = localStorage.getItem(THEME_STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
         if (raw) {
             const parsed = JSON.parse(raw);
-            if (parsed && typeof parsed === "object" && parsed.name) {
+            if (parsed && (parsed.isSongCoverTheme || (parsed.name && parsed.name.toLowerCase() === 'song cover'))) {
+                activateSongCoverTheme(false);
+            } else if (parsed && typeof parsed === "object" && parsed.name) {
                 const match = allThemes.find(t => t.name.toLowerCase() === parsed.name.toLowerCase());
                 applyTheme(match || DEFAULT_THEME, false);
             } else {
@@ -1908,14 +1923,15 @@
             try {
                 if (e.newValue) {
                     const parsed = JSON.parse(e.newValue);
-                    if (parsed && (!selectedBaseTheme || parsed.name !== selectedBaseTheme.name)) {
+                    if (parsed && (parsed.isSongCoverTheme || (parsed.name && parsed.name.toLowerCase() === 'song cover'))) {
+                        activateSongCoverTheme(false);
+                    } else if (parsed && (!selectedBaseTheme || parsed.name !== selectedBaseTheme.name || isSongCoverThemeMode)) {
                         applyTheme(parsed, false);
-                        syncSongCoverThemeTint();
                     }
                 }
             } catch (err) {}
-        } else if (e.key === MUSIC_STATE_KEY || e.key === SONG_COVER_TINT_KEY) {
-            syncSongCoverThemeTint();
+        } else if (e.key === MUSIC_STATE_KEY || e.key === SONG_COVER_FALLBACK_KEY) {
+            syncSongCoverThemeTint(true);
         }
     });
 })();

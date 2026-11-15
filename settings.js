@@ -1170,14 +1170,6 @@
                                 <i class="fa-solid fa-spinner fa-spin fa-2x text-[var(--text-muted)] opacity-40"></i>
                             </div>
                         </div>
-
-                        <div class="flex items-center justify-between gap-4 mt-4 pt-3 border-t border-[var(--border-main)]">
-                            <div>
-                                <p class="text-sm font-medium text-[var(--text-main)]">Song Cover Theme Tint</p>
-                                <p class="text-xs font-light text-[var(--text-muted)] opacity-70">Keep your selected theme, but tint it to the playing song's cover colors and fade back when it ends or closes.</p>
-                            </div>
-                            <input type="checkbox" id="songCoverThemeTintToggle" class="custom-checkbox w-5 h-5 flex-shrink-0 cursor-pointer" title="Tint active theme with playing song cover">
-                        </div>
                         
                         <div id="themeMessage" class="general-message-area text-sm mt-3"></div>
                     </div>
@@ -4019,6 +4011,11 @@
                 } catch (e) {}
                 const activeThemeName = savedTheme ? savedTheme.name : 'Original';
 
+                const isSongCoverActive = window.isSongCoverThemeActive
+                    ? window.isSongCoverThemeActive()
+                    : Boolean(savedTheme && (savedTheme.isSongCoverTheme || (savedTheme.name && savedTheme.name.toLowerCase() === 'song cover')));
+                const fallbackThemeName = window.getSongCoverFallbackThemeName ? window.getSongCoverFallbackThemeName() : 'Original';
+
                 let themeButtonsHtml = '';
                 for (const theme of allAvail) {
                     if (lightThemeNames.includes(theme.name)) {
@@ -4027,7 +4024,7 @@
                         theme['logo-src'] = '/images/logo.png';
                     }
                     
-                    const isActive = (theme.name.toLowerCase() === activeThemeName.toLowerCase());
+                    const isActive = !isSongCoverActive && (theme.name.toLowerCase() === activeThemeName.toLowerCase());
                     const themeTextColor = theme['accent-primary'] || (lightThemeNames.includes(theme.name) ? '#0f172a' : '#ffffff');
                     const activeBorder = theme['accent-primary'] || theme['tab-active-border'] || '#ff8c00';
                     const activeBg = theme['bg-primary'] || '#08080a';
@@ -4062,7 +4059,91 @@
                     `;
                 }
 
+                const fallbackMenuItemsHtml = allAvail.map(t => {
+                    const isFb = t.name.toLowerCase() === fallbackThemeName.toLowerCase();
+                    const dotColor = t['accent-primary'] || '#ff8800';
+                    return `
+                        <button type="button" class="song-cover-fallback-item w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer ${isFb ? 'bg-[var(--tab-active-bg)] text-[var(--tab-active-text)] border border-[var(--tab-active-border)]' : 'text-[var(--text-main)] hover:bg-[var(--tab-hover-bg)] border border-transparent'}" data-fallback-name="${escapeHtml(t.name)}">
+                            <span class="flex items-center gap-2 truncate">
+                                <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: ${dotColor};"></span>
+                                <span class="truncate">${escapeHtml(t.name)}</span>
+                            </span>
+                            ${isFb ? '<i class="fa-solid fa-check text-[10px]"></i>' : ''}
+                        </button>
+                    `;
+                }).join('');
+
+                themeButtonsHtml += `
+                    <div class="relative group" id="songCoverThemeCard">
+                        <div class="w-full h-full min-h-[46px] flex items-stretch rounded-[14px] overflow-hidden transition-all" style="background-color: var(--bg-page); border: 2px solid ${isSongCoverActive ? 'var(--accent-color)' : 'var(--border-main)'};">
+                            <button type="button" id="songCoverTuneBtn" class="flex-1 flex items-center justify-center py-2.5 hover:bg-[var(--tab-hover-bg)] transition-colors cursor-pointer text-[var(--text-main)]" title="Default theme when no song is playing: ${escapeHtml(fallbackThemeName)}">
+                                <span class="material-symbols-rounded text-[22px]">tune</span>
+                            </button>
+                            <div class="w-[1px] bg-[var(--border-main)] my-1.5"></div>
+                            <button type="button" id="songCoverApplyBtn" class="flex-1 flex items-center justify-center py-2.5 hover:bg-[var(--tab-hover-bg)] transition-colors cursor-pointer ${isSongCoverActive ? 'text-[var(--accent-color)]' : 'text-[var(--text-main)]'}" title="Use Song Cover Theme">
+                                <i class="fa-solid fa-music text-[18px]"></i>
+                            </button>
+                        </div>
+                        <div id="songCoverFallbackMenu" class="hidden absolute left-0 top-[calc(100%+8px)] z-50 w-56 max-h-64 overflow-y-auto custom-scroll p-2 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-main)] shadow-2xl flex-col gap-1">
+                            <div class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] opacity-70">When No Song Plays</div>
+                            ${fallbackMenuItemsHtml}
+                        </div>
+                    </div>
+                `;
+
                 themePickerContainer.innerHTML = themeButtonsHtml;
+
+                const songCoverTuneBtn = document.getElementById('songCoverTuneBtn');
+                const songCoverApplyBtn = document.getElementById('songCoverApplyBtn');
+                const songCoverFallbackMenu = document.getElementById('songCoverFallbackMenu');
+                const songCoverThemeCard = document.getElementById('songCoverThemeCard');
+
+                if (songCoverTuneBtn && songCoverFallbackMenu) {
+                    songCoverTuneBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const isHidden = songCoverFallbackMenu.classList.contains('hidden');
+                        songCoverFallbackMenu.classList.toggle('hidden', !isHidden);
+                        songCoverFallbackMenu.classList.toggle('flex', isHidden);
+                    });
+                    document.addEventListener('click', (e) => {
+                        if (songCoverThemeCard && !songCoverThemeCard.contains(e.target)) {
+                            songCoverFallbackMenu.classList.add('hidden');
+                            songCoverFallbackMenu.classList.remove('flex');
+                        }
+                    });
+                    songCoverFallbackMenu.querySelectorAll('.song-cover-fallback-item').forEach(item => {
+                        item.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const fbName = item.dataset.fallbackName;
+                            if (window.setSongCoverFallbackTheme) {
+                                window.setSongCoverFallbackTheme(fbName);
+                            }
+                            songCoverFallbackMenu.classList.add('hidden');
+                            songCoverFallbackMenu.classList.remove('flex');
+                            renderThemesGrid();
+                            showMessage(themeMessage, `Default theme for Song Cover set to ${fbName}!`, 'success');
+                        });
+                    });
+                }
+
+                if (songCoverApplyBtn) {
+                    songCoverApplyBtn.addEventListener('click', async () => {
+                        if (window.isSongCoverThemeActive && window.isSongCoverThemeActive()) {
+                            return;
+                        }
+                        if (window.activateSongCoverTheme) {
+                            window.activateSongCoverTheme(true);
+                        }
+                        if (currentUser) {
+                            try {
+                                const uId = currentUser.uid || currentUser.deviceToken || currentUser.id || 'local_user';
+                                await saveUserData(uId, { navbarTheme: { name: 'Song Cover', isSongCoverTheme: true } });
+                            } catch (error) {}
+                        }
+                        renderThemesGrid();
+                        showMessage(themeMessage, 'Song Cover theme applied!', 'success');
+                    });
+                }
 
                 // Wire up theme buttons
                 themePickerContainer.querySelectorAll('.theme-button').forEach(button => {
@@ -4107,24 +4188,6 @@
             }
 
             renderThemesGrid();
-
-            const songCoverThemeTintToggle = document.getElementById('songCoverThemeTintToggle');
-            if (songCoverThemeTintToggle) {
-                try {
-                    songCoverThemeTintToggle.checked = localStorage.getItem('12am_song_cover_tint') === 'true';
-                } catch (e) {}
-                songCoverThemeTintToggle.addEventListener('change', () => {
-                    const enabled = Boolean(songCoverThemeTintToggle.checked);
-                    try {
-                        localStorage.setItem('12am_song_cover_tint', enabled ? 'true' : 'false');
-                    } catch (e) {}
-                    window.dispatchEvent(new CustomEvent('12am:song-cover-tint-changed', { detail: { enabled } }));
-                    if (typeof window.__sync12amSongCoverThemeTint === 'function') {
-                        window.__sync12amSongCoverThemeTint();
-                    }
-                    showMessage(themeMessage, enabled ? 'Song cover theme tint enabled!' : 'Song cover theme tint disabled.', 'success');
-                });
-            }
 
             // Color Wheel Canvas Engine
             function initCanvasColorWheel(canvasId, cursorId, labelId, swatchId, initialHex, sliderId, valId) {

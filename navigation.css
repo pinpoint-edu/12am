@@ -417,6 +417,73 @@ body.sidebar-collapsed:has(#settings-floating-dock) #settings-container {
   transform: translateX(0) scale(1) !important;
 }
 
+.more-menu-container {
+  width: auto !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  padding: 0.45rem !important;
+  gap: 0.4rem !important;
+  border-radius: 18px !important;
+  overflow: visible !important;
+}
+
+.more-menu-icon-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted, #a1a1aa);
+  background: transparent;
+  border: 1px solid transparent;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: all 0.16s ease;
+  cursor: pointer;
+}
+
+.more-menu-icon-btn:hover {
+  color: var(--text-main, #ffffff);
+  background: var(--tab-hover-bg, rgba(255, 255, 255, 0.08));
+  border-color: var(--border-main, rgba(255, 255, 255, 0.12));
+  transform: translateY(-1px);
+}
+
+.more-menu-icon-btn.active {
+  color: var(--tab-active-text, var(--accent-color, #ffffff));
+  background: var(--tab-active-bg, rgba(255, 136, 0, 0.18));
+  border-color: var(--tab-active-border, var(--accent-color, #ff8800));
+}
+
+.more-menu-tooltip {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  padding: 0.3rem 0.55rem;
+  border-radius: 9px;
+  background: var(--bg-card, #0d0d12);
+  border: 1px solid var(--border-main, rgba(255, 255, 255, 0.12));
+  color: var(--text-main, #ffffff);
+  font-size: 0.72rem;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+  z-index: 100020;
+}
+
+.more-menu-icon-btn:hover .more-menu-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
 .auth-menu-header {
   padding: 0.25rem 0.5rem 0.5rem;
   min-width: 0;
