@@ -469,7 +469,7 @@ function prepareGameHtml(html, fileUrl) {
   }
 
   // Inject frame styling & window.top sandboxing & ServiceWorker / YaGames / PokiSDK / Ruffle / Flash Ad / wasm / LFS shims
-  const frameStyle = '<style>html,body{height:100%;margin:0;padding:0;overflow:hidden;background:#000;}.webgl-content,#gameContainer,#canvas{width:100%;height:100%;}</style>';
+  const frameStyle = '<style>html,body{height:100%;margin:0;padding:0;overflow:hidden;background:#000;}.webgl-content,#gameContainer,#canvas{width:100%;height:100%;}#loading-text{color:#f4f4f5 !important;}</style>';
   const innerScriptBody = [
     'var HOST_ORIGIN = ' + JSON.stringify(hostOrigin) + ';',
     'var _gameBaseHref = ' + JSON.stringify(base) + ';',
