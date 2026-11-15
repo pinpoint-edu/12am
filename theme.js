@@ -900,6 +900,9 @@
             __snowState.pattern.remove();
             __snowState.pattern = null;
         }
+        if (typeof document !== 'undefined' && document.querySelectorAll) {
+            document.querySelectorAll('#themeBgPattern, #themeBgCanvas, #snowCanvas, #fireworksContainer').forEach(el => el.remove());
+        }
         __snowState.activeTheme = '';
     }
 
@@ -919,6 +922,7 @@
             return;
         }
         if (isSongCoverThemeMode && lastAppliedCoverTintKey !== '') {
+            clearThemeEffects();
             return;
         }
         if (__snowState.activeTheme === fxType && (__snowState.canvas || __snowState.pattern || __snowState.fireworksEl)) return;
@@ -964,7 +968,7 @@
             const pat = document.createElement('div');
             pat.id = 'themeBgPattern';
             if (fxType === 'camo') {
-                pat.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:-1;opacity:0.34;';
+                pat.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:-1;opacity:0.34;filter:blur(5px);-webkit-filter:blur(5px);transform:scale(1.04);';
                 pat.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" preserveAspectRatio="none" style="display:block;width:100%;height:100%;"><filter id="12am-woodland-camo" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.0085" numOctaves="2" seed="11" stitchTiles="stitch" result="noise"/><feColorMatrix in="noise" type="matrix" values="2.6 0 0 0 -0.8 2.6 0 0 0 -0.8 2.6 0 0 0 -0.8 0 0 0 0 1" result="stretched"/><feComponentTransfer in="stretched" result="camo"><feFuncR type="discrete" tableValues="0.08 0.14 0.30 0.40 0.22 0.58"/><feFuncG type="discrete" tableValues="0.22 0.36 0.50 0.64 0.56 0.68"/><feFuncB type="discrete" tableValues="0.14 0.20 0.08 0.06 0.38 0.28"/></feComponentTransfer></filter><rect width="100%" height="100%" filter="url(#12am-woodland-camo)"/></svg>';
             } else {
                 pat.style.cssText = `position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:-1;opacity:0.5;background-color:transparent;background-image:url("${SPRINKLES_BG_SVG}"),linear-gradient(135deg,rgba(147,197,253,0.34) 0%,rgba(249,168,212,0.32) 100%);background-size:180px 180px,100% 100%;background-repeat:repeat,no-repeat;`;
