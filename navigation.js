@@ -190,7 +190,7 @@
 
         if (type === 'mibi' && user.mibiConfig) {
             const m = user.mibiConfig;
-            const bg = escapeHtml(m.bgColor || '#3B82F6');
+            const bg = m.bgColor === 'theme' ? 'var(--accent-color, #3B82F6)' : escapeHtml(m.bgColor || '#3B82F6');
             const scale = (m.size || 100) / 100;
             const rot = m.rotation || 0;
             const ox = m.offsetX || 0;
@@ -215,7 +215,8 @@
 
         const rawLetters = user.avatar_letter || user.pfp_letter_char || user.letterAvatarText || (user.firstName || user.nickname || 'U')[0] || 'U';
         const letters = escapeHtml(String(rawLetters).slice(0, 3));
-        const bg = escapeHtml(user.avatar_bg || user.pfpLetterBg || user.pfp_letter_bg || '#000000');
+        const rawBg = user.avatar_bg || user.pfpLetterBg || user.pfp_letter_bg || '#000000';
+        const bg = rawBg === 'theme' ? 'var(--accent-color, #000000)' : escapeHtml(rawBg);
         const color = escapeHtml(user.avatar_color || '#ffffff');
 
         return `<div style="width:${size}px; height:${size}px; border-radius:${radius}; background:${bg}; color:${color}; border:1px solid rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:${fontSize}; letter-spacing:0.5px; user-select:none; flex-shrink:0;">${letters}</div>`;
@@ -900,6 +901,10 @@
 
                 const state = readSavedMusicState();
                 const coverUrl = resolveDockCoverUrl(state?.track);
+                const activeTheme = typeof window.getCurrentTheme === 'function' ? window.getCurrentTheme() : null;
+                const isLight = Boolean(activeTheme && (activeTheme.name === 'Light' || activeTheme.name === 'Paper' || (typeof window.getLuminance === 'function' && window.getLuminance(activeTheme['bg-primary']) > 0.65)));
+                const logoTint = isLight ? '#000000' : (activeTheme && activeTheme.name === 'AMOLED' ? '#ffffff' : ((activeTheme && activeTheme['accent-primary']) || '#f59e0b'));
+                const logoUrl = `${prefix}images/logo-white.png`;
                 const overlay = document.createElement('div');
                 overlay.id = 'twelveam-music-launch-overlay';
                 overlay.innerHTML = `
@@ -911,7 +916,10 @@
                     <div class="twelveam-music-launch-eq" aria-hidden="true">
                         <span></span><span></span><span></span><span></span>
                     </div>
-                    <div class="twelveam-music-launch-label">${escapeHtml(isFastRedirect && state?.track?.title ? `Returning to ${state.track.title}` : 'Opening 12AM Music…')}</div>
+                    <div style="display:flex; align-items:center; justify-content:center; gap:12px;">
+                        <div style="width:40px; height:40px; background-color:${logoTint}; -webkit-mask-image:url('${logoUrl}'); mask-image:url('${logoUrl}'); -webkit-mask-size:contain; mask-size:contain; -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-position:center; mask-position:center;"></div>
+                        <span style="font-family:'Geist',sans-serif; font-size:2rem; font-weight:500; letter-spacing:-0.025em; color:var(--text-main, #ffffff);">music</span>
+                    </div>
                 `;
                 document.body.appendChild(overlay);
                 overlay.offsetHeight; // force reflow for transition

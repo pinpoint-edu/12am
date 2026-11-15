@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>12AM — Music</title>
     
-    <!-- Favicon & App Icons -->
-    <link rel="icon" type="image/svg+xml" href="yolk/favicon.svg">
-    <link rel="icon" type="image/png" sizes="256x256" href="yolk/icon-256.png">
+    <!-- App Icons -->
     <link rel="apple-touch-icon" href="yolk/icon-256.png">
     <link rel="apple-touch-icon" sizes="256x256" href="yolk/icon-256.png">
     <link rel="manifest" href="yolk/manifest.json">
@@ -2520,7 +2518,27 @@
         }
 
         html.light #bottom-player-play-pause,
+        html.light body.dark-mode #bottom-player-play-pause {
+            background-color: #e2e8f0 !important;
+            border-color: rgba(15, 23, 42, 0.16) !important;
+            color: #0f172a !important;
+        }
+
         html.light #bottom-player-play-pause *,
+        html.light body.dark-mode #bottom-player-play-pause *,
+        html.light #bottom-player-play-pause svg,
+        html.light body.dark-mode #bottom-player-play-pause svg {
+            color: #0f172a !important;
+            fill: #0f172a !important;
+        }
+
+        html.light #bottom-player,
+        html.light body.dark-mode #bottom-player {
+            background: rgba(255, 255, 255, 0.9) !important;
+            border: 1px solid rgba(15, 23, 42, 0.12) !important;
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
+        }
+
         html.light #now-playing-play-pause,
         html.light #now-playing-play-pause *,
         html.light #lyrics-bar-play-pause,

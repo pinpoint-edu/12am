@@ -908,6 +908,20 @@ export default async function handler(req, res) {
     return res.send("/* telemetry stubbed */");
   }
 
+  // Return transparent 1x1 PNG for broken null/undefined TMDB/wsrv image URLs from third-party embeds
+  if (/image\.tmdb\.org\/t\/p\/[^/]*(null|undefined)/i.test(target) || (/wsrv\.nl\/.*(null|undefined)/i.test(target))) {
+    const emptyPng = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", "base64");
+    res.status(200).setHeader("Content-Type", "image/png");
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    return res.send(emptyPng);
+  }
+
+  // Stub hardcoded localhost:8080 dev fallback calls inside vidlink embeds instead of 403ing
+  if (/^https?:\/\/localhost(?::\d+)?\/api\//i.test(target)) {
+    res.status(200).setHeader("Content-Type", "application/json; charset=utf-8");
+    return res.send(JSON.stringify({ sources: [], tracks: [] }));
+  }
+
   const reqBody = (req.method !== "GET" && req.method !== "HEAD") ? await readReqBody(req) : undefined;
 
   const makeFetchOpts = (urlObj, customReferer, omitOriginAndRef = false) => {

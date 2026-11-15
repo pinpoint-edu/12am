@@ -366,14 +366,22 @@ body.sidebar-collapsed:has(#settings-floating-dock) #settings-container {
    AUTH & MORE DROPDOWN MENUS
    ========================================================================== */
 
-.sidebar-auth-wrapper,
-.sidebar-more-wrapper {
+.sidebar-auth-wrapper {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
   width: 100%;
+}
+
+.sidebar-more-wrapper {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .auth-menu-container,
@@ -864,22 +872,36 @@ body.dock-right .sidebar-btn:hover .sidebar-tooltip {
 }
 
 /* Dropdown Menus flip to the LEFT of the dock */
-body.dock-right .auth-menu-container,
-body.dock-right .more-menu-container {
+body.dock-right .auth-menu-container {
   left: auto !important;
   right: calc(100% + 14px) !important;
   transform-origin: bottom right !important;
   transform: translateX(10px) scale(0.96) !important;
 }
 
-body.dock-right .auth-menu-container.open,
-body.dock-right .more-menu-container.open {
+body.dock-right .auth-menu-container.open {
   transform: translateX(0) scale(1) !important;
 }
 
-body.dock-right .auth-menu-container.closed,
-body.dock-right .more-menu-container.closed {
+body.dock-right .auth-menu-container.closed {
   transform: translateX(10px) scale(0.96) !important;
+}
+
+body.dock-right .more-menu-container {
+  left: auto !important;
+  right: calc(100% + 14px) !important;
+  top: 50% !important;
+  bottom: auto !important;
+  transform-origin: right center !important;
+  transform: translateY(-50%) translateX(8px) scale(0.95) !important;
+}
+
+body.dock-right .more-menu-container.open {
+  transform: translateY(-50%) translateX(0) scale(1) !important;
+}
+
+body.dock-right .more-menu-container.closed {
+  transform: translateY(-50%) translateX(8px) scale(0.95) !important;
 }
 
 /* Collapsed sidebars & edge sensor */

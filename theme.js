@@ -918,6 +918,9 @@
             clearThemeEffects();
             return;
         }
+        if (isSongCoverThemeMode && lastAppliedCoverTintKey !== '') {
+            return;
+        }
         if (__snowState.activeTheme === fxType && (__snowState.canvas || __snowState.pattern || __snowState.fireworksEl)) return;
         clearThemeEffects();
         if (typeof document === 'undefined' || !document.body) return;
@@ -926,9 +929,14 @@
         if (fxType === 'fireworks') {
             const fwWrap = document.createElement('div');
             fwWrap.id = 'fireworksContainer';
-            fwWrap.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:-1;opacity:0.78;';
+            fwWrap.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:-1;opacity:0;transition:opacity 0.65s ease;';
             document.body.prepend(fwWrap);
             __snowState.fireworksEl = fwWrap;
+            if (typeof requestAnimationFrame === 'function') {
+                requestAnimationFrame(() => { fwWrap.style.opacity = '0.78'; });
+            } else {
+                fwWrap.style.opacity = '0.78';
+            }
             if (!startFireworksInContainer(fwWrap)) {
                 let script = document.querySelector(`script[src="${FIREWORKS_CDN_URL}"]`);
                 if (!script && document.head) {
@@ -969,9 +977,14 @@
         const cv = document.createElement('canvas');
         cv.id = fxType === 'snow' ? 'snowCanvas' : 'themeBgCanvas';
         const cvOpacity = fxType === 'snow' ? '0.55' : (fxType === 'hearts' ? '0.26' : '0.85');
-        cv.style.cssText = `position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:-1;opacity:${cvOpacity};`;
+        cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:-1;opacity:0;transition:opacity 0.65s ease;';
         document.body.prepend(cv);
         __snowState.canvas = cv;
+        if (typeof requestAnimationFrame === 'function') {
+            requestAnimationFrame(() => { cv.style.opacity = cvOpacity; });
+        } else {
+            cv.style.opacity = cvOpacity;
+        }
 
         const ctx = cv.getContext('2d');
         const resize = () => { cv.width = window.innerWidth; cv.height = window.innerHeight; };
@@ -1844,6 +1857,7 @@
             if (lastAppliedCoverTintKey !== '') {
                 lastAppliedCoverTintKey = '';
                 animateThemeTransition(currentTheme, base, 750);
+                if (typeof updateWinterSnow === 'function') updateWinterSnow(base.name);
             } else if (forceImmediate) {
                 applyTheme(base, false, true);
             }
@@ -1865,6 +1879,17 @@
             const currentBase = getFallbackThemeForSongCover();
             selectedBaseTheme = currentBase;
             lastAppliedCoverTintKey = `${currentBase.name}::${coverUrl}`;
+            // Fade out any fallback theme background effect while tinted to the song cover
+            const activeFxEl = __snowState.canvas || __snowState.fireworksEl || __snowState.pattern;
+            if (activeFxEl) {
+                activeFxEl.style.transition = 'opacity 0.65s ease';
+                activeFxEl.style.opacity = '0';
+                setTimeout(() => {
+                    if (isSongCoverThemeMode && lastAppliedCoverTintKey !== '') {
+                        clearThemeEffects();
+                    }
+                }, 660);
+            }
             const tinted = buildTintedTheme(currentBase, palette);
             animateThemeTransition(currentTheme, tinted, 750);
         });

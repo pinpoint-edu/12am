@@ -1798,7 +1798,9 @@
             if (!bgEl || !layersContainer) return;
 
             // Update BG
-            bgEl.style.backgroundColor = mibiAvatarState.bgColor;
+            bgEl.style.background = mibiAvatarState.bgColor === 'theme'
+                ? 'var(--accent-color, #3B82F6)'
+                : (mibiAvatarState.bgColor || '#3B82F6');
             
             // Update Transforms (using percentages for translate)
             const scale = mibiAvatarState.size / 100;
@@ -1834,6 +1836,20 @@
             if (category === 'bg') {
                 // Switch to Flex for Colors (Wrapping, no scrollbar)
                 grid.className = 'flex flex-wrap gap-2 justify-center p-2';
+
+                // Theme-synced option
+                const themeBtn = document.createElement('button');
+                const isThemeSelected = mibiAvatarState.bgColor === 'theme';
+                themeBtn.className = `w-10 h-10 rounded-[16px] shadow-sm transition-transform hover:scale-110 focus:outline-none border-2 flex-shrink-0 flex items-center justify-center ${isThemeSelected ? 'border-[var(--text-main)]' : 'border-[var(--border-main)]'} hover:border-dashed hover:border-[var(--text-main)]`;
+                themeBtn.style.background = 'var(--accent-color, #ff8800)';
+                themeBtn.title = 'Sync to Active Theme';
+                themeBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles text-white text-xs drop-shadow"></i>';
+                themeBtn.onclick = () => {
+                    mibiAvatarState.bgColor = 'theme';
+                    updateMibiPreview();
+                    renderMacGrid('bg');
+                };
+                grid.appendChild(themeBtn);
 
                 // Color Palette
                 MIBI_ASSETS.colors.forEach(color => {
@@ -2693,7 +2709,11 @@
                     const curEyes = document.getElementById('mibiCurrentEyes');
                     const curMouth = document.getElementById('mibiCurrentMouth');
                     const curHat = document.getElementById('mibiCurrentHat');
-                    if (previewSquircle) previewSquircle.style.backgroundColor = mibiAvatarState.bgColor || '#3B82F6';
+                    if (previewSquircle) {
+                        previewSquircle.style.background = mibiAvatarState.bgColor === 'theme'
+                            ? 'var(--accent-color, #3B82F6)'
+                            : (mibiAvatarState.bgColor || '#3B82F6');
+                    }
                     if (previewInner) {
                         const scale = (mibiAvatarState.size || 100) / 100;
                         previewInner.style.transform = `translate(${mibiAvatarState.offsetX || 0}%, ${mibiAvatarState.offsetY || 0}%) rotate(${mibiAvatarState.rotation || 0}deg) scale(${scale})`;
@@ -2963,7 +2983,7 @@
                             <!-- Mibi Avatar Settings -->
                             <div id="pfpMibiSettings" class="${currentPfpMode === 'mibi' ? 'flex' : 'hidden'} flex-col gap-4 mt-1">
                                 <div class="flex items-center gap-6">
-                                    <div id="mibiCurrentPreviewSquircle" class="w-20 h-20 rounded-[20px] overflow-hidden border border-[var(--border-main)] relative flex-shrink-0 shadow-lg" style="background: ${mibiAvatarState.bgColor || '#3B82F6'};">
+                                    <div id="mibiCurrentPreviewSquircle" class="w-20 h-20 rounded-[20px] overflow-hidden border border-[var(--border-main)] relative flex-shrink-0 shadow-lg" style="background: ${mibiAvatarState.bgColor === 'theme' ? 'var(--accent-color, #3B82F6)' : (mibiAvatarState.bgColor || '#3B82F6')};">
                                         <div id="mibiCurrentPreviewInner" class="absolute inset-0" style="transform: translate(${mibiAvatarState.offsetX || 0}%, ${mibiAvatarState.offsetY || 0}%) rotate(${mibiAvatarState.rotation || 0}deg) scale(${(mibiAvatarState.size || 100)/100}); transform-origin: center; pointer-events: none;">
                                             <img src="mibi-avatars/head.png" alt="Head" class="absolute inset-0 w-full h-full object-contain z-10">
                                             <img id="mibiCurrentEyes" src="${mibiAvatarState.eyes ? `mibi-avatars/eyes/${mibiAvatarState.eyes}` : ''}" alt="" class="absolute inset-0 w-full h-full object-contain z-20 ${mibiAvatarState.eyes ? '' : 'hidden'}">
@@ -3029,7 +3049,7 @@
                                     <div id="mac-preview-wrapper" class="w-full md:w-5/12 flex flex-col items-center justify-center bg-[var(--bg-page)] p-5 border-b md:border-b-0 md:border-r border-[var(--border-main)] transition-all duration-500 ease-in-out z-10">
                                         <div class="relative w-44 h-44 md:w-52 md:h-52 aspect-square rounded-[40px] overflow-hidden border-2 border-[var(--border-main)] shadow-lg mb-3 transition-all duration-300 hover:border-dashed hover:border-[var(--text-main)] cursor-pointer flex-shrink-0" id="mac-preview-container" style="aspect-ratio: 1/1;">
                                             <!-- Background (Static) -->
-                                            <div id="mac-preview-bg" class="absolute inset-0 w-full h-full transition-colors duration-300" style="background-color: ${mibiAvatarState.bgColor || '#3B82F6'};"></div>
+                                            <div id="mac-preview-bg" class="absolute inset-0 w-full h-full transition-colors duration-300" style="background: ${mibiAvatarState.bgColor === 'theme' ? 'var(--accent-color, #3B82F6)' : (mibiAvatarState.bgColor || '#3B82F6')};"></div>
                                             
                                             <!-- Avatar Layers Container (Rotates/Scales/Moves) -->
                                             <div id="mac-layers-container" class="absolute inset-0 w-full h-full transition-transform duration-75 ease-out origin-center pointer-events-none">
@@ -3269,7 +3289,7 @@
                 const text = getCleanLetterText();
                 if (pfpLetterPreview) {
                     pfpLetterPreview.textContent = text;
-                    pfpLetterPreview.style.backgroundColor = selectedBgColor;
+                    pfpLetterPreview.style.background = selectedBgColor === 'theme' ? 'var(--accent-color, #ff8800)' : selectedBgColor;
                     pfpLetterPreview.style.color = selectedTextColor;
                 }
             };
@@ -3334,7 +3354,28 @@
 
             if (pfpColorGrid) {
                 pfpColorGrid.innerHTML = '';
-                letterColors.slice(0, 16).forEach(color => {
+                const themeOpt = document.createElement('button');
+                themeOpt.type = 'button';
+                const isThemeBg = selectedBgColor === 'theme';
+                themeOpt.className = `color-option w-8 h-8 rounded-lg border-2 cursor-pointer transition-transform hover:scale-105 flex items-center justify-center ${isThemeBg ? 'selected border-white ring-2 ring-[var(--accent-color)]' : 'border-[var(--border-main)]'}`;
+                themeOpt.style.background = 'var(--accent-color, #ff8800)';
+                themeOpt.title = 'Sync to Active Theme';
+                themeOpt.setAttribute('aria-label', 'Sync to Active Theme');
+                themeOpt.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles text-white text-[10px] drop-shadow"></i>';
+                themeOpt.onclick = () => {
+                    selectedBgColor = 'theme';
+                    pfpColorGrid.querySelectorAll('.color-option').forEach(el => {
+                        el.classList.remove('selected', 'border-white', 'ring-2', 'ring-[var(--accent-color)]');
+                        el.classList.add('border-transparent');
+                    });
+                    themeOpt.classList.add('selected', 'border-white', 'ring-2', 'ring-[var(--accent-color)]');
+                    themeOpt.classList.remove('border-transparent');
+                    updateLetterPreviewLive();
+                    persistLetterAvatar(true);
+                };
+                pfpColorGrid.appendChild(themeOpt);
+
+                letterColors.slice(0, 15).forEach(color => {
                     const d = document.createElement('button');
                     d.type = 'button';
                     const hexColor = color.startsWith('#') ? color : '#' + color;
