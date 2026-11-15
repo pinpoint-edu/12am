@@ -46,8 +46,9 @@
         { id: "ai", name: "AI", icon: "fa-solid fa-robot", url: "ai.html" }
     ];
 
-    // More popup menu pages: Notes, Dictionary, Messenger
+    // More popup menu pages: Notes, Dictionary, Messenger, Sports
     const MORE_NAV_PAGES = [
+        { id: "sports", name: "Sports", icon: "fa-solid fa-trophy", url: "sports.html" },
         { id: "notes", name: "Notes", icon: "fa-solid fa-note-sticky", url: "notes.html" },
         { id: "dictionary", name: "Dictionary", icon: "fa-solid fa-book-bookmark", url: "dictionary.html" },
         { id: "messenger", name: "Messenger", icon: "fa-solid fa-comments", url: "messenger.html" }
