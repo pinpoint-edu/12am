@@ -428,15 +428,22 @@ function prepareGameHtml(html, fileUrl) {
   const mBase = html.match(/<base\b[^>]*\bhref\s*=\s*(['"])(.*?)\1[^>]*>/i);
   if (mBase) {
     const existingHref = mBase[2];
-    try {
-      base = new URL(existingHref, base).href;
-    } catch (e) {
-      if (/^https?:\/\//i.test(existingHref)) base = existingHref;
+    if (existingHref.startsWith('/') && !existingHref.startsWith('//')) {
+      base = repoBase + existingHref.replace(/^\/+/, '');
+    } else {
+      try {
+        base = new URL(existingHref, base).href;
+      } catch (e) {
+        if (/^https?:\/\//i.test(existingHref)) base = existingHref;
+      }
     }
     base = normalizeGitBaseUrl(base);
     if (!base.endsWith('/') && !/\.[a-z0-9]+$/i.test(base)) base += '/';
   }
   html = html.replace(/<base\b[^>]*>/gi, '');
+
+  // Rewrite root-relative HTML attributes (src="/...", href="/...") to repoBase so CDN paths (/gh/owner/repo@main/) aren't stripped
+  html = html.replace(/(\b(?:src|href|data)\s*=\s*)(["'])\/(?!\/|api\/|textbooks\/ruffle\/)([^"']*)\2/gi, `$1$2${repoBase}$3$2`);
 
   // Resolve relative Flash <embed src> / <object data> URLs to absolute base URLs so Ruffle never logs "relative URL without a base"
   html = html.replace(/(<(?:embed|object)\b[^>]*\b(?:src|data)\s*=\s*)(["'])([^"']+)\2/gi, (m, pre, q, val) => {
@@ -579,7 +586,13 @@ function prepareGameHtml(html, fileUrl) {
     '} catch(e){}',
     'try {',
     '  var _isUnityTelemetryUrl = function(abs) {',
-    '    return /(?:cloud\\.unity3d\\.com|events\\.mz\\.unity3d\\.com|\\bunity3d\\.com\\/v1\\/events|cloud\\.umami\\.is|gamemonetize\\.com)/i.test(abs);',
+    '    return /(?:stats\\.unity3d\\.com|cloud\\.unity3d\\.com|events\\.mz\\.unity3d\\.com|\\bunity3d\\.com\\/v1\\/events|cloud\\.umami\\.is|gamemonetize\\.com)/i.test(abs);',
+    '  };',
+    '  var _resolveGameUrl = function(u) {',
+    '    if (typeof u === "string" && u.charAt(0) === "/" && u.charAt(1) !== "/" && u.indexOf("/api/") !== 0 && u.indexOf("/textbooks/ruffle/") !== 0) {',
+    '      return rb + u.replace(/^\\/+/, "");',
+    '    }',
+    '    return new URL(u, document.baseURI || window.location.href).href;',
     '  };',
     '  var _isDeadFlashAdUrl = function(abs) {',
     '    return /(?:^|[.\\/])(?:mochiads\\.com|mochibot\\.com|cpmstar\\.com|armorbot\\.com|kongetrack\\.com)(?:[\\/:?#]|$)/i.test(abs);',
@@ -596,7 +609,7 @@ function prepareGameHtml(html, fileUrl) {
     '      var url = typeof input === "string" ? input : (input && input.url ? input.url : "");',
     '      if (url && typeof url === "string") {',
     '        try {',
-    '          var abs = new URL(url, document.baseURI || window.location.href).href;',
+    '          var abs = _resolveGameUrl(url);',
     '          if (_isDeadFlashAdUrl(abs)) {',
     '            if (/\\.swf(?:$|[?#])/i.test(abs)) {',
     '              return Promise.resolve(new Response(_emptySwfBytes.slice(), { status: 200, headers: { "Content-Type": "application/x-shockwave-flash" } }));',
@@ -610,7 +623,7 @@ function prepareGameHtml(html, fileUrl) {
     '            if (_needsDirectProxy(abs)) {',
     '              return _origFetch.call(this, _proxyBase + encodeURIComponent(abs), init);',
     '            }',
-    '            return _origFetch.apply(this, arguments).then(function(res) {',
+    '            return _origFetch.call(this, typeof input === "string" ? abs : input, init).then(function(res) {',
     '              if (res.status === 403 || res.status === 404) {',
     '                return _origFetch.call(window, _proxyBase + encodeURIComponent(abs), init);',
     '              }',
@@ -652,7 +665,7 @@ function prepareGameHtml(html, fileUrl) {
     '    var rest = Array.prototype.slice.call(arguments, 2);',
     '    this._tbFakeJson = false;',
     '    try {',
-    '      var abs = new URL(url, document.baseURI || window.location.href).href;',
+    '      var abs = _resolveGameUrl(url);',
     '      this._tbAbsUrl = abs;',
     '      if (_isDeadFlashAdUrl(abs)) {',
     '        this._tbFakeJson = true;',
@@ -665,6 +678,9 @@ function prepareGameHtml(html, fileUrl) {
     '      }',
     '      if (/^https?:/i.test(abs) && abs.indexOf("/api/proxy?url=") === -1 && abs.indexOf("/api/web?") === -1 && _needsDirectProxy(abs)) {',
     '        return _origXHROpen.apply(this, [method, _proxyBase + encodeURIComponent(abs)].concat(rest));',
+    '      }',
+    '      if (typeof url === "string" && url !== abs && /^https?:/i.test(abs)) {',
+    '        return _origXHROpen.apply(this, [method, abs].concat(rest));',
     '      }',
     '    } catch(e) {}',
     '    return _origXHROpen.apply(this, arguments);',
