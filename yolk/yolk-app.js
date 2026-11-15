@@ -7021,9 +7021,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function drawAppleMusicPreset(canvas, preset, title, tintHex) {
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
-        const w = canvas.width;
-        const h = canvas.height;
-        ctx.clearRect(0, 0, w, h);
+        const rawW = canvas.width;
+        const rawH = canvas.height;
+        ctx.clearRect(0, 0, rawW, rawH);
+
+        // Normalize all drawing to a 240x240 logical coordinate space so previews and 480x480 exports are pixel-identical
+        const w = 240;
+        const h = 240;
+        ctx.save();
+        ctx.scale(rawW / w, rawH / h);
 
         const rgb = hexToRgbObj(tintHex || '#FFE600') || { r: 255, g: 230, b: 0 };
 
@@ -7227,6 +7233,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.fillText(line, 16, y);
         }
         ctx.restore();
+        ctx.restore();
     }
 
     function generatePresetCoverDataUrl(preset, title, tintHex) {
@@ -7271,34 +7278,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const plCurrentModeLabel = document.getElementById('pl-current-mode-label');
 
     function setPlaylistCoverChoice(mode) {
-        if (!plCustomizeQuestionnaire || !plCustomizeOptionsView) return;
-        if (mode === 'presets') {
-            plCustomizeQuestionnaire.classList.add('hidden');
-            plCustomizeOptionsView.classList.remove('hidden');
-            if (plPresetsSection) plPresetsSection.classList.remove('hidden');
-            if (plUploadSection) plUploadSection.classList.add('hidden');
-            if (plCurrentModeLabel) plCurrentModeLabel.textContent = 'Preset Artwork';
+        const isUpload = mode === 'upload';
+        if (plPresetsSection) plPresetsSection.classList.toggle('hidden', isUpload);
+        const tintCard = document.getElementById('pl-tint-card');
+        if (tintCard) tintCard.classList.toggle('hidden', isUpload);
+        if (plUploadSection) plUploadSection.classList.toggle('hidden', !isUpload);
+        if (plCurrentModeLabel) plCurrentModeLabel.textContent = isUpload ? 'Custom Photo' : 'Preset Artwork';
+
+        if (plChoicePresetsBtn) {
+            plChoicePresetsBtn.classList.toggle('is-active-mode', !isUpload);
+        }
+        if (plChoiceUploadBtn) {
+            plChoiceUploadBtn.classList.toggle('is-active-mode', isUpload);
+        }
+
+        if (!isUpload) {
             if (pendingModalCover && !pendingModalCover.startsWith('data:image/svg+xml')) {
                 pendingModalCover = null;
             }
-            updateModalCoverUI();
-        } else if (mode === 'upload') {
-            plCustomizeQuestionnaire.classList.add('hidden');
-            plCustomizeOptionsView.classList.remove('hidden');
-            if (plPresetsSection) plPresetsSection.classList.add('hidden');
-            if (plUploadSection) plUploadSection.classList.remove('hidden');
-            if (plCurrentModeLabel) plCurrentModeLabel.textContent = 'Custom Photo Upload';
-            updateModalCoverUI();
-        } else {
-            // Step 1: Questionnaire mode
-            plCustomizeQuestionnaire.classList.remove('hidden');
-            plCustomizeOptionsView.classList.add('hidden');
+            renderAllPresetCanvases(playlistNameInput?.value, pendingModalTint?.hex);
         }
+        updateModalCoverUI();
     }
 
     if (plChoicePresetsBtn) plChoicePresetsBtn.onclick = () => setPlaylistCoverChoice('presets');
     if (plChoiceUploadBtn) plChoiceUploadBtn.onclick = () => setPlaylistCoverChoice('upload');
-    if (plChangeChoiceBtn) plChangeChoiceBtn.onclick = () => setPlaylistCoverChoice('questionnaire');
+    if (plChangeChoiceBtn) plChangeChoiceBtn.onclick = () => setPlaylistCoverChoice('presets');
 
     function renderAllPresetCanvases(title, tintHex) {
         const name = (title !== undefined) ? title : (playlistNameInput?.value || '');
@@ -7408,10 +7413,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (modalCoverRemoveBtn) modalCoverRemoveBtn.classList.add('hidden');
             if (modalCoverRecropBtn) modalCoverRecropBtn.classList.add('hidden');
             document.querySelectorAll('.pl-preset-option').forEach(opt => {
-                opt.classList.toggle('is-selected', opt.getAttribute('data-preset') === selectedPresetCover);
+                opt.classList.toggle('is-selected', (opt.getAttribute('data-preset') || 'stripes') === selectedPresetCover);
             });
         }
         renderAllPresetCanvases(playlistNameInput?.value, pendingModalTint?.hex);
+        updateInfoTabLivePreview();
     }
 
     if (modalCoverPreview && playlistModalCoverInput) {
@@ -7480,14 +7486,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!hex) return;
             const rgb = hexToRgbObj(hex);
             pendingModalTint = { hex, r: rgb.r, g: rgb.g, b: rgb.b };
+            if (plPresetsSection && !plPresetsSection.classList.contains('hidden')) {
+                pendingModalCover = null;
+            }
             if (modalTintDot) modalTintDot.style.backgroundColor = hex;
             if (modalTintStatus) modalTintStatus.textContent = `Custom (${hex})`;
             const label = document.getElementById('modal-tint-label');
             if (label) label.textContent = hex;
+            document.querySelectorAll('.pl-quick-tint-btn').forEach(b => b.classList.toggle('is-selected', b === btn));
             renderAllPresetCanvases(playlistNameInput?.value, hex);
-            if (plInfoPreviewCanvas && !pendingModalCover) {
-                drawAppleMusicPreset(plInfoPreviewCanvas, selectedPresetCover, playlistNameInput?.value, hex);
-            }
+            updateInfoTabLivePreview();
         });
     });
 
@@ -7495,20 +7503,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (modalTintAutoBtn) {
         modalTintAutoBtn.addEventListener('click', () => {
             pendingModalTint = null;
+            if (plPresetsSection && !plPresetsSection.classList.contains('hidden')) {
+                pendingModalCover = null;
+            }
             if (modalTintDot) modalTintDot.style.backgroundColor = '#FFE600';
             if (modalTintStatus) modalTintStatus.textContent = 'Automatic';
             const label = document.getElementById('modal-tint-label');
             if (label) label.textContent = 'Automatic';
+            document.querySelectorAll('.pl-quick-tint-btn').forEach(b => b.classList.toggle('is-selected', b === modalTintAutoBtn));
             renderAllPresetCanvases(playlistNameInput?.value, '#FFE600');
-            if (plInfoPreviewCanvas && !pendingModalCover) {
-                drawAppleMusicPreset(plInfoPreviewCanvas, selectedPresetCover, playlistNameInput?.value, '#FFE600');
-            }
+            updateInfoTabLivePreview();
         });
     }
 
     if (playlistNameInput) {
         playlistNameInput.addEventListener('input', () => {
             renderAllPresetCanvases(playlistNameInput.value, pendingModalTint?.hex);
+            updateInfoTabLivePreview();
         });
         playlistNameInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
@@ -7566,12 +7577,13 @@ document.addEventListener('DOMContentLoaded', () => {
         pendingModalCover = null;
         lastUploadedRawImage = null;
         if (modalTintDot) modalTintDot.style.backgroundColor = '#FFE600';
-        if (modalTintStatus) modalTintStatus.textContent = 'Automatic (from artwork)';
+        if (modalTintStatus) modalTintStatus.textContent = 'Automatic';
+        const labelCreate = document.getElementById('modal-tint-label');
+        if (labelCreate) labelCreate.textContent = 'Automatic';
         if (playlistModalTitle) playlistModalTitle.textContent = 'New Playlist';
         if (playlistNameInput) playlistNameInput.value = '';
         if (playlistDescInput) playlistDescInput.value = '';
-        setPlaylistCoverChoice('questionnaire');
-        switchPlaylistModalTab('info');
+        setPlaylistCoverChoice('presets');
         try {
             updateModalCoverUI();
         } catch (err) {
@@ -7591,17 +7603,19 @@ document.addEventListener('DOMContentLoaded', () => {
         playlistToEditPending = pl;
         pendingModalTint = pl.custom_tint || null;
         selectedPresetCover = pl.preset_style || 'stripes';
-        pendingModalCover = pl.cover || null;
-        lastUploadedRawImage = (pendingModalCover && !pendingModalCover.startsWith('data:image/svg+xml')) ? pendingModalCover : null;
+        const hasCustomPhoto = Boolean(pl.cover && !pl.preset_style);
+        pendingModalCover = hasCustomPhoto ? pl.cover : null;
+        lastUploadedRawImage = hasCustomPhoto ? pl.cover : null;
         if (modalTintDot) modalTintDot.style.backgroundColor = pendingModalTint ? pendingModalTint.hex : '#FFE600';
-        if (modalTintStatus) modalTintStatus.textContent = pendingModalTint ? `Custom (${pendingModalTint.hex})` : 'Automatic (from artwork)';
+        if (modalTintStatus) modalTintStatus.textContent = pendingModalTint ? `Custom (${pendingModalTint.hex})` : 'Automatic';
+        const labelEdit = document.getElementById('modal-tint-label');
+        if (labelEdit) labelEdit.textContent = pendingModalTint ? pendingModalTint.hex : 'Automatic';
         if (playlistModalTitle) playlistModalTitle.textContent = 'Edit Playlist';
         const plName = pl.name || '';
         const plDesc = (pl.description && pl.description !== '[object Object]' && pl.description !== 'undefined') ? pl.description : '';
         if (playlistNameInput) playlistNameInput.value = plName;
         if (playlistDescInput) playlistDescInput.value = plDesc;
-        setPlaylistCoverChoice('questionnaire');
-        switchPlaylistModalTab('info');
+        setPlaylistCoverChoice(hasCustomPhoto ? 'upload' : 'presets');
         try {
             updateModalCoverUI();
         } catch (err) {

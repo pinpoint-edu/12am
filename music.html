@@ -4084,251 +4084,173 @@
     </div>
 
     <!-- Modal: Fullscreen Create / Edit Playlist (Questionnaire Customization & Pixel-Perfect Information Tab) -->
-    <div id="playlist-modal" class="modal-overlay fixed inset-0 w-screen h-screen z-[10000] pt-[64px] bg-[#FCFBF8] dark:bg-[#0c0c0e] flex flex-col hidden overflow-hidden">
-        <!-- Fullscreen Top Header Bar -->
-        <header class="w-full border-b border-zinc-200/80 dark:border-white/10 px-4 sm:px-8 py-3.5 flex items-center justify-between shrink-0 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl z-10">
-            <div class="flex items-center gap-3">
-                <button type="button" id="playlist-modal-cancel" class="px-4 py-1.5 rounded-full text-zinc-600 dark:text-zinc-300 text-xs sm:text-sm font-bold hover:bg-zinc-100 dark:hover:bg-white/10 transition-all cursor-pointer">
+    <div id="playlist-modal" class="modal-overlay fixed inset-0 w-screen h-screen z-[10000] bg-black/55 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 hidden overflow-hidden">
+        <div class="w-full max-w-4xl max-h-[90vh] rounded-[28px] border border-zinc-200/80 dark:border-white/10 shadow-2xl flex flex-col overflow-hidden" style="background: var(--bg-primary, #0c0c0e); color: var(--text-primary, #ffffff);">
+            <!-- Compact Top Header -->
+            <header class="w-full border-b border-zinc-200/70 dark:border-white/10 px-5 sm:px-6 py-4 flex items-center justify-between shrink-0" style="background: var(--bg-secondary, rgba(15, 15, 20, 0.9));">
+                <button type="button" id="playlist-modal-cancel" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold opacity-75 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/10 transition-all cursor-pointer">
                     Cancel
                 </button>
-                <h3 id="playlist-modal-title" class="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-white hidden md:block">Edit Playlist</h3>
-            </div>
-
-            <!-- Tab Switcher: Customization vs Information -->
-            <div class="flex items-center p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-2xl shrink-0">
-                <button type="button" id="pl-tab-customize" class="py-1.5 px-4 rounded-xl text-xs font-bold transition-all bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-xs cursor-pointer">
-                    Customization
-                </button>
-                <button type="button" id="pl-tab-info" class="py-1.5 px-4 rounded-xl text-xs font-bold transition-all text-zinc-500 hover:text-zinc-800 dark:hover:text-white cursor-pointer">
-                    Information
-                </button>
-            </div>
-
-            <div class="flex items-center gap-2">
-                <button id="playlist-modal-save" type="button" class="px-5 py-2 rounded-full bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer">
+                <h3 id="playlist-modal-title" class="text-sm sm:text-base font-bold tracking-tight">Edit Playlist</h3>
+                <button id="playlist-modal-save" type="button" class="px-5 py-2 rounded-xl text-white text-xs sm:text-sm font-bold shadow-md hover:opacity-90 active:scale-95 transition-all cursor-pointer" style="background: var(--accent-primary, #ff8800);">
                     Save
                 </button>
-            </div>
-        </header>
+            </header>
 
-        <!-- Tab 1: Customization Content (Questionnaire First -> Corresponding Options) -->
-        <div id="pl-tab-customize-content" class="flex-1 overflow-y-auto px-4 py-6 max-w-3xl mx-auto w-full flex flex-col gap-6">
-            <!-- 1. Questionnaire View (Shown initially or when switching choice) -->
-            <div id="pl-customize-questionnaire" class="flex flex-col items-center justify-center gap-6 py-8 text-center">
-                <div class="flex flex-col gap-1.5">
-                    <span class="text-xs font-bold uppercase tracking-widest text-zinc-400">Step 1</span>
-                    <h4 class="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white">Choose your playlist cover style</h4>
-                    <p class="text-xs sm:text-sm text-zinc-500 max-w-md">Pick from Apple Music preset graphic patterns tinted with your color, or upload your own photo.</p>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-xl mt-2">
-                    <!-- Choice 1: Presets -->
-                    <button type="button" id="pl-choice-presets-btn" class="bubbly-hover p-6 rounded-3xl border-2 border-zinc-200/90 dark:border-white/10 hover:border-black dark:hover:border-white bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl flex flex-col items-center text-center gap-3.5 shadow-sm hover:shadow-md transition-all cursor-pointer group">
-                        <div class="w-16 h-16 rounded-2xl bg-amber-500/10 dark:bg-amber-400/20 text-amber-500 flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                        </div>
-                        <div>
-                            <div class="text-base font-extrabold text-zinc-900 dark:text-white">Preset Artwork</div>
-                            <div class="text-xs text-zinc-500 mt-1">Apple Music patterns with custom vibrant tints</div>
-                        </div>
-                        <span class="px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-[11px] font-bold text-zinc-700 dark:text-zinc-300">Choose Presets</span>
-                    </button>
-
-                    <!-- Choice 2: Custom Photo Upload -->
-                    <button type="button" id="pl-choice-upload-btn" class="bubbly-hover p-6 rounded-3xl border-2 border-zinc-200/90 dark:border-white/10 hover:border-black dark:hover:border-white bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl flex flex-col items-center text-center gap-3.5 shadow-sm hover:shadow-md transition-all cursor-pointer group">
-                        <div class="w-16 h-16 rounded-2xl bg-blue-500/10 dark:bg-blue-400/20 text-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                        </div>
-                        <div>
-                            <div class="text-base font-extrabold text-zinc-900 dark:text-white">Upload Photo</div>
-                            <div class="text-xs text-zinc-500 mt-1">Upload and crop your own personal photo</div>
-                        </div>
-                        <span class="px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-[11px] font-bold text-zinc-700 dark:text-zinc-300">Upload Photo</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- 2. Corresponding Options View (Revealed after questionnaire choice) -->
-            <div id="pl-customize-options-view" class="flex flex-col gap-6 hidden">
-                <div class="flex items-center justify-between pb-2 border-b border-zinc-200/70 dark:border-white/10">
-                    <span id="pl-current-mode-label" class="text-xs font-bold uppercase tracking-widest text-zinc-400">Preset Artwork</span>
-                    <button type="button" id="pl-change-choice-btn" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">
-                        Change Choice
-                    </button>
-                </div>
-
-                <!-- Section Top: Playlist Tint (16 options: 8 options per row, 2 rows. Last 2: Custom Wheel & Automatic) -->
-                <div class="p-4 sm:p-5 rounded-3xl bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-white/10 flex flex-col gap-3">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <span class="text-xs font-bold text-zinc-900 dark:text-white block">Playlist Tint</span>
-                            <span id="modal-tint-status" class="text-[11px] text-zinc-500 font-medium">Automatic</span>
-                        </div>
-                        <div id="modal-tint-dot-wrapper" class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-[11px] font-semibold text-zinc-700 dark:text-zinc-200">
-                            <span id="modal-tint-dot" class="w-3.5 h-3.5 rounded-full border border-black/20 inline-block" style="background-color: #FFE600;"></span>
-                            <span id="modal-tint-label">Automatic</span>
-                        </div>
-                    </div>
-                    <!-- Exactly 16 Options: 8 columns x 2 rows -->
-                    <div id="pl-quick-tints" class="grid grid-cols-8 gap-2 justify-items-center pt-2 border-t border-zinc-200/60 dark:border-zinc-800">
-                        <!-- 1-14 Vibrant Color Swatches -->
-                        <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm hover:scale-115 transition-transform cursor-pointer" style="background-color: #FFE600;" data-hex="#FFE600" title="Electric Yellow"></button>
-                        <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm hover:scale-115 transition-transform cursor-pointer" style="background-color: #FF9500;" data-hex="#FF9500" title="Vibrant Orange"></button>
-                        <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm hover:scale-115 transition-transform cursor-pointer" style="background-color: #FF3B30;" data-hex="#FF3B30" title="Hot Crimson"></button>
-                        <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm hover:scale-115 transition-transform cursor-pointer" style="background-color: #FF2D55;" data-hex="#FF2D55" title="Vivid Pink"></button>
-                        <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm hover:scale-115 transition-transform cursor-pointer" style="background-color: #AF52DE;" data-hex="#AF52DE" title="Radiant Purple"></button>
-                        <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm hover:scale-115 transition-transform cursor-pointer" style="background-color: #5856D6;" data-hex="#5856D6" title="Deep Violet"></button>
-                        <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm hover:scale-115 transition-transform cursor-pointer" style="background-color: #007AFF;" data-hex="#007AFF" title="Ocean Blue"></button>
-                        <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm hover:scale-115 transition-transform cursor-pointer" style="background-color: #34C759;" data-hex="#34C759" title="Bright Emerald"></button>
-                        <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm hover:scale-115 transition-transform cursor-pointer" style="background-color: #00C7BE;" data-hex="#00C7BE" title="Teal Cyan"></button>
-                        <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm hover:scale-115 transition-transform cursor-pointer" style="background-color: #30B0C7;" data-hex="#30B0C7" title="Sky Blue"></button>
-                        <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm hover:scale-115 transition-transform cursor-pointer" style="background-color: #FF6482;" data-hex="#FF6482" title="Coral Rose"></button>
-                        <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm hover:scale-115 transition-transform cursor-pointer" style="background-color: #8E8E93;" data-hex="#8E8E93" title="Silver Slate"></button>
-                        <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm hover:scale-115 transition-transform cursor-pointer" style="background-color: #FFFFFF;" data-hex="#FFFFFF" title="Pure White"></button>
-                        <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm hover:scale-115 transition-transform cursor-pointer" style="background-color: #1C1C1E;" data-hex="#1C1C1E" title="Onyx Black"></button>
-                        <!-- 15. Custom Tint Option -->
-                        <button type="button" id="modal-open-tint-wheel-btn" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm hover:scale-115 transition-transform cursor-pointer flex items-center justify-center relative overflow-hidden" style="background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);" title="Custom Tint">
-                            <span class="w-2.5 h-2.5 rounded-full bg-white dark:bg-zinc-900 border border-black/20"></span>
-                        </button>
-                        <!-- 16. Automatic Tint Option -->
-                        <button type="button" id="modal-tint-auto-btn" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-dashed border-zinc-400 dark:border-zinc-500 shadow-sm hover:scale-115 transition-transform cursor-pointer flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200" title="Automatic">
-                            <span class="material-symbols-rounded text-[14px]">auto_awesome</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Section A: 6 Presets Grid -->
-                <div id="pl-presets-section" class="flex flex-col gap-3">
-                    <label class="text-[11px] font-bold text-zinc-500 uppercase tracking-wider block">Default Cover Style</label>
-                    <div id="pl-preset-covers-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        <!-- 1. Stripes -->
-                        <div data-preset="stripes" class="pl-preset-option group cursor-pointer border-2 border-zinc-200/90 dark:border-zinc-800 rounded-2xl p-2 transition-all hover:border-black dark:hover:border-white flex flex-col items-center gap-2 bg-white/70 dark:bg-zinc-900/70 is-selected">
-                            <div class="w-full aspect-square rounded-xl overflow-hidden shadow-xs relative bg-zinc-900">
-                                <canvas class="pl-preset-canvas w-full h-full block" width="240" height="240" data-preset="stripes"></canvas>
-                            </div>
-                            <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200">Stripes</span>
-                        </div>
-                        <!-- 2. Diagonal -->
-                        <div data-preset="diagonal" class="pl-preset-option group cursor-pointer border-2 border-zinc-200/90 dark:border-zinc-800 rounded-2xl p-2 transition-all hover:border-black dark:hover:border-white flex flex-col items-center gap-2 bg-white/70 dark:bg-zinc-900/70">
-                            <div class="w-full aspect-square rounded-xl overflow-hidden shadow-xs relative bg-zinc-900">
-                                <canvas class="pl-preset-canvas w-full h-full block" width="240" height="240" data-preset="diagonal"></canvas>
-                            </div>
-                            <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200">Diagonal</span>
-                        </div>
-                        <!-- 3. Circles -->
-                        <div data-preset="circles" class="pl-preset-option group cursor-pointer border-2 border-zinc-200/90 dark:border-zinc-800 rounded-2xl p-2 transition-all hover:border-black dark:hover:border-white flex flex-col items-center gap-2 bg-white/70 dark:bg-zinc-900/70">
-                            <div class="w-full aspect-square rounded-xl overflow-hidden shadow-xs relative bg-zinc-900">
-                                <canvas class="pl-preset-canvas w-full h-full block" width="240" height="240" data-preset="circles"></canvas>
-                            </div>
-                            <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200">Circles</span>
-                        </div>
-                        <!-- 4. Checker -->
-                        <div data-preset="checker" class="pl-preset-option group cursor-pointer border-2 border-zinc-200/90 dark:border-zinc-800 rounded-2xl p-2 transition-all hover:border-black dark:hover:border-white flex flex-col items-center gap-2 bg-white/70 dark:bg-zinc-900/70">
-                            <div class="w-full aspect-square rounded-xl overflow-hidden shadow-xs relative bg-zinc-900">
-                                <canvas class="pl-preset-canvas w-full h-full block" width="240" height="240" data-preset="checker"></canvas>
-                            </div>
-                            <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200">Checker</span>
-                        </div>
-                        <!-- 5. Vinyl -->
-                        <div data-preset="vinyl" class="pl-preset-option group cursor-pointer border-2 border-zinc-200/90 dark:border-zinc-800 rounded-2xl p-2 transition-all hover:border-black dark:hover:border-white flex flex-col items-center gap-2 bg-white/70 dark:bg-zinc-900/70">
-                            <div class="w-full aspect-square rounded-xl overflow-hidden shadow-xs relative bg-zinc-900">
-                                <canvas class="pl-preset-canvas w-full h-full block" width="240" height="240" data-preset="vinyl"></canvas>
-                            </div>
-                            <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200">Vinyl</span>
-                        </div>
-                        <!-- 6. Neon -->
-                        <div data-preset="neon" class="pl-preset-option group cursor-pointer border-2 border-zinc-200/90 dark:border-zinc-800 rounded-2xl p-2 transition-all hover:border-black dark:hover:border-white flex flex-col items-center gap-2 bg-white/70 dark:bg-zinc-900/70">
-                            <div class="w-full aspect-square rounded-xl overflow-hidden shadow-xs relative bg-zinc-900">
-                                <canvas class="pl-preset-canvas w-full h-full block" width="240" height="240" data-preset="neon"></canvas>
-                            </div>
-                            <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200">Neon</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section B: Custom Photo Upload Area -->
-                <div id="pl-upload-section" class="p-6 rounded-3xl bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-5 hidden">
-                    <div class="flex items-center gap-4 min-w-0">
-                        <div id="modal-cover-preview" class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 overflow-hidden shrink-0 flex items-center justify-center relative cursor-pointer hover:border-black dark:hover:border-white transition-colors" title="Upload custom photo">
-                            <img id="modal-cover-img" src="" class="w-full h-full object-cover hidden">
-                            <div id="modal-cover-placeholder" class="text-zinc-400 flex flex-col items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                            </div>
-                        </div>
-                        <div class="flex flex-col min-w-0">
-                            <span class="text-sm font-extrabold text-zinc-900 dark:text-white">Custom Cover Image</span>
-                            <span class="text-xs text-zinc-500 mt-0.5">Upload a photo from your computer or camera</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2 shrink-0">
-                        <button type="button" id="modal-cover-upload-btn" class="px-4 py-2 text-xs font-bold bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 rounded-xl transition-all cursor-pointer">
-                            Upload
-                        </button>
-                        <button type="button" id="modal-cover-recrop-btn" class="px-3.5 py-2 text-xs font-bold bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 rounded-xl transition-all hidden cursor-pointer">
-                            Crop
-                        </button>
-                        <button type="button" id="modal-cover-remove-btn" class="px-3 py-2 text-xs font-semibold text-red-500 hover:text-red-700 hidden cursor-pointer">
-                            Reset
-                        </button>
-                    </div>
-                    <input type="file" id="playlist-modal-cover-input" accept="image/*" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;">
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab 2: Information Content (Pixel-Perfect Match with Real Playlist Detail View) -->
-        <div id="pl-tab-info-content" class="flex-1 overflow-y-auto px-2 sm:px-6 py-6 max-w-[1240px] mx-auto w-full flex flex-col gap-4 sm:gap-6 hidden">
-            <!-- Top Hero Card (Identical layout and typography to #playlist-detail-view) -->
-            <div class="playlist-hero-card w-full bg-white/85 dark:bg-zinc-900/85 backdrop-blur-xl rounded-3xl border border-white/80 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-7 flex flex-col gap-4 sm:gap-5">
-                <div class="flex flex-row items-center gap-4 sm:gap-7 w-full">
-                    <!-- Left: Cover Art (Matching exact 176px - 192px responsive sizing) -->
-                    <div id="pl-info-preview-art" class="w-28 h-28 sm:w-44 sm:h-44 md:w-48 md:h-48 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center overflow-hidden shrink-0 shadow-[0_12px_28px_rgba(0,0,0,0.1)] border border-white/60 dark:border-white/10 relative">
+            <!-- Unified Two-Column Studio Body -->
+            <div class="flex-1 overflow-y-auto p-5 sm:p-6 grid grid-cols-1 md:grid-cols-[280px_1fr] gap-6 items-start">
+                <!-- Left Column: Live Cover Preview + Playlist Details -->
+                <div class="flex flex-col gap-4">
+                    <div id="pl-info-preview-art" class="w-full aspect-square max-w-[260px] mx-auto rounded-[22px] flex items-center justify-center overflow-hidden shadow-lg border border-black/10 dark:border-white/10 relative" style="background: var(--bg-secondary, #14141a);">
                         <canvas id="pl-info-preview-canvas" width="240" height="240" class="w-full h-full object-cover block"></canvas>
                         <img id="pl-info-preview-img" src="" class="w-full h-full object-cover hidden">
                     </div>
 
-                    <!-- Right of Cover: Collection Badge, Editable Name, Meta, and Editable Description -->
-                    <div class="flex-1 flex flex-col items-start justify-center min-w-0 text-left">
-                        <div class="playlist-collection-badge inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-[9px] sm:text-[10px] uppercase tracking-widest font-bold text-zinc-600 dark:text-zinc-300 mb-1.5">
-                            <span>Playlist Collection</span>
+                    <div class="flex flex-col gap-2.5">
+                        <input id="playlist-name-input" type="text" placeholder="Playlist Name" class="w-full font-semibold text-base sm:text-lg tracking-tight rounded-xl px-3.5 py-2.5 border border-zinc-200/80 dark:border-white/12 focus:outline-none transition-all" style="background: var(--bg-secondary, rgba(255,255,255,0.06)); color: var(--text-primary, inherit);" title="Playlist title">
+                        <div id="pl-info-desc-wrapper" class="relative w-full" title="Playlist description">
+                            <input id="playlist-desc-input" type="text" placeholder="Add an optional description..." class="w-full text-xs sm:text-sm rounded-xl px-3.5 py-2.5 border border-zinc-200/80 dark:border-white/12 focus:outline-none transition-all" style="background: var(--bg-secondary, rgba(255,255,255,0.06)); color: var(--text-primary, inherit);">
                         </div>
-                        <!-- Inline Editable Title matching real playlist title typography -->
-                        <input id="playlist-name-input" type="text" placeholder="Playlist Name" class="w-full font-medium text-xl sm:text-3xl text-zinc-900 dark:text-white tracking-tight leading-tight bg-zinc-100/60 dark:bg-white/5 border border-zinc-200 dark:border-white/10 hover:border-zinc-300 dark:hover:border-zinc-700 focus:border-purple-500 focus:bg-white dark:focus:bg-zinc-800 rounded-xl px-4 py-2.5 focus:outline-none transition-all truncate" title="Click to edit playlist title">
-                        
-                        <p id="pl-info-track-meta" class="text-xs sm:text-sm font-medium text-zinc-500 mt-2 px-1">0 songs • 0 min</p>
+                        <p id="pl-info-track-meta" class="text-xs font-medium opacity-65 px-1">0 songs • 0 min</p>
+                    </div>
+                </div>
 
-                        <!-- Inline Editable Description matching real playlist description typography -->
-                        <div id="pl-info-desc-wrapper" class="relative group/desc cursor-pointer w-full max-w-xl mt-2" title="Click to edit full description">
-                            <input id="playlist-desc-input" type="text" placeholder="Add an optional description..." class="w-full text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 font-normal bg-zinc-100/60 dark:bg-white/5 border border-zinc-200 dark:border-white/10 hover:border-zinc-300 dark:hover:border-zinc-700 focus:border-purple-500 focus:bg-white dark:focus:bg-zinc-800 rounded-xl px-4 py-2.5 focus:outline-none transition-all truncate">
+                <!-- Right Column: Cover Mode Toggle, Tint Palette, Presets / Upload -->
+                <div class="flex flex-col gap-4 min-w-0">
+                    <!-- Mode Segmented Control -->
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="inline-flex items-center p-1 rounded-2xl border border-zinc-200/70 dark:border-white/10" style="background: var(--bg-secondary, rgba(255,255,255,0.05));">
+                            <button type="button" id="pl-choice-presets-btn" class="pl-mode-btn is-active-mode px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer">
+                                Preset Artwork
+                            </button>
+                            <button type="button" id="pl-choice-upload-btn" class="pl-mode-btn px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer">
+                                Custom Photo
+                            </button>
+                        </div>
+                        <span id="pl-current-mode-label" class="text-[11px] font-semibold uppercase tracking-wider opacity-50 hidden sm:inline">Preset Artwork</span>
+                    </div>
+
+                    <!-- Tint Palette Card (8x2 grid) -->
+                    <div id="pl-tint-card" class="p-4 rounded-2xl border border-zinc-200/80 dark:border-white/10 flex flex-col gap-3" style="background: var(--bg-secondary, rgba(255,255,255,0.04));">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-bold block">Artwork Tint</span>
+                                <span id="modal-tint-status" class="text-[11px] opacity-65 font-medium">Automatic</span>
+                            </div>
+                            <div id="modal-tint-dot-wrapper" class="flex items-center gap-1.5 px-3 py-1 rounded-xl border border-zinc-200/70 dark:border-white/10 text-[11px] font-semibold">
+                                <span id="modal-tint-dot" class="w-3.5 h-3.5 rounded-full border border-black/20 inline-block" style="background-color: #FFE600;"></span>
+                                <span id="modal-tint-label">Automatic</span>
+                            </div>
+                        </div>
+                        <div id="pl-quick-tints" class="grid grid-cols-8 gap-2 justify-items-center pt-2 border-t border-zinc-200/50 dark:border-white/10">
+                            <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white/80 dark:border-zinc-700 shadow-sm hover:scale-110 transition-transform cursor-pointer" style="background-color: #FFE600;" data-hex="#FFE600" title="Electric Yellow"></button>
+                            <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white/80 dark:border-zinc-700 shadow-sm hover:scale-110 transition-transform cursor-pointer" style="background-color: #FF9500;" data-hex="#FF9500" title="Vibrant Orange"></button>
+                            <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white/80 dark:border-zinc-700 shadow-sm hover:scale-110 transition-transform cursor-pointer" style="background-color: #FF3B30;" data-hex="#FF3B30" title="Hot Crimson"></button>
+                            <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white/80 dark:border-zinc-700 shadow-sm hover:scale-110 transition-transform cursor-pointer" style="background-color: #FF2D55;" data-hex="#FF2D55" title="Vivid Pink"></button>
+                            <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white/80 dark:border-zinc-700 shadow-sm hover:scale-110 transition-transform cursor-pointer" style="background-color: #AF52DE;" data-hex="#AF52DE" title="Radiant Purple"></button>
+                            <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white/80 dark:border-zinc-700 shadow-sm hover:scale-110 transition-transform cursor-pointer" style="background-color: #5856D6;" data-hex="#5856D6" title="Deep Violet"></button>
+                            <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white/80 dark:border-zinc-700 shadow-sm hover:scale-110 transition-transform cursor-pointer" style="background-color: #007AFF;" data-hex="#007AFF" title="Ocean Blue"></button>
+                            <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white/80 dark:border-zinc-700 shadow-sm hover:scale-110 transition-transform cursor-pointer" style="background-color: #34C759;" data-hex="#34C759" title="Bright Emerald"></button>
+                            <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white/80 dark:border-zinc-700 shadow-sm hover:scale-110 transition-transform cursor-pointer" style="background-color: #00C7BE;" data-hex="#00C7BE" title="Teal Cyan"></button>
+                            <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white/80 dark:border-zinc-700 shadow-sm hover:scale-110 transition-transform cursor-pointer" style="background-color: #30B0C7;" data-hex="#30B0C7" title="Sky Blue"></button>
+                            <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white/80 dark:border-zinc-700 shadow-sm hover:scale-110 transition-transform cursor-pointer" style="background-color: #FF6482;" data-hex="#FF6482" title="Coral Rose"></button>
+                            <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white/80 dark:border-zinc-700 shadow-sm hover:scale-110 transition-transform cursor-pointer" style="background-color: #8E8E93;" data-hex="#8E8E93" title="Silver Slate"></button>
+                            <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white/80 dark:border-zinc-700 shadow-sm hover:scale-110 transition-transform cursor-pointer" style="background-color: #FFFFFF;" data-hex="#FFFFFF" title="Pure White"></button>
+                            <button type="button" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white/80 dark:border-zinc-700 shadow-sm hover:scale-110 transition-transform cursor-pointer" style="background-color: #1C1C1E;" data-hex="#1C1C1E" title="Onyx Black"></button>
+                            <button type="button" id="modal-open-tint-wheel-btn" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white/80 dark:border-zinc-700 shadow-sm hover:scale-110 transition-transform cursor-pointer flex items-center justify-center relative overflow-hidden" style="background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);" title="Custom Tint">
+                                <span class="w-2.5 h-2.5 rounded-full bg-white dark:bg-zinc-900 border border-black/20"></span>
+                            </button>
+                            <button type="button" id="modal-tint-auto-btn" class="pl-quick-tint-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-dashed border-zinc-400 dark:border-zinc-500 shadow-sm hover:scale-110 transition-transform cursor-pointer flex items-center justify-center" title="Automatic">
+                                <span class="material-symbols-rounded text-[14px]">auto_awesome</span>
+                            </button>
                         </div>
                     </div>
-                </div>
 
-                <!-- Bottom Row: Centered Action Buttons (Play All, Edit, Delete preview) -->
-                <div class="flex items-center justify-center gap-3 w-full pt-3 sm:pt-4 border-t border-zinc-200/60 dark:border-white/10 flex-wrap pointer-events-none opacity-85">
-                    <div class="flex items-center justify-center w-11 h-11 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-md">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" class="ml-0.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    <!-- 6 Presets Grid -->
+                    <div id="pl-presets-section" class="flex flex-col gap-2.5">
+                        <div id="pl-preset-covers-grid" class="grid grid-cols-3 gap-2.5">
+                            <div data-preset="stripes" class="pl-preset-option group cursor-pointer border-2 border-zinc-200/80 dark:border-white/10 rounded-2xl p-1.5 transition-all flex flex-col items-center gap-1.5 is-selected" style="background: var(--bg-secondary, rgba(255,255,255,0.04));">
+                                <div class="w-full aspect-square rounded-xl overflow-hidden shadow-xs relative bg-zinc-900">
+                                    <canvas class="pl-preset-canvas w-full h-full block" width="240" height="240" data-preset="stripes"></canvas>
+                                </div>
+                                <span class="text-[11px] font-bold">Stripes</span>
+                            </div>
+                            <div data-preset="diagonal" class="pl-preset-option group cursor-pointer border-2 border-zinc-200/80 dark:border-white/10 rounded-2xl p-1.5 transition-all flex flex-col items-center gap-1.5" style="background: var(--bg-secondary, rgba(255,255,255,0.04));">
+                                <div class="w-full aspect-square rounded-xl overflow-hidden shadow-xs relative bg-zinc-900">
+                                    <canvas class="pl-preset-canvas w-full h-full block" width="240" height="240" data-preset="diagonal"></canvas>
+                                </div>
+                                <span class="text-[11px] font-bold">Diagonal</span>
+                            </div>
+                            <div data-preset="circles" class="pl-preset-option group cursor-pointer border-2 border-zinc-200/80 dark:border-white/10 rounded-2xl p-1.5 transition-all flex flex-col items-center gap-1.5" style="background: var(--bg-secondary, rgba(255,255,255,0.04));">
+                                <div class="w-full aspect-square rounded-xl overflow-hidden shadow-xs relative bg-zinc-900">
+                                    <canvas class="pl-preset-canvas w-full h-full block" width="240" height="240" data-preset="circles"></canvas>
+                                </div>
+                                <span class="text-[11px] font-bold">Circles</span>
+                            </div>
+                            <div data-preset="checker" class="pl-preset-option group cursor-pointer border-2 border-zinc-200/80 dark:border-white/10 rounded-2xl p-1.5 transition-all flex flex-col items-center gap-1.5" style="background: var(--bg-secondary, rgba(255,255,255,0.04));">
+                                <div class="w-full aspect-square rounded-xl overflow-hidden shadow-xs relative bg-zinc-900">
+                                    <canvas class="pl-preset-canvas w-full h-full block" width="240" height="240" data-preset="checker"></canvas>
+                                </div>
+                                <span class="text-[11px] font-bold">Checker</span>
+                            </div>
+                            <div data-preset="vinyl" class="pl-preset-option group cursor-pointer border-2 border-zinc-200/80 dark:border-white/10 rounded-2xl p-1.5 transition-all flex flex-col items-center gap-1.5" style="background: var(--bg-secondary, rgba(255,255,255,0.04));">
+                                <div class="w-full aspect-square rounded-xl overflow-hidden shadow-xs relative bg-zinc-900">
+                                    <canvas class="pl-preset-canvas w-full h-full block" width="240" height="240" data-preset="vinyl"></canvas>
+                                </div>
+                                <span class="text-[11px] font-bold">Vinyl</span>
+                            </div>
+                            <div data-preset="neon" class="pl-preset-option group cursor-pointer border-2 border-zinc-200/80 dark:border-white/10 rounded-2xl p-1.5 transition-all flex flex-col items-center gap-1.5" style="background: var(--bg-secondary, rgba(255,255,255,0.04));">
+                                <div class="w-full aspect-square rounded-xl overflow-hidden shadow-xs relative bg-zinc-900">
+                                    <canvas class="pl-preset-canvas w-full h-full block" width="240" height="240" data-preset="neon"></canvas>
+                                </div>
+                                <span class="text-[11px] font-bold">Neon</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex items-center justify-center w-11 h-11 rounded-full bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/80 dark:border-white/10 shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                    </div>
-                    <div class="flex items-center justify-center w-11 h-11 rounded-full bg-red-50 dark:bg-red-950/40 text-red-600 border border-red-200/50 dark:border-red-800/40 shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Bottom Tracks Card (Loaded with actual songs in identical song-row layout, non-clickable) -->
-            <div id="playlist-tracks-card" class="w-full bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-3xl border border-zinc-200/80 dark:border-white/10 p-5 sm:p-6 shadow-sm flex flex-col transition-all">
-                <div class="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-3 px-2 flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-2.5 shrink-0">
-                    <span>Tracks</span>
-                    <span id="pl-info-songs-count" class="text-[10px] font-semibold text-zinc-500">0 songs</span>
-                </div>
-                <div id="pl-info-sample-tracks" class="flex-1 flex flex-col gap-1.5 px-1 py-1 pointer-events-none select-none">
-                    <!-- Populated dynamically with actual playlist tracks -->
-                </div>
-                <div id="pl-info-tracks-footer" class="mt-4 pt-3.5 border-t border-zinc-200/70 dark:border-zinc-800 px-2 flex items-center justify-between text-xs font-semibold text-zinc-500">
-                    <span id="pl-info-footer-summary">0 songs • 0 min</span>
+                    <!-- Custom Photo Upload Panel -->
+                    <div id="pl-upload-section" class="p-5 rounded-2xl border border-zinc-200/80 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 hidden" style="background: var(--bg-secondary, rgba(255,255,255,0.04));">
+                        <div class="flex items-center gap-4 min-w-0">
+                            <div id="modal-cover-preview" class="w-16 h-16 rounded-2xl border border-zinc-300 dark:border-zinc-700 overflow-hidden shrink-0 flex items-center justify-center relative cursor-pointer transition-colors" style="background: var(--bg-primary, #14141a);" title="Upload custom photo">
+                                <img id="modal-cover-img" src="" class="w-full h-full object-cover hidden">
+                                <div id="modal-cover-placeholder" class="opacity-50 flex flex-col items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                </div>
+                            </div>
+                            <div class="flex flex-col min-w-0">
+                                <span class="text-sm font-bold">Custom Cover Image</span>
+                                <span class="text-xs opacity-65 mt-0.5">Upload and crop your own photo</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <button type="button" id="modal-cover-upload-btn" class="px-4 py-2 text-xs font-bold text-white rounded-xl transition-all cursor-pointer" style="background: var(--accent-primary, #ff8800);">
+                                Upload
+                            </button>
+                            <button type="button" id="modal-cover-recrop-btn" class="px-3.5 py-2 text-xs font-bold border border-zinc-200 dark:border-zinc-700 rounded-xl transition-all hidden cursor-pointer">
+                                Crop
+                            </button>
+                            <button type="button" id="modal-cover-remove-btn" class="px-3 py-2 text-xs font-semibold text-red-500 hover:text-red-400 hidden cursor-pointer">
+                                Reset
+                            </button>
+                        </div>
+                        <input type="file" id="playlist-modal-cover-input" accept="image/*" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;">
+                    </div>
+
+                    <style>
+                        #playlist-modal .pl-mode-btn.is-active-mode {
+                            background: var(--accent-primary, #ff8800) !important;
+                            color: #ffffff !important;
+                            box-shadow: 0 2px 10px var(--accent-glow, rgba(255, 136, 0, 0.35));
+                        }
+                        #playlist-modal .pl-preset-option.is-selected {
+                            border-color: var(--accent-primary, #ff8800) !important;
+                            box-shadow: 0 0 0 2px var(--accent-secondary, rgba(255, 136, 0, 0.35));
+                        }
+                        #playlist-modal .pl-quick-tint-btn.is-selected {
+                            transform: scale(1.14);
+                            box-shadow: 0 0 0 2px var(--bg-primary, #000), 0 0 0 4px var(--accent-primary, #ff8800);
+                        }
+                    </style>
                 </div>
             </div>
         </div>
