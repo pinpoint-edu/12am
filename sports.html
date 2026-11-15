@@ -589,12 +589,15 @@
             </div>
             <div class="player-right">
                 <select id="sourceSelect" class="select-dark" title="Select stream source / quality"></select>
+                <button id="shieldToggleBtn" class="player-btn-squircle" title="Popup & Redirect Blocker: ON" style="color: var(--accent-color); border-color: var(--accent-color);">
+                    <span class="material-symbols-sharp">shield</span>
+                </button>
                 <button id="reloadStreamBtn" class="player-btn-squircle" title="Reload stream">
                     <span class="material-symbols-sharp">refresh</span>
                 </button>
             </div>
         </div>
-        <iframe id="streamFrame" allow="fullscreen; picture-in-picture" allowfullscreen frameborder="0"></iframe>
+        <iframe id="streamFrame" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" referrerpolicy="no-referrer" allow="fullscreen; picture-in-picture" allowfullscreen frameborder="0"></iframe>
     </div>
 
     <script>
@@ -631,6 +634,27 @@
             const sourceSelect = document.getElementById('sourceSelect');
             const closePlayerBtn = document.getElementById('closePlayerBtn');
             const reloadStreamBtn = document.getElementById('reloadStreamBtn');
+            const shieldToggleBtn = document.getElementById('shieldToggleBtn');
+            const SANDBOX_VALUE = 'allow-scripts allow-same-origin allow-forms allow-presentation';
+            let shieldEnabled = true;
+
+            if (shieldToggleBtn) {
+                shieldToggleBtn.onclick = () => {
+                    shieldEnabled = !shieldEnabled;
+                    if (shieldEnabled) {
+                        streamFrame.setAttribute('sandbox', SANDBOX_VALUE);
+                        shieldToggleBtn.style.color = 'var(--accent-color)';
+                        shieldToggleBtn.style.borderColor = 'var(--accent-color)';
+                        shieldToggleBtn.title = 'Popup & Redirect Blocker: ON';
+                    } else {
+                        streamFrame.removeAttribute('sandbox');
+                        shieldToggleBtn.style.color = '';
+                        shieldToggleBtn.style.borderColor = '';
+                        shieldToggleBtn.title = 'Popup & Redirect Blocker: OFF';
+                    }
+                    if (sourceSelect.value) streamFrame.src = sourceSelect.value;
+                };
+            }
 
             async function fetchJsonWithFallback(proxyPath, directPath) {
                 try {
