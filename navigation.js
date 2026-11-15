@@ -35,20 +35,20 @@
         }
     };
 
-    // Primary dock pages in requested order: Dashboard, Soundboard, Games, Music, Movies, Proxy, AI
+    // Primary dock pages in requested order: Dashboard, Soundboard, Games, Music, Media, Sports, Proxy, AI
     const MAIN_NAV_PAGES = [
         { id: "dashboard", name: "Dashboard", icon: "fa-solid fa-house-user", url: "dashboard.html" },
         { id: "soundboard", name: "Soundboard", icon: "fa-solid fa-volume-high", url: "soundboard.html" },
         { id: "games", name: "Games", icon: "fa-solid fa-gamepad", url: "games.html" },
         { id: "music", name: "Music", icon: "fa-solid fa-music", url: "music.html" },
         { id: "movies", name: "Media", icon: "fa-solid fa-film", url: "movies.html" },
+        { id: "sports", name: "Sports", icon: "fa-solid fa-trophy", url: "sports.html" },
         { id: "proxy", name: "Web", icon: "fa-solid fa-globe", url: "proxy.html" },
         { id: "ai", name: "AI", icon: "fa-solid fa-robot", url: "ai.html" }
     ];
 
-    // More popup menu pages: Notes, Dictionary, Messenger, Sports
+    // More popup menu pages: Notes, Dictionary, Messenger
     const MORE_NAV_PAGES = [
-        { id: "sports", name: "Sports", icon: "fa-solid fa-trophy", url: "sports.html" },
         { id: "notes", name: "Notes", icon: "fa-solid fa-note-sticky", url: "notes.html" },
         { id: "dictionary", name: "Dictionary", icon: "fa-solid fa-book-bookmark", url: "dictionary.html" },
         { id: "messenger", name: "Messenger", icon: "fa-solid fa-comments", url: "messenger.html" }
@@ -80,6 +80,7 @@
 
         if (base === 'games' || base.includes('game') || href.includes('games')) return 'games';
         if (base === 'movies' || base.includes('movie') || href.includes('movies')) return 'movies';
+        if (base === 'sports' || base.includes('sport') || href.includes('sports')) return 'sports';
         if (base === 'music' || base.includes('music') || href.includes('music') || href.includes('yolk')) return 'music';
         if (base === 'messenger' || base.includes('messenger') || href.includes('messenger')) return 'messenger';
         if (base === 'soundboard' || base.includes('sound') || href.includes('soundboard')) return 'soundboard';
