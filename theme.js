@@ -1203,6 +1203,7 @@
             } catch (e) {}
         }
         applyTheme(fallback, false, true);
+        if (typeof updateWinterSnow === 'function') updateWinterSnow(fallback.name);
         syncSongCoverThemeTint(true);
     }
 
@@ -1865,6 +1866,7 @@
                 if (typeof updateWinterSnow === 'function') updateWinterSnow(base.name);
             } else if (forceImmediate) {
                 applyTheme(base, false, true);
+                if (typeof updateWinterSnow === 'function') updateWinterSnow(base.name);
             }
             return;
         }
