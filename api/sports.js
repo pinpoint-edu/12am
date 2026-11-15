@@ -3,7 +3,7 @@ const STREAMFREE_BASE = 'https://streamfree.top/api/v1';
 const DLHD_BASE = 'https://thedaddy.li';
 const cache = new Map();
 
-const AD_HOST_PATTERN = '(?:popads|popcash|propellerads|monetag|adsterra|effectivegatecpm|highperformanceformat|hilltopads|onclicka|onclickalgo|acscdn|exoclick|tsyndicate|trafficjunky|juicyads|googlesyndication|doubleclick|adnxs|taboola|outbrain|mgid|revcontent|bidvertiser|chitika|infolinks|yandex\\.ru\\/ads|mc\\.yandex|disable-devtool|adtng|adsco\\.re|pubfuture|richpush|pushground|galaksion|evadav|clickadu|admaven|shorte\\.st|ouo\\.io|linkvertise|bidgear|vdo\\.ai|2mdn\\.net|quantserve|scorecardresearch|histats|whos\\.amung\\.us|livejasmin|chaturbate|stripchat|bongacams)';
+const AD_HOST_PATTERN = '(?:novemberfrost|popads|popcash|propellerads|monetag|adsterra|effectivegatecpm|highperformanceformat|hilltopads|onclicka|onclickalgo|acscdn|exoclick|tsyndicate|trafficjunky|juicyads|googlesyndication|doubleclick|adnxs|taboola|outbrain|mgid|revcontent|bidvertiser|chitika|infolinks|yandex\\.ru\\/ads|mc\\.yandex|disable-devtool|adtng|adsco\\.re|pubfuture|richpush|pushground|galaksion|evadav|clickadu|admaven|shorte\\.st|ouo\\.io|linkvertise|bidgear|vdo\\.ai|2mdn\\.net|quantserve|scorecardresearch|histats|whos\\.amung\\.us|livejasmin|chaturbate|stripchat|bongacams)';
 const AD_HOST_RE = new RegExp(AD_HOST_PATTERN, 'i');
 
 function getCached(key, ttlMs) {

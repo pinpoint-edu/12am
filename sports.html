@@ -687,12 +687,12 @@
                 if (shieldMode === 'sandbox') {
                     streamFrame.setAttribute('sandbox', SANDBOX_VALUE);
                     streamFrame.src = rawUrl;
-                } else if (shieldMode === 'proxy' || (shieldMode === 'smart' && isDlhd)) {
-                    // Unsandboxed frame + server-side & injected zero-alarm AdShield
+                } else if (shieldMode === 'proxy' || shieldMode === 'smart') {
+                    // Unsandboxed frame + server-side & injected zero-alarm AdShield for both StreamFree & DLHD
                     streamFrame.removeAttribute('sandbox');
                     streamFrame.src = `/api/sports?action=embed&url=${encodeURIComponent(rawUrl)}`;
                 } else {
-                    // Smart mode for StreamFree or Shield Off: no sandbox attribute so StreamFree plays cleanly
+                    // Shield Off: direct unsandboxed iframe
                     streamFrame.removeAttribute('sandbox');
                     streamFrame.src = rawUrl;
                 }
