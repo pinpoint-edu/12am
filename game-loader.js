@@ -298,28 +298,19 @@ async function fetchGameHtml(file) {
       } catch (e) {}
     }
 
-    // 2. Match pinpoint-mini's exact repo + multi-CDN mirror strategy for Originals (textbooks/, etc.)
+    // 2. Try raw.githubusercontent.com & cdn.statically.io FIRST for pinpoint-edu repos (avoids jsDelivr 20MB 403s), then CDN_MIRRORS
     const mirrors = [activeMirror, ...CDN_MIRRORS.filter(m => m !== activeMirror)];
     const isMiniRepo = fetchFile.startsWith('yolk/') || fetchFile.startsWith('movies/') || fetchFile === 'ai.html' || fetchFile === 'web.html' || fetchFile.startsWith('pages/') || fetchFile.includes('Soundboard.html') || fetchFile.includes('happy-wheels') || fetchFile.includes('superhot') || fetchFile.includes('tetrominoes') || fetchFile.includes('tetris') || fetchFile.includes('retro-bowl');
     const primaryRepo = isMiniRepo ? 'pinpoint-edu/pinpoint-mini@main/' : 'pinpoint-edu/assets@main/';
     const fallbackRepo = isMiniRepo ? 'pinpoint-edu/assets@main/' : 'pinpoint-edu/pinpoint-mini@main/';
 
-    const isLargeGame = fetchFile.includes('happy-wheels') || fetchFile.includes('retro-bowl') || fetchFile.includes('gladihoppers') || fetchFile.includes('highway-traffic') || fetchFile.includes('drivemad') || fetchFile.includes('bloonsTD5') || fetchFile.includes('bloonsTD4');
-
-    const urlsToTry = (isLargeGame || isMiniRepo) ? [
+    const urlsToTry = [
       'https://raw.githubusercontent.com/' + primaryRepo.replace(/@[^/]+\//, '/main/') + fetchFile,
       'https://cdn.statically.io/gh/' + primaryRepo + fetchFile,
-      ...mirrors.map(m => m + '/gh/' + primaryRepo + fetchFile),
       'https://raw.githubusercontent.com/' + fallbackRepo.replace(/@[^/]+\//, '/main/') + fetchFile,
       'https://cdn.statically.io/gh/' + fallbackRepo + fetchFile,
-      ...mirrors.map(m => m + '/gh/' + fallbackRepo + fetchFile)
-    ] : [
       ...mirrors.map(m => m + '/gh/' + primaryRepo + fetchFile),
-      'https://cdn.statically.io/gh/' + primaryRepo + fetchFile,
-      'https://raw.githubusercontent.com/' + primaryRepo.replace(/@[^/]+\//, '/main/') + fetchFile,
-      ...mirrors.map(m => m + '/gh/' + fallbackRepo + fetchFile),
-      'https://cdn.statically.io/gh/' + fallbackRepo + fetchFile,
-      'https://raw.githubusercontent.com/' + fallbackRepo.replace(/@[^/]+\//, '/main/') + fetchFile
+      ...mirrors.map(m => m + '/gh/' + fallbackRepo + fetchFile)
     ];
 
     for (const url of urlsToTry) {
@@ -365,10 +356,15 @@ async function fetchGameHtml(file) {
 
 function normalizeGitBaseUrl(url) {
   if (!url) return url;
-  // Keep GitHub Pages base for StrongdogXP repos, and match pinpoint-mini CDN mirror base for assets/pinpoint-mini
+  // Keep GitHub Pages base for StrongdogXP repos
   const mStrongdog = url.match(/^https?:\/\/raw\.githubusercontent\.com\/pinpoint-edu\/(strongdog[^/]*)\/(?:main|master)\/(.*)$/i);
   if (mStrongdog) {
     return `https://pinpoint-edu.github.io/${mStrongdog[1]}/${mStrongdog[2]}`;
+  }
+  // pinpoint-edu/assets and pinpoint-mini exceed jsDelivr's 20MB limit (403); use cdn.statically.io for proper MIME types
+  const mPinpointLarge = url.match(/^https?:\/\/raw\.githubusercontent\.com\/pinpoint-edu\/(assets|pinpoint-mini)\/([^/]+)\/(.*)$/i);
+  if (mPinpointLarge) {
+    return `https://cdn.statically.io/gh/pinpoint-edu/${mPinpointLarge[1]}@${mPinpointLarge[2]}/${mPinpointLarge[3]}`;
   }
   if (url.includes('raw.githubusercontent.com/')) {
     return url
@@ -531,34 +527,38 @@ function prepareGameHtml(html, fileUrl) {
     '    logError: _pokiNoop',
     '  };',
     '} catch(e){}',
-    'try {',
-    '  var _blockedScriptRe = /poki-sdk|imasdk\\.googleapis\\.com|\\/vs\\/gameloader-helper\\.js/i;',
-    '  var _rewriteScriptUrl = function(u) {',
-    '    if (typeof u === "string" && _blockedScriptRe.test(u)) return "data:text/javascript,";',
-    '    if (typeof u === "string" && /(?:^|\\/)ruffle\\/ruffle\\.js(?:$|[?#])/i.test(u)) return _ruffleSrc;',
-    '    return u;',
-    '  };',
-    '  var _origCreateEl = document.createElement;',
-    '  document.createElement = function(tag) {',
-    '    var el = _origCreateEl.apply(this, arguments);',
-    '    if (typeof tag === "string" && tag.toLowerCase() === "script") {',
-    '      var _origSetAttr = el.setAttribute;',
-    '      el.setAttribute = function(k, v) {',
-    '        if (typeof k === "string" && k.toLowerCase() === "src") v = _rewriteScriptUrl(v);',
-    '        return _origSetAttr.call(this, k, v);',
-    '      };',
+    '(function() {',
+    '  if (window.__12amScriptHooked) return;',
+    '  window.__12amScriptHooked = true;',
+    '  try {',
+    '    var _blockedScriptRe = /poki-sdk|imasdk\\.googleapis\\.com|\\/vs\\/gameloader-helper\\.js/i;',
+    '    var _rewriteScriptUrl = function(u) {',
+    '      if (typeof u === "string" && _blockedScriptRe.test(u)) return "data:text/javascript,";',
+    '      if (typeof u === "string" && /(?:^|\\/)ruffle\\/ruffle\\.js(?:$|[?#])/i.test(u)) return _ruffleSrc;',
+    '      return u;',
+    '    };',
+    '    var _nativeCreateEl = (window.Document && Document.prototype.createElement) || document.createElement;',
+    '    document.createElement = function(tag) {',
+    '      var el = _nativeCreateEl.apply(this, arguments);',
+    '      if (typeof tag === "string" && tag.toLowerCase() === "script") {',
+    '        var _origSetAttr = el.setAttribute;',
+    '        el.setAttribute = function(k, v) {',
+    '          if (typeof k === "string" && k.toLowerCase() === "src") v = _rewriteScriptUrl(v);',
+    '          return _origSetAttr.call(this, k, v);',
+    '        };',
+    '      }',
+    '      return el;',
+    '    };',
+    '    var _sDesc = window.HTMLScriptElement && Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, "src");',
+    '    if (_sDesc && _sDesc.set) {',
+    '      Object.defineProperty(HTMLScriptElement.prototype, "src", {',
+    '        get: _sDesc.get,',
+    '        set: function(v) { return _sDesc.set.call(this, _rewriteScriptUrl(v)); },',
+    '        configurable: true',
+    '      });',
     '    }',
-    '    return el;',
-    '  };',
-    '  var _sDesc = window.HTMLScriptElement && Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, "src");',
-    '  if (_sDesc && _sDesc.set) {',
-    '    Object.defineProperty(HTMLScriptElement.prototype, "src", {',
-    '      get: _sDesc.get,',
-    '      set: function(v) { return _sDesc.set.call(this, _rewriteScriptUrl(v)); },',
-    '      configurable: true',
-    '    });',
-    '  }',
-    '} catch(e){}',
+    '  } catch(e){}',
+    '})();',
     'try {',
     '  if (window.navigator && window.navigator.serviceWorker) {',
     '    window.navigator.serviceWorker.register = function() {',
