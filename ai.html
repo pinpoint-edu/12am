@@ -487,10 +487,9 @@
         <h2 class="welcome-title">12AM AI</h2>
         <p class="welcome-desc">Fast responses, code generation, study guides, and unblocked AI research.</p>
         <div class="prompt-suggestions">
-          <button class="prompt-chip" onclick="usePrompt('Explain quantum computing simply')">Quantum computing</button>
-          <button class="prompt-chip" onclick="usePrompt('Write a clean JavaScript Snake game in HTML5 canvas')">Code a Snake game</button>
-          <button class="prompt-chip" onclick="usePrompt('Help me study for a math test on quadratic formulas')">Quadratic math test</button>
-          <button class="prompt-chip" onclick="usePrompt('Give me a creative strategy for Retro Bowl')">Retro Bowl strategy</button>
+          <button class="prompt-chip" onclick="usePrompt('Summarize a topic in 5 simple bullet points')">Summarize a topic</button>
+          <button class="prompt-chip" onclick="usePrompt('Explain the quadratic formula step by step with LaTeX')">Quadratic formula</button>
+          <button class="prompt-chip" onclick="usePrompt('Help me write a simple 5-paragraph essay outline')">Essay outline</button>
         </div>
       </div>
     </div>
@@ -544,10 +543,9 @@
           <h2 class="welcome-title">12AM AI</h2>
           <p class="welcome-desc">Fast responses, code generation, study guides, and unblocked AI research.</p>
           <div class="prompt-suggestions">
-            <button class="prompt-chip" onclick="usePrompt('Explain quantum computing simply')">Quantum computing</button>
-            <button class="prompt-chip" onclick="usePrompt('Write a clean JavaScript Snake game in HTML5 canvas')">Code a Snake game</button>
-            <button class="prompt-chip" onclick="usePrompt('Help me study for a math test on quadratic formulas')">Quadratic math test</button>
-            <button class="prompt-chip" onclick="usePrompt('Give me a creative strategy for Retro Bowl')">Retro Bowl strategy</button>
+            <button class="prompt-chip" onclick="usePrompt('Summarize a topic in 5 simple bullet points')">Summarize a topic</button>
+            <button class="prompt-chip" onclick="usePrompt('Explain the quadratic formula step by step with LaTeX')">Quadratic formula</button>
+            <button class="prompt-chip" onclick="usePrompt('Help me write a simple 5-paragraph essay outline')">Essay outline</button>
           </div>
         </div>
       `;
@@ -562,7 +560,51 @@
 
     function renderBubbleContent(bubble, text) {
       if (typeof marked !== 'undefined') {
-        bubble.innerHTML = marked.parse(text);
+        const codeStashes = [];
+        const mathStashes = [];
+
+        // 1. Stash fenced & inline code so math inside code isn't touched
+        let protectedText = String(text || '').replace(/```[\s\S]*?```|`[^`\n]+`/g, (m) => {
+          const idx = codeStashes.length;
+          codeStashes.push(m);
+          return `@@12AMCODE${idx}@@`;
+        });
+
+        // 2. Stash display & inline LaTeX before marked mangles backslashes, _, *, or <>
+        const stashMath = (expr, displayMode) => {
+          const idx = mathStashes.length;
+          mathStashes.push({ expr, displayMode });
+          return `@@12AMMATH${idx}@@`;
+        };
+
+        protectedText = protectedText
+          .replace(/\$\$([\s\S]+?)\$\$/g, (_, expr) => stashMath(expr, true))
+          .replace(/\\\[([\s\S]+?)\\\]/g, (_, expr) => stashMath(expr, true))
+          .replace(/\\\(([\s\S]+?)\\\)/g, (_, expr) => stashMath(expr, false))
+          .replace(/(^|[^\\$])\$([^\n$]+?)\$/g, (_, prefix, expr) => prefix + stashMath(expr, false));
+
+        // 3. Restore code before marked.parse
+        protectedText = protectedText.replace(/@@12AMCODE(\d+)@@/g, (_, i) => codeStashes[Number(i)]);
+
+        let html = marked.parse(protectedText);
+
+        // 4. Render or restore LaTeX placeholders cleanly
+        html = html.replace(/@@12AMMATH(\d+)@@/g, (_, i) => {
+          const item = mathStashes[Number(i)];
+          if (!item) return '';
+          if (window.katex && typeof window.katex.renderToString === 'function') {
+            try {
+              return window.katex.renderToString(item.expr.trim(), {
+                displayMode: item.displayMode,
+                throwOnError: false
+              });
+            } catch (_) {}
+          }
+          const esc = item.expr.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          return item.displayMode ? `\\[${esc}\\]` : `\\(${esc}\\)`;
+        });
+
+        bubble.innerHTML = html;
       } else {
         bubble.textContent = text;
       }
