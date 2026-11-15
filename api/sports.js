@@ -1,6 +1,7 @@
-// api/sports.js — Cached StreamFree + DaddyLiveHD (DLHD) API & Stealth AdShield Embed Proxy
-const STREAMFREE_BASE = 'https://streamfree.top/api/v1';
-const DLHD_BASE = 'https://thedaddy.li';
+// api/sports.js — Cached DAMITV + Sport-Video-Archive API & Stealth AdShield Embed Proxy
+const DAMITV_BASE = 'https://ondemand.st/papi/api';
+const ARCHIVE_BASE = 'https://bn32423.us.ci/api';
+const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 const cache = new Map();
 
 const AD_HOST_PATTERN = '(?:novemberfrost|popads|popcash|propellerads|monetag|adsterra|effectivegatecpm|highperformanceformat|hilltopads|onclicka|onclickalgo|acscdn|exoclick|tsyndicate|trafficjunky|juicyads|googlesyndication|doubleclick|adnxs|taboola|outbrain|mgid|revcontent|bidvertiser|chitika|infolinks|yandex\\.ru\\/ads|mc\\.yandex|disable-devtool|adtng|adsco\\.re|pubfuture|richpush|pushground|galaksion|evadav|clickadu|admaven|shorte\\.st|ouo\\.io|linkvertise|bidgear|vdo\\.ai|2mdn\\.net|quantserve|scorecardresearch|histats|whos\\.amung\\.us|livejasmin|chaturbate|stripchat|bongacams)';
@@ -262,11 +263,7 @@ function sanitizeEmbedHtml(html, targetUrl, proxyBaseUrl) {
     const shieldScript = buildStealthShieldScript(parsed.origin, proxyBaseUrl);
 
     let out = String(html || '');
-
-    // Strip meta refresh redirects
     out = out.replace(/<meta[^>]+http-equiv\s*=\s*["']?refresh["']?[^>]*>/gi, '');
-
-    // Neutralize external ad-network script tags
     out = out.replace(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["'][^>]*>[\s\S]*?<\/script>/gi, (match, src) => {
         if (AD_HOST_RE.test(src)) {
             return '<!-- ad-script-blocked -->';
@@ -274,7 +271,6 @@ function sanitizeEmbedHtml(html, targetUrl, proxyBaseUrl) {
         return match;
     });
 
-    // Inject <base> and stealth shield right after <head> (or prepend if no <head>)
     const injection = `<base href="${baseHref}">\n${shieldScript}`;
     if (/<head[^>]*>/i.test(out)) {
         out = out.replace(/<head[^>]*>/i, (m) => `${m}\n${injection}`);
@@ -293,10 +289,8 @@ export default async function handler(req, res) {
         return res.status(204).end();
     }
 
-    const provider = String(req.query.provider || 'streamfree').toLowerCase();
+    const provider = String(req.query.provider || 'damitv').toLowerCase();
     const action = String(req.query.action || 'streams').toLowerCase();
-    const category = String(req.query.category || '').trim().toLowerCase();
-    const key = String(req.query.key || '').trim();
 
     // Stealth AdShield HTML proxy for stream embeds
     if (action === 'embed') {
@@ -309,7 +303,7 @@ export default async function handler(req, res) {
         try {
             const upstream = await fetch(parsed.toString(), {
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+                    'User-Agent': BROWSER_UA,
                     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                     'Accept-Language': 'en-US,en;q=0.9',
                     'Referer': ref
@@ -337,11 +331,32 @@ export default async function handler(req, res) {
         }
     }
 
-    if (provider === 'dlhd') {
-        const apiKey = String(req.query.apikey || process.env.DLHD_API_KEY || '').trim();
-        const endpoint = action === 'channels' ? 'channels' : (action === 'info' ? 'info' : 'schedule');
-        const cacheKey = `dlhd:${endpoint}:${apiKey ? 'keyed' : 'public'}`;
-        const ttlMs = endpoint === 'channels' ? 5 * 60 * 1000 : 2 * 60 * 1000;
+    // Sport-Video-Archive API (past games & replays)
+    if (provider === 'archive') {
+        let targetUrl = '';
+        let ttlMs = 2 * 60 * 1000;
+        let cacheKey = '';
+
+        if (action === 'sources') {
+            targetUrl = `${ARCHIVE_BASE}/sources`;
+            ttlMs = 10 * 60 * 1000;
+            cacheKey = 'archive:sources';
+        } else if (action === 'sections') {
+            targetUrl = `${ARCHIVE_BASE}/sections`;
+            ttlMs = 10 * 60 * 1000;
+            cacheKey = 'archive:sections';
+        } else {
+            const params = new URLSearchParams();
+            const limit = Math.min(Math.max(parseInt(req.query.limit || '48', 10) || 48, 1), 100);
+            const offset = Math.max(parseInt(req.query.offset || '0', 10) || 0, 0);
+            params.set('limit', String(limit));
+            params.set('offset', String(offset));
+            if (req.query.source && req.query.source !== 'all') params.set('source', String(req.query.source));
+            if (req.query.section && req.query.section !== 'all') params.set('section', String(req.query.section));
+            if (req.query.q) params.set('q', String(req.query.q).trim());
+            targetUrl = `${ARCHIVE_BASE}/videos?${params.toString()}`;
+            cacheKey = `archive:videos:${params.toString()}`;
+        }
 
         const cached = getCached(cacheKey, ttlMs);
         if (cached) {
@@ -351,66 +366,30 @@ export default async function handler(req, res) {
         }
 
         try {
-            if (apiKey) {
-                const url = `${DLHD_BASE}/daddyapi.php?key=${encodeURIComponent(apiKey)}&endpoint=${encodeURIComponent(endpoint)}`;
-                const upstream = await fetch(url, {
-                    headers: { 'Accept': 'application/json', 'User-Agent': '12AM-Sports/1.0' }
-                });
-                if (!upstream.ok) {
-                    return res.status(upstream.status).json({ error: `DLHD upstream returned ${upstream.status}` });
+            const upstream = await fetch(targetUrl, {
+                headers: {
+                    'Accept': 'application/json',
+                    'User-Agent': BROWSER_UA
                 }
-                const data = await upstream.json();
-                setCached(cacheKey, data);
-                res.setHeader('Cache-Control', `public, max-age=${Math.round(ttlMs / 1000)}`);
-                return res.status(200).json(data);
-            }
-
-            // Fallback public schedule endpoint if no API key is configured
-            if (endpoint === 'schedule') {
-                const pubRes = await fetch(`${DLHD_BASE}/schedule/schedule-generated.json`, {
-                    headers: { 'Accept': 'application/json', 'User-Agent': '12AM-Sports/1.0' }
-                });
-                if (pubRes.ok) {
-                    const pubData = await pubRes.json();
-                    const wrapped = { success: true, data: pubData, source: 'public' };
-                    setCached(cacheKey, wrapped);
-                    res.setHeader('Cache-Control', `public, max-age=${Math.round(ttlMs / 1000)}`);
-                    return res.status(200).json(wrapped);
-                }
-            }
-
-            return res.status(200).json({
-                success: false,
-                requiresKey: true,
-                error: 'DLHD_API_KEY_REQUIRED',
-                message: 'Set DLHD API key to load DaddyLiveHD schedule & channels.'
             });
+            if (!upstream.ok) {
+                return res.status(upstream.status).json({ error: `Archive upstream returned ${upstream.status}` });
+            }
+            const data = await upstream.json();
+            setCached(cacheKey, data);
+            res.setHeader('Cache-Control', `public, max-age=${Math.round(ttlMs / 1000)}`);
+            res.setHeader('X-Cache', 'MISS');
+            return res.status(200).json(data);
         } catch (err) {
-            return res.status(502).json({ error: 'Failed to reach DaddyLiveHD API', detail: err.message });
+            return res.status(502).json({ error: 'Failed to reach Sport-Video-Archive API', detail: err.message });
         }
     }
 
-    // Default: StreamFree API
-    let targetUrl = `${STREAMFREE_BASE}/streams`;
-    let ttlMs = 60 * 1000;
-    let cacheKey = 'streams:all';
-
-    if (action === 'categories') {
-        targetUrl = `${STREAMFREE_BASE}/categories`;
-        ttlMs = 10 * 60 * 1000;
-        cacheKey = 'categories';
-    } else if (action === 'sources' && key) {
-        targetUrl = `${STREAMFREE_BASE}/sources/${encodeURIComponent(key)}`;
-        ttlMs = 30 * 1000;
-        cacheKey = `sources:${key}`;
-    } else if (action === 'stream' && key) {
-        targetUrl = `${STREAMFREE_BASE}/streams/${encodeURIComponent(key)}`;
-        ttlMs = 30 * 1000;
-        cacheKey = `stream:${key}`;
-    } else if (category && category !== 'all') {
-        targetUrl = `${STREAMFREE_BASE}/streams?category=${encodeURIComponent(category)}`;
-        cacheKey = `streams:${category}`;
-    }
+    // Default: DAMITV API (ondemand.st/papi/api/streams & ping)
+    const isPing = action === 'ping';
+    const targetUrl = isPing ? `${DAMITV_BASE}/ping` : `${DAMITV_BASE}/streams`;
+    const ttlMs = isPing ? 15 * 1000 : 60 * 1000;
+    const cacheKey = isPing ? 'damitv:ping' : 'damitv:streams';
 
     const cached = getCached(cacheKey, ttlMs);
     if (cached) {
@@ -423,20 +402,19 @@ export default async function handler(req, res) {
         const upstream = await fetch(targetUrl, {
             headers: {
                 'Accept': 'application/json',
-                'User-Agent': '12AM-Sports/1.0'
+                'User-Agent': BROWSER_UA,
+                'Referer': 'https://damitv.st/'
             }
         });
-
         if (!upstream.ok) {
-            return res.status(upstream.status).json({ error: `Upstream returned ${upstream.status}` });
+            return res.status(upstream.status).json({ error: `DAMITV upstream returned ${upstream.status}` });
         }
-
         const data = await upstream.json();
         setCached(cacheKey, data);
         res.setHeader('Cache-Control', `public, max-age=${Math.round(ttlMs / 1000)}`);
         res.setHeader('X-Cache', 'MISS');
         return res.status(200).json(data);
     } catch (err) {
-        return res.status(502).json({ error: 'Failed to reach StreamFree API', detail: err.message });
+        return res.status(502).json({ error: 'Failed to reach DAMITV API', detail: err.message });
     }
 }

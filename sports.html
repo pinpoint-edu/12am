@@ -534,19 +534,15 @@
             <div class="cinema-search-container" style="display:flex; align-items:center; gap:10px; max-width:680px;">
                 <div class="cinema-search-box" style="flex:1;">
                     <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted); font-size: 0.9rem;"></i>
-                    <input type="text" id="sportsSearchInput" class="cinema-search-input" placeholder="Search teams, leagues, channels, or matches..." autocomplete="off">
-                    <button id="refreshStreamsBtn" type="button" title="Refresh streams" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; padding:4px 6px;">
+                    <input type="text" id="sportsSearchInput" class="cinema-search-input" placeholder="Search live matches, teams, leagues, or past games..." autocomplete="off">
+                    <button id="refreshStreamsBtn" type="button" title="Refresh" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; padding:4px 6px;">
                         <i class="fa-solid fa-rotate-right"></i>
                     </button>
                 </div>
-                <select id="providerSelect" class="select-dark" title="Select stream provider" style="height:44px; border-radius:16px; padding:0 12px;">
-                    <option value="all">All Sources</option>
-                    <option value="streamfree">StreamFree</option>
-                    <option value="dlhd">DaddyLiveHD</option>
-                </select>
-                <button id="dlhdKeyBtn" type="button" class="player-btn-squircle" title="Set DaddyLiveHD API Key" style="width:44px; height:44px; border-radius:16px;">
-                    <span class="material-symbols-sharp">key</span>
-                </button>
+                <div style="display:flex; gap:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); padding:4px; border-radius:16px;">
+                    <button id="modeLiveBtn" type="button" class="cinema-tab active" style="padding:7px 14px; border-radius:12px; font-size:0.84rem;">Live</button>
+                    <button id="modeArchiveBtn" type="button" class="cinema-tab" style="padding:7px 14px; border-radius:12px; font-size:0.84rem;">Past Games</button>
+                </div>
             </div>
         </header>
 
@@ -580,9 +576,15 @@
         </div>
 
         <section id="sportsGrid" class="sports-grid"></section>
+        <div id="loadMoreWrap" class="hidden" style="text-align:center; padding:1.75rem 0;">
+            <button id="loadMoreBtn" type="button" class="spotlight-btn-play" style="margin:0 auto;">
+                <i class="fa-solid fa-plus"></i>
+                <span>Load More Past Games</span>
+            </button>
+        </div>
         <div id="emptyState" class="hidden" style="text-align:center; padding:4rem 1rem; color:var(--text-muted);">
             <i class="fa-solid fa-tv" style="font-size:2.2rem; margin-bottom:0.75rem; opacity:0.5;"></i>
-            <p style="font-size:0.95rem; margin:0;">No matching live or upcoming streams right now.</p>
+            <p style="font-size:0.95rem; margin:0;">No matching streams or replays found.</p>
         </div>
     </main>
 
@@ -597,6 +599,9 @@
             </div>
             <div class="player-right">
                 <select id="sourceSelect" class="select-dark" title="Select stream source / quality"></select>
+                <a id="openExternalBtn" class="player-btn-squircle hidden" href="#" target="_blank" rel="noopener" title="Open replay link in new tab" style="text-decoration:none;">
+                    <span class="material-symbols-sharp">open_in_new</span>
+                </a>
                 <button id="shieldToggleBtn" class="player-btn-squircle" title="Smart AdShield: ON (Zero-Alarm)" style="color: var(--accent-color); border-color: var(--accent-color);">
                     <span class="material-symbols-sharp">shield</span>
                 </button>
@@ -606,22 +611,34 @@
             </div>
         </div>
         <iframe id="streamFrame" referrerpolicy="no-referrer" allow="fullscreen; picture-in-picture" allowfullscreen frameborder="0"></iframe>
+        <div id="archiveLinksPanel" class="hidden" style="flex:1; overflow-y:auto; padding:2rem; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1rem; background:#0d0d0f; color:var(--text-main);">
+            <p style="color:var(--text-muted); font-size:0.95rem; margin:0; text-align:center;">This archived game provides external replay/download links:</p>
+            <div id="archiveLinksList" style="display:flex; flex-wrap:wrap; gap:0.75rem; justify-content:center; max-width:680px;"></div>
+        </div>
     </div>
 
     <script>
         (function() {
-            const CACHE_KEY = '12am_sports_streams_cache_v2';
-            const DLHD_KEY_STORAGE = '12am_dlhd_api_key';
-            const CACHE_TTL_MS = 60 * 1000;
-            const DIRECT_API = 'https://streamfree.top/api/v1';
-            const DLHD_BASE = 'https://thedaddy.li';
-            const DLHD_FOLDERS = ['stream', 'cast', 'watch', 'plus', 'casting', 'player'];
+            const DAMITV_CACHE_KEY = '12am_sports_damitv_cache_v1';
+            const DAMITV_TTL_MS = 60 * 1000;
+            const ARCHIVE_DIRECT = 'https://bn32423.us.ci/api';
+            const SHIELD_MODE_KEY = '12am_sports_shield_mode';
+            const SANDBOX_VALUE = 'allow-scripts allow-same-origin allow-forms allow-presentation';
+            const SHIELD_MODES = ['smart', 'proxy', 'sandbox', 'off'];
 
-            let allStreams = [];
+            let viewMode = 'live'; // 'live' (DAMITV) | 'archive' (Sport-Video-Archive)
+            let liveStreams = [];
+            let liveCategories = [];
             let activeCategory = 'all';
-            let activeProvider = 'all';
+
+            let archiveSources = [];
+            let archiveVideos = [];
+            let archiveTotal = 0;
+            let archiveOffset = 0;
+            let activeArchiveSource = 'all';
+            let archiveLoading = false;
             let searchQuery = '';
-            let activeStream = null;
+            let searchTimer = null;
 
             const categoryTabsEl = document.getElementById('categoryTabs');
             const sportsGridEl = document.getElementById('sportsGrid');
@@ -630,8 +647,10 @@
             const gridHeadingEl = document.getElementById('gridHeading');
             const searchInputEl = document.getElementById('sportsSearchInput');
             const refreshBtnEl = document.getElementById('refreshStreamsBtn');
-            const providerSelectEl = document.getElementById('providerSelect');
-            const dlhdKeyBtnEl = document.getElementById('dlhdKeyBtn');
+            const modeLiveBtn = document.getElementById('modeLiveBtn');
+            const modeArchiveBtn = document.getElementById('modeArchiveBtn');
+            const loadMoreWrap = document.getElementById('loadMoreWrap');
+            const loadMoreBtn = document.getElementById('loadMoreBtn');
 
             const spotlightBanner = document.getElementById('spotlightBanner');
             const spotlightBg = document.getElementById('spotlightBg');
@@ -646,12 +665,13 @@
             const streamFrame = document.getElementById('streamFrame');
             const playerTitle = document.getElementById('playerTitle');
             const sourceSelect = document.getElementById('sourceSelect');
+            const openExternalBtn = document.getElementById('openExternalBtn');
+            const archiveLinksPanel = document.getElementById('archiveLinksPanel');
+            const archiveLinksList = document.getElementById('archiveLinksList');
             const closePlayerBtn = document.getElementById('closePlayerBtn');
             const reloadStreamBtn = document.getElementById('reloadStreamBtn');
             const shieldToggleBtn = document.getElementById('shieldToggleBtn');
-            const SHIELD_MODE_KEY = '12am_sports_shield_mode';
-            const SANDBOX_VALUE = 'allow-scripts allow-same-origin allow-forms allow-presentation';
-            const SHIELD_MODES = ['smart', 'proxy', 'sandbox', 'off'];
+
             let shieldMode = localStorage.getItem(SHIELD_MODE_KEY) || 'smart';
             if (!SHIELD_MODES.includes(shieldMode)) shieldMode = 'smart';
 
@@ -660,8 +680,8 @@
                 const iconEl = shieldToggleBtn.querySelector('.material-symbols-sharp');
                 const meta = {
                     smart: { icon: 'shield', color: 'var(--accent-color)', title: 'AdShield: Smart (Zero-Alarm + In-Frame Blocker)' },
-                    proxy: { icon: 'verified_user', color: '#22c55e', title: 'AdShield: Deep Proxy AdBlock (All Sources)' },
-                    sandbox: { icon: 'gpp_maybe', color: '#eab308', title: 'AdShield: Strict Sandbox (Blocks Popups, StreamFree may warn)' },
+                    proxy: { icon: 'verified_user', color: '#22c55e', title: 'AdShield: Deep Proxy AdBlock' },
+                    sandbox: { icon: 'gpp_maybe', color: '#eab308', title: 'AdShield: Strict Sandbox' },
                     off: { icon: 'gpp_off', color: '', title: 'AdShield: OFF' }
                 }[shieldMode];
                 if (iconEl) iconEl.textContent = meta.icon;
@@ -672,34 +692,24 @@
 
             function loadStreamUrl(rawUrl, forceFallback = false) {
                 if (!rawUrl) return;
-                const isDlhd = activeStream && activeStream.provider === 'dlhd';
-
                 if (forceFallback) {
-                    if (isDlhd) {
-                        streamFrame.setAttribute('sandbox', SANDBOX_VALUE);
-                    } else {
-                        streamFrame.removeAttribute('sandbox');
-                    }
+                    streamFrame.setAttribute('sandbox', SANDBOX_VALUE);
                     streamFrame.src = rawUrl;
                     return;
                 }
-
                 if (shieldMode === 'sandbox') {
                     streamFrame.setAttribute('sandbox', SANDBOX_VALUE);
                     streamFrame.src = rawUrl;
                 } else if (shieldMode === 'proxy' || shieldMode === 'smart') {
-                    // Unsandboxed frame + server-side & injected zero-alarm AdShield for both StreamFree & DLHD
                     streamFrame.removeAttribute('sandbox');
                     streamFrame.src = `/api/sports?action=embed&url=${encodeURIComponent(rawUrl)}`;
                 } else {
-                    // Shield Off: direct unsandboxed iframe
                     streamFrame.removeAttribute('sandbox');
                     streamFrame.src = rawUrl;
                 }
             }
 
             updateShieldUi();
-
             if (shieldToggleBtn) {
                 shieldToggleBtn.onclick = () => {
                     const idx = SHIELD_MODES.indexOf(shieldMode);
@@ -710,14 +720,12 @@
                 };
             }
 
-            // Automatic fallback if proxied embed hits Cloudflare/upstream challenge
             window.addEventListener('message', (e) => {
                 if (e.data && e.data.type === '12am-embed-fallback' && e.data.url && playerModal.style.display === 'flex') {
                     loadStreamUrl(e.data.url, true);
                 }
             });
 
-            // Parent-tab navigation guard while player is open
             window.addEventListener('beforeunload', (e) => {
                 if (playerModal.style.display === 'flex' && shieldMode !== 'off') {
                     e.preventDefault();
@@ -725,14 +733,12 @@
                 }
             });
 
-            async function fetchJsonWithFallback(proxyPath, directPath) {
-                try {
-                    const res = await fetch(proxyPath);
-                    if (res.ok) return await res.json();
-                } catch (_) {}
-                const directRes = await fetch(directPath);
-                if (!directRes.ok) throw new Error(`HTTP ${directRes.status}`);
-                return await directRes.json();
+            function esc(str) {
+                return String(str || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
             }
 
             function formatMatchTime(ts) {
@@ -742,154 +748,107 @@
                 return d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
             }
 
-            function isStreamLive(stream) {
-                return Array.isArray(stream.sources) && stream.sources.some(s => s.live);
+            function isDamitvLive(s) {
+                return s.status === 'live' || Number(s.always_live) === 1;
             }
 
-            function getBestQuality(stream) {
-                if (!Array.isArray(stream.sources) || !stream.sources.length) return 'HD';
-                const liveFirst = stream.sources.find(s => s.live) || stream.sources[0];
-                return liveFirst.quality || 'HD';
-            }
-
-            function getStreamSources(stream) {
-                if (Array.isArray(stream.sources) && stream.sources.length > 0) {
-                    return stream.sources;
-                }
-                return [{
-                    quality: 'Auto',
-                    url: `https://streamfree.top/embed/${encodeURIComponent(stream.category || 'sports')}/${encodeURIComponent(stream.stream_key)}`,
-                    live: false
-                }];
-            }
-
-            function resolveDlhdLogo(logoUrl) {
-                if (!logoUrl) return '';
-                const s = String(logoUrl).trim();
-                if (/^https?:\/\//i.test(s)) return s;
-                return `${DLHD_BASE}/${s.replace(/^\/+/, '')}`;
-            }
-
-            function buildDlhdChannelSources(channels, channels2) {
-                const list = [...(Array.isArray(channels) ? channels : []), ...(Array.isArray(channels2) ? channels2 : [])];
+            function getDamitvSources(s) {
                 const out = [];
-                list.forEach(ch => {
-                    if (!ch || !ch.channel_id) return;
-                    const cid = String(ch.channel_id).trim();
-                    const cname = ch.channel_name || `Channel ${cid}`;
-                    DLHD_FOLDERS.forEach(folder => {
+                if (Array.isArray(s.sources)) {
+                    s.sources.forEach((src, i) => {
+                        if (!src || !src.embed) return;
+                        const qLabel = src.hd ? 'HD' : (src.sd ? 'SD' : 'Auto');
                         out.push({
-                            quality: `${cname} • /${folder}/`,
-                            url: `${DLHD_BASE}/${folder}/stream-${encodeURIComponent(cid)}.php`,
-                            live: true
+                            label: `${src.name || `Source ${i + 1}`} • ${qLabel}`,
+                            url: src.embed
                         });
                     });
-                });
+                }
+                if (s.embed && !out.some(o => o.url === s.embed)) {
+                    out.unshift({ label: 'Main Embed • HD', url: s.embed });
+                }
                 return out;
             }
 
-            function normalizeDlhdSchedule(scheduleData) {
-                const items = [];
-                if (!scheduleData || typeof scheduleData !== 'object') return items;
-                Object.entries(scheduleData).forEach(([dayLabel, catsObj]) => {
-                    if (!catsObj || typeof catsObj !== 'object') return;
-                    Object.entries(catsObj).forEach(([catName, events]) => {
-                        if (!Array.isArray(events)) return;
-                        events.forEach((ev, idx) => {
-                            const sources = buildDlhdChannelSources(ev.channels, ev.channels2);
-                            if (!sources.length) return;
-                            const firstCh = (ev.channels && ev.channels[0]) || (ev.channels2 && ev.channels2[0]) || {};
-                            items.push({
-                                provider: 'dlhd',
-                                name: ev.event || 'Live Event',
-                                category: catName.toLowerCase(),
-                                league: `${catName} • ${dayLabel.split(' - ')[0]}`,
-                                stream_key: `dlhd-${firstCh.channel_id || idx}`,
-                                match_time_label: ev.time ? `${ev.time} UK` : 'Live',
-                                match_timestamp: 0,
-                                sources,
-                                thumbnail_url: resolveDlhdLogo(firstCh.logo_url)
-                            });
-                        });
-                    });
-                });
-                return items;
-            }
-
-            function normalizeDlhdChannels(channelsArr) {
-                if (!Array.isArray(channelsArr)) return [];
-                return channelsArr.map(ch => ({
-                    provider: 'dlhd',
-                    name: ch.channel_name || `Channel ${ch.channel_id}`,
-                    category: '24/7 channels',
-                    league: 'DaddyLiveHD 24/7',
-                    stream_key: `dlhd-ch-${ch.channel_id}`,
-                    match_time_label: '24/7 Live',
-                    match_timestamp: 0,
-                    sources: buildDlhdChannelSources([ch], []),
-                    thumbnail_url: resolveDlhdLogo(ch.logo_url)
-                }));
-            }
-
-            function renderCategories(categories) {
-                const list = ['all', ...categories];
+            function renderTabs() {
                 categoryTabsEl.innerHTML = '';
-                list.forEach(cat => {
-                    const btn = document.createElement('button');
-                    btn.className = `cinema-tab${activeCategory === cat ? ' active' : ''}`;
-                    btn.dataset.category = cat;
-                    btn.textContent = cat === 'all' ? 'All Sports' : cat;
-                    btn.onclick = () => {
-                        activeCategory = cat;
-                        document.querySelectorAll('#categoryTabs .cinema-tab').forEach(b => {
-                            b.classList.toggle('active', b.dataset.category === cat);
-                        });
-                        renderGrid();
-                    };
-                    categoryTabsEl.appendChild(btn);
-                });
+                if (viewMode === 'live') {
+                    const list = ['all', ...liveCategories];
+                    list.forEach(cat => {
+                        const btn = document.createElement('button');
+                        btn.className = `cinema-tab${activeCategory === cat ? ' active' : ''}`;
+                        btn.textContent = cat === 'all' ? 'All Sports' : cat.replace(/-/g, ' ');
+                        btn.onclick = () => {
+                            activeCategory = cat;
+                            renderTabs();
+                            renderLiveGrid();
+                        };
+                        categoryTabsEl.appendChild(btn);
+                    });
+                } else {
+                    const list = [{ key: 'all', label: 'All Replays' }, ...archiveSources];
+                    list.forEach(src => {
+                        const btn = document.createElement('button');
+                        btn.className = `cinema-tab${activeArchiveSource === src.key ? ' active' : ''}`;
+                        btn.textContent = src.label;
+                        btn.onclick = () => {
+                            activeArchiveSource = src.key;
+                            renderTabs();
+                            loadArchiveVideos(true);
+                        };
+                        categoryTabsEl.appendChild(btn);
+                    });
+                }
             }
 
             function renderSpotlight(streams) {
-                if (searchQuery.trim() || !streams.length) {
-                    spotlightBanner.classList.add('is-hidden-search');
-                    if (!streams.length) spotlightBanner.classList.add('hidden');
+                if (viewMode !== 'live' || searchQuery.trim() || !streams.length) {
+                    spotlightBanner.classList.add('hidden');
                     return;
                 }
                 spotlightBanner.classList.remove('hidden', 'is-hidden-search');
-                const featured = streams.find(isStreamLive) || streams[0];
-                const live = isStreamLive(featured);
+                const featured = streams.find(isDamitvLive) || streams[0];
+                const live = isDamitvLive(featured);
 
-                spotlightBg.src = featured.thumbnail_url || '';
+                spotlightBg.src = featured.poster || '';
                 spotlightBg.onerror = () => { spotlightBg.style.display = 'none'; };
                 spotlightBg.onload = () => { spotlightBg.style.display = 'block'; };
                 spotlightTitle.textContent = featured.name || 'Live Match';
-                spotlightLeague.textContent = `${featured.league || featured.category || 'Sports'}`;
-                spotlightTime.textContent = featured.match_time_label || (live ? 'Streaming Live' : formatMatchTime(featured.match_timestamp));
+                spotlightLeague.textContent = featured.league || (featured.category_name || 'Sports').replace(/-/g, ' ');
+                spotlightTime.textContent = Number(featured.always_live) === 1
+                    ? '24/7 Live Channel'
+                    : (live ? `Live • ${featured.viewers || 0} watching` : formatMatchTime(featured.starts_at));
                 spotlightBadge.classList.toggle('is-upcoming', !live);
-                spotlightBadgeText.textContent = live ? 'Live Now' : 'Upcoming';
-                spotlightPlayBtn.onclick = () => openStream(featured);
+                spotlightBadgeText.textContent = Number(featured.always_live) === 1 ? '24/7' : (live ? 'Live Now' : 'Upcoming');
+                spotlightPlayBtn.onclick = () => openLiveStream(featured);
             }
 
-            function renderGrid() {
+            function renderLiveGrid() {
+                loadMoreWrap.classList.add('hidden');
                 const q = searchQuery.trim().toLowerCase();
-                const filtered = allStreams.filter(s => {
-                    const provOk = activeProvider === 'all' || (s.provider || 'streamfree') === activeProvider;
-                    const catOk = activeCategory === 'all' || (s.category || '').toLowerCase() === activeCategory;
-                    const textOk = !q ||
+                let filtered = liveStreams.filter(s => {
+                    const catOk = activeCategory === 'all' || (s.category_name || '').toLowerCase() === activeCategory.toLowerCase();
+                    if (!catOk) return false;
+                    if (!q) return true;
+                    return (
                         (s.name || '').toLowerCase().includes(q) ||
                         (s.league || '').toLowerCase().includes(q) ||
-                        (s.category || '').toLowerCase().includes(q);
-                    return provOk && catOk && textOk;
+                        (s.category_name || '').toLowerCase().includes(q)
+                    );
                 });
 
-                filtered.sort((a, b) => Number(isStreamLive(b)) - Number(isStreamLive(a)) || (a.match_timestamp || 0) - (b.match_timestamp || 0));
+                filtered.sort((a, b) => {
+                    const aLive = isDamitvLive(a) ? 1 : 0;
+                    const bLive = isDamitvLive(b) ? 1 : 0;
+                    if (aLive !== bLive) return bLive - aLive;
+                    return (b.viewers || 0) - (a.viewers || 0);
+                });
 
                 renderSpotlight(filtered);
 
-                gridHeadingEl.textContent = q
-                    ? `Search: "${searchQuery.trim()}"`
-                    : (activeCategory === 'all' ? 'Live & Upcoming' : `${activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)} Streams`);
+                gridHeadingEl.textContent = activeCategory === 'all'
+                    ? 'Live & Upcoming (DAMITV)'
+                    : activeCategory.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
                 streamCountLabelEl.textContent = `${filtered.length} ${filtered.length === 1 ? 'stream' : 'streams'}`;
 
                 sportsGridEl.innerHTML = '';
@@ -900,27 +859,31 @@
                 emptyStateEl.classList.add('hidden');
 
                 filtered.forEach(stream => {
-                    const live = isStreamLive(stream);
-                    const quality = getBestQuality(stream);
-                    const isDlhd = stream.provider === 'dlhd';
+                    const live = isDamitvLive(stream);
+                    const is247 = Number(stream.always_live) === 1;
+                    const sources = getDamitvSources(stream);
                     const card = document.createElement('article');
                     card.className = 'sport-card';
-                    card.onclick = () => openStream(stream);
+                    card.onclick = () => openLiveStream(stream);
+
+                    const thumb = stream.poster || '';
+                    const statusLabel = is247 ? '24/7' : (live ? 'LIVE' : 'SOON');
+                    const timeLabel = is247 ? 'Always Live' : (live ? `${stream.viewers || 0} viewers` : formatMatchTime(stream.starts_at));
 
                     card.innerHTML = `
                         <div class="sport-thumb-wrap">
-                            <img class="sport-thumb" src="${stream.thumbnail_url || ''}" alt="${(stream.name || '').replace(/"/g, '&quot;')}" loading="lazy" onerror="this.style.opacity='0.15'">
-                            <span class="sport-live-pill ${live ? 'is-live' : 'is-upcoming'}">
-                                ${live ? '<span class="live-dot"></span> Live' : 'Scheduled'}
+                            ${thumb ? `<img class="sport-thumb" src="${esc(thumb)}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
+                            <div class="sport-thumb-placeholder"><i class="fa-solid fa-trophy"></i></div>
+                            <span class="sport-badge ${live ? 'badge-live' : 'badge-upcoming'}">
+                                ${live ? '<span class="live-dot"></span>' : ''}${statusLabel}
                             </span>
-                            <span class="sport-quality-pill">${isDlhd ? 'DLHD' : quality}</span>
+                            <span class="sport-quality-pill">${sources.length} ${sources.length === 1 ? 'SRC' : 'SRCS'}</span>
                         </div>
                         <div class="sport-card-body">
-                            <span class="sport-card-league">${stream.league || stream.category || 'Sports'}</span>
-                            <h3 class="sport-card-title">${stream.name || 'Stream'}</h3>
+                            <h3 class="sport-card-title">${esc(stream.name || 'Match Stream')}</h3>
                             <div class="sport-card-meta">
-                                <span>${stream.match_time_label || formatMatchTime(stream.match_timestamp)}</span>
-                                <span>${getStreamSources(stream).length} ${getStreamSources(stream).length === 1 ? 'source' : 'sources'}</span>
+                                <span>${esc(stream.league || stream.category_name || 'Sports')}</span>
+                                <span>${esc(timeLabel)}</span>
                             </div>
                         </div>
                     `;
@@ -928,42 +891,121 @@
                 });
             }
 
-            async function openStream(stream) {
-                activeStream = stream;
-                playerTitle.textContent = stream.name || 'Live Stream';
-                playerModal.style.display = 'flex';
-                document.body.style.overflow = 'hidden';
+            function renderArchiveGrid() {
+                spotlightBanner.classList.add('hidden');
+                gridHeadingEl.textContent = 'Past Games & Replays';
+                streamCountLabelEl.textContent = `${archiveVideos.length} of ${archiveTotal.toLocaleString()} replays`;
 
-                let sources = getStreamSources(stream);
-                populateSources(sources);
+                sportsGridEl.innerHTML = '';
+                if (!archiveVideos.length && !archiveLoading) {
+                    emptyStateEl.classList.remove('hidden');
+                    loadMoreWrap.classList.add('hidden');
+                    return;
+                }
+                emptyStateEl.classList.add('hidden');
 
-                // Refresh live sources for StreamFree streams on open
-                if (stream.provider !== 'dlhd') {
-                    try {
-                        const fresh = await fetchJsonWithFallback(
-                            `/api/sports?action=sources&key=${encodeURIComponent(stream.stream_key)}`,
-                            `${DIRECT_API}/sources/${encodeURIComponent(stream.stream_key)}`
-                        );
-                        if (fresh && Array.isArray(fresh.sources) && fresh.sources.length) {
-                            sources = fresh.sources;
-                            populateSources(sources);
-                        }
-                    } catch (_) {}
+                archiveVideos.forEach(item => {
+                    const card = document.createElement('article');
+                    card.className = 'sport-card';
+                    card.onclick = () => openArchiveItem(item);
+
+                    const thumb = item.thumb || item.screenshot || '';
+                    const streamCount = Array.isArray(item.streams) ? item.streams.length : 0;
+                    const pill = streamCount > 0 ? `${streamCount} PLAY` : (item.mega && item.mega.length ? 'MEGA' : (item.torrent ? 'TORRENT' : 'REPLAY'));
+
+                    card.innerHTML = `
+                        <div class="sport-thumb-wrap">
+                            ${thumb ? `<img class="sport-thumb" src="${esc(thumb)}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
+                            <div class="sport-thumb-placeholder"><i class="fa-solid fa-clapperboard"></i></div>
+                            <span class="sport-badge badge-upcoming">${esc(item.source || 'archive')}</span>
+                            <span class="sport-quality-pill">${esc(pill)}</span>
+                        </div>
+                        <div class="sport-card-body">
+                            <h3 class="sport-card-title">${esc(item.title || 'Archived Replay')}</h3>
+                            <div class="sport-card-meta">
+                                <span>${esc(item.section || 'Replay')}</span>
+                                <span>${esc(item.date || '')}</span>
+                            </div>
+                        </div>
+                    `;
+                    sportsGridEl.appendChild(card);
+                });
+
+                if (archiveVideos.length < archiveTotal) {
+                    loadMoreWrap.classList.remove('hidden');
+                } else {
+                    loadMoreWrap.classList.add('hidden');
                 }
             }
 
-            function populateSources(sources) {
+            function openLiveStream(stream) {
+                playerTitle.textContent = stream.name || 'Live Stream';
+                archiveLinksPanel.classList.add('hidden');
+                streamFrame.classList.remove('hidden');
+                sourceSelect.classList.remove('hidden');
+                openExternalBtn.classList.add('hidden');
+                playerModal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+
+                const sources = getDamitvSources(stream);
                 sourceSelect.innerHTML = '';
-                sources.forEach((src, idx) => {
+                sources.forEach(src => {
                     const opt = document.createElement('option');
                     opt.value = src.url;
-                    opt.textContent = `Source ${idx + 1} • ${src.quality || 'HD'}${src.live ? ' (Live)' : ''}`;
+                    opt.textContent = src.label;
                     sourceSelect.appendChild(opt);
                 });
-                const preferred = sources.find(s => s.live) || sources[0];
-                if (preferred) {
-                    sourceSelect.value = preferred.url;
-                    loadStreamUrl(preferred.url);
+                if (sources[0]) {
+                    sourceSelect.value = sources[0].url;
+                    loadStreamUrl(sources[0].url);
+                }
+            }
+
+            function openArchiveItem(item) {
+                playerTitle.textContent = item.title || 'Past Game Replay';
+                playerModal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+
+                const streams = Array.isArray(item.streams) ? item.streams : [];
+                if (streams.length > 0) {
+                    archiveLinksPanel.classList.add('hidden');
+                    streamFrame.classList.remove('hidden');
+                    sourceSelect.classList.remove('hidden');
+                    openExternalBtn.classList.remove('hidden');
+
+                    sourceSelect.innerHTML = '';
+                    streams.forEach((s, idx) => {
+                        const opt = document.createElement('option');
+                        opt.value = s.url;
+                        opt.textContent = s.label || `Replay Server #${idx + 1}`;
+                        sourceSelect.appendChild(opt);
+                    });
+                    sourceSelect.value = streams[0].url;
+                    openExternalBtn.href = streams[0].url;
+                    loadStreamUrl(streams[0].url);
+                } else {
+                    streamFrame.src = 'about:blank';
+                    streamFrame.classList.add('hidden');
+                    sourceSelect.classList.add('hidden');
+                    openExternalBtn.classList.add('hidden');
+                    archiveLinksPanel.classList.remove('hidden');
+                    archiveLinksList.innerHTML = '';
+
+                    const addLink = (label, href) => {
+                        if (!href) return;
+                        const a = document.createElement('a');
+                        a.href = href;
+                        a.target = '_blank';
+                        a.rel = 'noopener';
+                        a.className = 'spotlight-btn-play';
+                        a.style.textDecoration = 'none';
+                        a.innerHTML = `<i class="fa-solid fa-arrow-up-right-from-square"></i><span>${esc(label)}</span>`;
+                        archiveLinksList.appendChild(a);
+                    };
+
+                    (item.mega || []).forEach((u, i) => addLink(`MEGA${item.mega.length > 1 ? ` #${i + 1}` : ''}`, u));
+                    if (item.torrent) addLink('Torrent (.mkv.torrent)', item.torrent);
+                    if (item.pageUrl) addLink('Open Replay Page', item.pageUrl);
                 }
             }
 
@@ -971,92 +1013,165 @@
                 playerModal.style.display = 'none';
                 streamFrame.src = 'about:blank';
                 document.body.style.overflow = '';
-                activeStream = null;
             }
 
             sourceSelect.onchange = () => {
-                if (sourceSelect.value) loadStreamUrl(sourceSelect.value);
+                if (sourceSelect.value) {
+                    openExternalBtn.href = sourceSelect.value;
+                    loadStreamUrl(sourceSelect.value);
+                }
             };
             reloadStreamBtn.onclick = () => {
                 if (sourceSelect.value) loadStreamUrl(sourceSelect.value);
             };
             closePlayerBtn.onclick = closePlayer;
 
-            searchInputEl.addEventListener('input', () => {
-                searchQuery = searchInputEl.value;
-                renderGrid();
-            });
-
-            if (providerSelectEl) {
-                providerSelectEl.onchange = () => {
-                    activeProvider = providerSelectEl.value || 'all';
-                    renderGrid();
-                };
-            }
-
-            if (dlhdKeyBtnEl) {
-                dlhdKeyBtnEl.onclick = () => {
-                    const current = localStorage.getItem(DLHD_KEY_STORAGE) || '';
-                    const next = prompt('Enter your DaddyLiveHD (thedaddy.li) API key (leave blank to clear):', current);
-                    if (next !== null) {
-                        if (next.trim()) {
-                            localStorage.setItem(DLHD_KEY_STORAGE, next.trim());
-                        } else {
-                            localStorage.removeItem(DLHD_KEY_STORAGE);
-                        }
-                        loadSportsData(true);
-                    }
-                };
-            }
-
-            async function loadSportsData(forceRefresh = false) {
+            async function loadLiveData(forceRefresh = false) {
                 if (!forceRefresh) {
                     try {
-                        const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
-                        if (cached && Date.now() - cached.ts < CACHE_TTL_MS && Array.isArray(cached.streams)) {
-                            allStreams = cached.streams;
-                            renderCategories(cached.categories || []);
-                            renderGrid();
+                        const cached = JSON.parse(localStorage.getItem(DAMITV_CACHE_KEY) || 'null');
+                        if (cached && Date.now() - cached.ts < DAMITV_TTL_MS && Array.isArray(cached.streams)) {
+                            liveStreams = cached.streams;
+                            liveCategories = cached.categories || [];
+                            renderTabs();
+                            renderLiveGrid();
                             return;
                         }
                     } catch (_) {}
                 }
 
-                streamCountLabelEl.textContent = 'Loading streams...';
-                const dlhdKey = localStorage.getItem(DLHD_KEY_STORAGE) || '';
-                const dlhdQuery = dlhdKey ? `&apikey=${encodeURIComponent(dlhdKey)}` : '';
-
+                streamCountLabelEl.textContent = 'Loading DAMITV streams...';
                 try {
-                    const [catsData, streamsData, dlhdSched, dlhdChans] = await Promise.all([
-                        fetchJsonWithFallback('/api/sports?action=categories', `${DIRECT_API}/categories`).catch(() => ({ categories: [] })),
-                        fetchJsonWithFallback('/api/sports?action=streams', `${DIRECT_API}/streams`).catch(() => ({ streams: [] })),
-                        fetch(`/api/sports?provider=dlhd&action=schedule${dlhdQuery}`).then(r => r.ok ? r.json() : null).catch(() => null),
-                        dlhdKey ? fetch(`/api/sports?provider=dlhd&action=channels${dlhdQuery}`).then(r => r.ok ? r.json() : null).catch(() => null) : Promise.resolve(null)
-                    ]);
-
-                    const sfStreams = (Array.isArray(streamsData?.streams) ? streamsData.streams : []).map(s => ({ ...s, provider: 'streamfree' }));
-                    const dlhdEvents = dlhdSched && dlhdSched.data ? normalizeDlhdSchedule(dlhdSched.data) : [];
-                    const dlhd247 = dlhdChans && Array.isArray(dlhdChans.data) ? normalizeDlhdChannels(dlhdChans.data) : [];
-
-                    allStreams = [...sfStreams, ...dlhdEvents, ...dlhd247];
-                    const catSet = new Set(Array.isArray(catsData?.categories) ? catsData.categories : []);
-                    dlhdEvents.forEach(e => { if (e.category) catSet.add(e.category); });
-                    if (dlhd247.length) catSet.add('24/7 channels');
-                    const categories = Array.from(catSet);
-
+                    const res = await fetch('/api/sports?provider=damitv&action=streams');
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const data = await res.json();
+                    const groups = Array.isArray(data.streams) ? data.streams : [];
+                    const flat = [];
+                    const cats = [];
+                    groups.forEach(g => {
+                        if (g.category) cats.push(g.category);
+                        if (Array.isArray(g.streams)) {
+                            g.streams.forEach(item => flat.push(item));
+                        }
+                    });
+                    liveCategories = Array.from(new Set(cats));
+                    liveStreams = flat;
                     try {
-                        localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), categories, streams: allStreams }));
+                        localStorage.setItem(DAMITV_CACHE_KEY, JSON.stringify({
+                            ts: Date.now(),
+                            categories: liveCategories,
+                            streams: liveStreams
+                        }));
                     } catch (_) {}
-                    renderCategories(categories);
-                    renderGrid();
+                    renderTabs();
+                    renderLiveGrid();
                 } catch (err) {
-                    streamCountLabelEl.textContent = 'Unavailable';
+                    streamCountLabelEl.textContent = 'DAMITV unavailable';
                     emptyStateEl.classList.remove('hidden');
                 }
             }
 
-            refreshBtnEl.onclick = () => loadSportsData(true);
-            loadSportsData(false);
+            async function loadArchiveSources() {
+                if (archiveSources.length) return;
+                try {
+                    const res = await fetch('/api/sports?provider=archive&action=sources');
+                    const data = res.ok ? await res.json() : await fetch(`${ARCHIVE_DIRECT}/sources`).then(r => r.json());
+                    if (Array.isArray(data)) archiveSources = data;
+                } catch (_) {}
+            }
+
+            async function loadArchiveVideos(reset = true) {
+                if (archiveLoading) return;
+                archiveLoading = true;
+                if (reset) {
+                    archiveOffset = 0;
+                    archiveVideos = [];
+                    streamCountLabelEl.textContent = 'Loading past games...';
+                }
+                const params = new URLSearchParams({
+                    provider: 'archive',
+                    action: 'videos',
+                    limit: '48',
+                    offset: String(archiveOffset)
+                });
+                if (activeArchiveSource !== 'all') params.set('source', activeArchiveSource);
+                if (searchQuery.trim()) params.set('q', searchQuery.trim());
+
+                try {
+                    let data;
+                    try {
+                        const r = await fetch(`/api/sports?${params.toString()}`);
+                        if (!r.ok) throw new Error('proxy');
+                        data = await r.json();
+                    } catch (_) {
+                        const directParams = new URLSearchParams({ limit: '48', offset: String(archiveOffset) });
+                        if (activeArchiveSource !== 'all') directParams.set('source', activeArchiveSource);
+                        if (searchQuery.trim()) directParams.set('q', searchQuery.trim());
+                        const r2 = await fetch(`${ARCHIVE_DIRECT}/videos?${directParams.toString()}`);
+                        data = await r2.json();
+                    }
+                    const list = Array.isArray(data.videos) ? data.videos : [];
+                    archiveTotal = Number(data.total || list.length);
+                    archiveVideos = reset ? list : [...archiveVideos, ...list];
+                    archiveOffset += list.length;
+                    renderTabs();
+                    renderArchiveGrid();
+                } catch (err) {
+                    streamCountLabelEl.textContent = 'Archive unavailable';
+                    emptyStateEl.classList.remove('hidden');
+                } finally {
+                    archiveLoading = false;
+                }
+            }
+
+            modeLiveBtn.onclick = () => {
+                if (viewMode === 'live') return;
+                viewMode = 'live';
+                modeLiveBtn.classList.add('active');
+                modeArchiveBtn.classList.remove('active');
+                renderTabs();
+                if (liveStreams.length) {
+                    renderLiveGrid();
+                } else {
+                    loadLiveData(false);
+                }
+            };
+
+            modeArchiveBtn.onclick = async () => {
+                if (viewMode === 'archive') return;
+                viewMode = 'archive';
+                modeArchiveBtn.classList.add('active');
+                modeLiveBtn.classList.remove('active');
+                await loadArchiveSources();
+                renderTabs();
+                if (archiveVideos.length) {
+                    renderArchiveGrid();
+                } else {
+                    loadArchiveVideos(true);
+                }
+            };
+
+            loadMoreBtn.onclick = () => loadArchiveVideos(false);
+
+            searchInputEl.addEventListener('input', () => {
+                searchQuery = searchInputEl.value;
+                if (viewMode === 'live') {
+                    renderLiveGrid();
+                } else {
+                    clearTimeout(searchTimer);
+                    searchTimer = setTimeout(() => loadArchiveVideos(true), 300);
+                }
+            });
+
+            refreshBtnEl.onclick = () => {
+                if (viewMode === 'live') {
+                    loadLiveData(true);
+                } else {
+                    loadArchiveVideos(true);
+                }
+            };
+
+            loadLiveData(false);
         })();
     </script>
 </body>
