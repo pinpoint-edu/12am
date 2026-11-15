@@ -1146,18 +1146,18 @@ body.dock-right.sidebar-collapsed .messenger-frame#app-container {
 
 .music-mini-menu-container {
   position: absolute;
-  left: calc(100% + 10px);
+  left: calc(100% + 14px);
   top: 50%;
   bottom: auto;
   width: auto !important;
   z-index: 9999;
-  background: var(--navbar-bg, var(--bg-secondary, rgba(14, 14, 18, 0.92))) !important;
+  background: var(--bg-card, var(--navbar-bg, #0d0d12)) !important;
   backdrop-filter: blur(24px) !important;
   -webkit-backdrop-filter: blur(24px) !important;
-  border: 1px solid var(--navbar-border, var(--border-main, rgba(255, 255, 255, 0.1))) !important;
+  border: 1px solid var(--border-main, var(--navbar-border, rgba(255, 255, 255, 0.12))) !important;
   border-radius: 18px !important;
   padding: 6px !important;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 0, 0, 0.22) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 25px var(--accent-glow, rgba(245, 158, 11, 0.15)) !important;
   color: var(--text-main, #ffffff);
   opacity: 0;
   visibility: hidden;
@@ -1181,7 +1181,7 @@ body.dock-right.sidebar-collapsed .messenger-frame#app-container {
 
 body.dock-right .music-mini-menu-container {
   left: auto;
-  right: calc(100% + 10px);
+  right: calc(100% + 14px);
   transform: translateY(-50%) translateX(8px) scale(0.95);
 }
 

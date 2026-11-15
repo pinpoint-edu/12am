@@ -1815,16 +1815,16 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
         }
         body.dark-mode #searchInput {
-            background-color: #16161a !important;
-            border-color: #27272a !important;
-            color: #f4f4f5 !important;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+            background-color: var(--bg-card, var(--bg-secondary, #16161a)) !important;
+            border-color: var(--border-main, var(--border-primary, #27272a)) !important;
+            color: var(--text-main, #f4f4f5) !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 18px var(--accent-glow, transparent) !important;
         }
         body.dark-mode #searchInput::placeholder {
-            color: #71717a !important;
+            color: var(--text-muted, #71717a) !important;
         }
         body.dark-mode #searchInput:focus {
-            border-color: #3f3f46 !important;
+            border-color: var(--accent-primary, #ff8800) !important;
         }
         body.dark-mode .search-tab-pill {
             background-color: #18181c !important;
@@ -2344,42 +2344,48 @@
             top: 4.5rem !important;
         }
 
-        #searchInput {
-            background: var(--bg-secondary, rgba(16, 16, 22, 0.92)) !important;
-            border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.14)) !important;
-            color: var(--text-primary, #ffffff) !important;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+        #searchInput,
+        body.dark-mode #searchInput {
+            background: var(--bg-card, var(--bg-secondary, rgba(16, 16, 22, 0.92))) !important;
+            border: 1px solid var(--border-main, var(--border-primary, rgba(255, 255, 255, 0.14))) !important;
+            color: var(--text-main, var(--text-primary, #ffffff)) !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28), 0 0 18px var(--accent-glow, transparent) !important;
         }
 
-        #searchInput:focus {
+        #searchInput:focus,
+        body.dark-mode #searchInput:focus {
             border-color: var(--accent-primary, #ff8800) !important;
-            box-shadow: 0 0 0 3px var(--accent-secondary, rgba(255, 136, 0, 0.35)) !important;
+            box-shadow: 0 0 0 3px var(--accent-secondary, rgba(255, 136, 0, 0.35)), 0 0 22px var(--accent-glow, transparent) !important;
         }
 
-        html.light #searchInput {
-            background: rgba(255, 255, 255, 0.92) !important;
-            border: 1px solid rgba(15, 23, 42, 0.14) !important;
-            color: #0f172a !important;
-            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08) !important;
+        html.light #searchInput,
+        html.light body.dark-mode #searchInput {
+            background: var(--bg-card, rgba(255, 255, 255, 0.92)) !important;
+            border: 1px solid var(--border-main, rgba(15, 23, 42, 0.14)) !important;
+            color: var(--text-main, #0f172a) !important;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08), 0 0 16px var(--accent-glow, transparent) !important;
         }
 
-        html.light #searchInput::placeholder {
-            color: #64748b !important;
+        html.light #searchInput::placeholder,
+        html.light body.dark-mode #searchInput::placeholder {
+            color: var(--text-muted, #64748b) !important;
         }
 
         /* Bottom Player */
-        #bottom-player {
-            background: var(--bg-secondary, rgba(14, 14, 18, 0.95)) !important;
-            border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.12)) !important;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22) !important;
-            backdrop-filter: blur(24px) !important;
-            -webkit-backdrop-filter: blur(24px) !important;
+        #bottom-player,
+        body.dark-mode #bottom-player {
+            background: var(--navbar-bg, var(--bg-card, rgba(14, 14, 18, 0.95))) !important;
+            border: 1px solid var(--navbar-border, var(--border-main, rgba(255, 255, 255, 0.12))) !important;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22), 0 0 22px var(--accent-glow, transparent) !important;
+            backdrop-filter: blur(28px) saturate(165%) !important;
+            -webkit-backdrop-filter: blur(28px) saturate(165%) !important;
         }
 
-        html.light #bottom-player {
-            background: rgba(255, 255, 255, 0.88) !important;
-            border: 1px solid rgba(15, 23, 42, 0.12) !important;
-            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
+        html.light #bottom-player,
+        html.light body.dark-mode #bottom-player {
+            background: var(--navbar-bg, rgba(255, 255, 255, 0.9)) !important;
+            border: 1px solid var(--navbar-border, rgba(15, 23, 42, 0.12)) !important;
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.1), 0 0 20px var(--accent-glow, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
         }
         #bottom-player.group:hover,
         #bottom-player:not(.is-loading):hover {
@@ -2534,9 +2540,9 @@
 
         html.light #bottom-player,
         html.light body.dark-mode #bottom-player {
-            background: rgba(255, 255, 255, 0.9) !important;
-            border: 1px solid rgba(15, 23, 42, 0.12) !important;
-            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
+            background: var(--navbar-bg, rgba(255, 255, 255, 0.9)) !important;
+            border: 1px solid var(--navbar-border, rgba(15, 23, 42, 0.12)) !important;
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.1), 0 0 20px var(--accent-glow, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
         }
 
         html.light #now-playing-play-pause,

@@ -1799,7 +1799,7 @@
 
             // Update BG
             bgEl.style.background = mibiAvatarState.bgColor === 'theme'
-                ? 'var(--accent-color, #3B82F6)'
+                ? 'var(--accent-primary, var(--accent-color, #3B82F6))'
                 : (mibiAvatarState.bgColor || '#3B82F6');
             
             // Update Transforms (using percentages for translate)
@@ -2967,7 +2967,7 @@
                             <div id="pfpLetterSettings" class="${currentPfpMode === 'letter' ? 'flex' : 'hidden'} flex-col gap-4 mt-1">
                                 <div class="flex items-center gap-4">
                                     <!-- Top-Left Preview -->
-                                    <div id="pfp-letter-preview" class="w-20 h-20 rounded-[20px] flex items-center justify-center text-2xl font-bold shadow-lg border border-[var(--border-main)] flex-shrink-0 select-none" style="background: ${currentBg}; color: ${currentColor};">${safeCurrentLetters}</div>
+                                    <div id="pfp-letter-preview" class="w-20 h-20 rounded-[20px] flex items-center justify-center text-2xl font-bold shadow-lg border border-[var(--border-main)] flex-shrink-0 select-none" style="background: ${currentBg === 'theme' ? 'var(--accent-primary, var(--accent-color, #ff8800))' : currentBg}; color: ${currentColor};">${safeCurrentLetters}</div>
                                     <!-- Input to the Right of Preview -->
                                     <div class="flex flex-col gap-1.5 flex-1 max-w-[260px]">
                                         <label for="pfp-letter-input" class="text-xs text-[var(--text-muted)] uppercase tracking-wider font-bold">Characters (up to 3)</label>
@@ -3289,7 +3289,9 @@
                 const text = getCleanLetterText();
                 if (pfpLetterPreview) {
                     pfpLetterPreview.textContent = text;
-                    pfpLetterPreview.style.background = selectedBgColor === 'theme' ? 'var(--accent-color, #ff8800)' : selectedBgColor;
+                    pfpLetterPreview.style.background = selectedBgColor === 'theme'
+                        ? 'var(--accent-primary, var(--accent-color, #ff8800))'
+                        : selectedBgColor;
                     pfpLetterPreview.style.color = selectedTextColor;
                 }
             };

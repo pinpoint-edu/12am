@@ -86,11 +86,11 @@
       display: flex;
       align-items: center;
       min-height: 54px;
-      background: var(--bg-card);
+      background: var(--bg-card, var(--bg-secondary));
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      border: 1px solid var(--border-main);
-      border-radius: 9999px;
+      border: 1px solid var(--border-main, var(--border-primary));
+      border-radius: 18px;
       padding: 0.9rem 1.35rem;
       box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2), 0 0 20px var(--accent-glow);
       transition: all 0.25s ease;
@@ -98,7 +98,7 @@
 
     .search-box:focus-within {
       border-color: var(--accent-color);
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.25), 0 0 24px var(--accent-glow);
+      box-shadow: 0 0 0 3px var(--accent-secondary, rgba(255, 136, 0, 0.25)), 0 16px 36px rgba(0, 0, 0, 0.25), 0 0 24px var(--accent-glow);
     }
 
     .search-box input {
@@ -120,8 +120,10 @@
 
     .search-hint {
       font-size: 0.72rem;
-      padding: 2px 7px;
-      border-radius: 6px;
+      padding: 3px 8px;
+      min-width: 24px;
+      text-align: center;
+      border-radius: 9px;
       background: var(--border-faint);
       border: 1px solid var(--border-main);
       color: var(--text-muted);
