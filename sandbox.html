@@ -14,6 +14,10 @@
 
     <script src="sandbox-media.js"></script>
     <script>
+        if (location.protocol === 'file:') {
+            document.body.insertAdjacentHTML('afterbegin', '<p style="color:red">Service Workers need http(s). Open via the deployed site or run: <code>python3 -m http.server 8000</code> then visit http://localhost:8000/sandbox.html</p>');
+        }
+        const normalize = u => /^https?:\/\//i.test(u) ? u : 'https://' + u;
         const swReady = 'serviceWorker' in navigator
             ? navigator.serviceWorker.register('/sw.js').then(() => navigator.serviceWorker.ready)
             : Promise.reject(new Error('Service Worker unsupported'));
@@ -21,8 +25,8 @@
 
         async function launchSandbox() {
             await swReady;
-            const url = document.getElementById('target').value.trim();
-            if (!url) return;
+            const url = normalize(document.getElementById('target').value.trim());
+            if (!document.getElementById('target').value.trim()) return;
             document.getElementById('sandbox-frame').src = '/virtual-route/' + encodeURIComponent(url);
         }
 
