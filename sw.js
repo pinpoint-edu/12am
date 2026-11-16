@@ -1,4 +1,52 @@
 let streamRouter = null;
+
+// Virtual-route sandbox: set to your deployed Google Apps Script Web App URL (see apps-script/Code.gs)
+const BACKEND_PIPELINE = "https://script.google.com/macros/s/AKfycbzzdqqtMyOe918m4QYYLQckHA8gm4Fu5fkpZxI_-EUpla5JUmRsbOc8IQzMKTNDuXBSoQ/exec";
+const VIRTUAL_ROUTE = "/virtual-route/";
+
+function toVirtual(ref, base) {
+    try {
+        const abs = new URL(ref, base).href;
+        if (!/^https?:/i.test(abs)) return ref;
+        return VIRTUAL_ROUTE + encodeURIComponent(abs);
+    } catch (e) { return ref; }
+}
+
+function rewriteHTML(html, base) {
+    html = html.replace(/(\s(?:src|href|action|poster)\s*=\s*)(["'])(.*?)\2/gi, (m, a, q, v) => {
+        if (/^(#|data:|javascript:|blob:|mailto:)/i.test(v.trim())) return m;
+        return a + q + toVirtual(v.trim(), base) + q;
+    });
+    return html.replace(/url\(\s*(["']?)(?!data:|#)(.*?)\1\s*\)/gi, (m, q, v) => "url(" + q + toVirtual(v, base) + q + ")");
+}
+
+async function handleVirtualRoute(requestUrl) {
+    const idx = requestUrl.indexOf(VIRTUAL_ROUTE);
+    const actualTarget = decodeURIComponent(requestUrl.slice(idx + VIRTUAL_ROUTE.length).split("#")[0]);
+    if (!/^https?:\/\//i.test(actualTarget)) {
+        return new Response("Invalid target", { status: 400 });
+    }
+    if (BACKEND_PIPELINE.startsWith("YOUR_")) {
+        return new Response("Backend not configured: set BACKEND_PIPELINE in sw.js", { status: 500 });
+    }
+    try {
+        const res = await fetch(BACKEND_PIPELINE + "?b64=1&url=" + encodeURIComponent(actualTarget));
+        const data = await res.json();
+        const bin = Uint8Array.from(atob(data.body), c => c.charCodeAt(0));
+        const type = data.contentType || "application/octet-stream";
+        if (/text\/html/i.test(type)) {
+            const html = rewriteHTML(new TextDecoder().decode(bin), actualTarget);
+            return new Response(html, { status: data.status, headers: { "Content-Type": "text/html; charset=utf-8" } });
+        }
+        if (/text\/css/i.test(type)) {
+            const css = rewriteHTML(new TextDecoder().decode(bin), actualTarget);
+            return new Response(css, { status: data.status, headers: { "Content-Type": "text/css; charset=utf-8" } });
+        }
+        return new Response(bin, { status: data.status, headers: { "Content-Type": type } });
+    } catch (err) {
+        return new Response("Gateway Error: " + err, { status: 502 });
+    }
+}
 // Ultraviolet / BareMux SharedWorker disabled - proxy traffic routed via unblocker gateway
 
 let textbookHTML = "";
@@ -87,6 +135,11 @@ self.addEventListener("fetch", (event) => {
     } catch (err) {}
 
     if (event.request.method !== "GET") return;
+
+    if (new URL(event.request.url).pathname.startsWith(VIRTUAL_ROUTE)) {
+        event.respondWith(handleVirtualRoute(event.request.url));
+        return;
+    }
 
     const rawUrl = event.request.url;
     if (!rawUrl.startsWith("http://") && !rawUrl.startsWith("https://")) {

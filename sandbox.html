@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Engineering Project: Virtual Asset Sandbox</title>
+</head>
+<body>
+    <input type="text" id="target" placeholder="Enter target asset URI">
+    <button onclick="launchSandbox()">Execute In Isolated Context</button>
+    <input type="text" id="media" placeholder="Direct media URL (CORS + Range required)">
+    <button onclick="loadMedia()">Load Media Blob</button>
+    <progress id="prog" value="0" max="1" style="display:none"></progress>
+    <video id="vid" controls style="display:none;width:100%;max-height:60vh"></video>
+
+    <script src="sandbox-media.js"></script>
+    <script>
+        const swReady = 'serviceWorker' in navigator
+            ? navigator.serviceWorker.register('/sw.js').then(() => navigator.serviceWorker.ready)
+            : Promise.reject(new Error('Service Worker unsupported'));
+        swReady.then(() => console.log('Virtual File System Interception Layer Initialized.'));
+
+        async function launchSandbox() {
+            await swReady;
+            const url = document.getElementById('target').value.trim();
+            if (!url) return;
+            document.getElementById('sandbox-frame').src = '/virtual-route/' + encodeURIComponent(url);
+        }
+
+        async function loadMedia() {
+            const src = document.getElementById('media').value.trim();
+            if (!src) return;
+            const prog = document.getElementById('prog');
+            prog.style.display = '';
+            try {
+                const { url } = await fetchToBlobUrl(src, { onProgress: p => prog.value = p });
+                const v = document.getElementById('vid');
+                v.src = url; v.style.display = '';
+            } catch (err) { alert('Media load failed: ' + err.message); }
+            prog.style.display = 'none';
+        }
+    </script>
+    <iframe id="sandbox-frame" style="width:100%; height:90vh; border:none;"></iframe>
+</body>
+</html>
