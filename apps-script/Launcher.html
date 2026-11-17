@@ -5,32 +5,170 @@
   <meta charset="UTF-8">
   <style>
     body{margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
-         background:#0f1115;color:#fff;font-family:system-ui,sans-serif}
+         background:#0f1115;color:#fff;font-family:system-ui,sans-serif;gap:12px}
     button{padding:14px 32px;font-size:18px;border:0;border-radius:10px;background:#4f8cff;color:#fff;cursor:pointer}
-    button:hover{background:#3b76e8}
-    p{opacity:.6;font-size:14px;max-width:360px;text-align:center}
+    button:disabled{opacity:.6}
+    select{background:#1a1d24;color:#fff;border:1px solid #333;border-radius:8px;padding:6px}
+    p{opacity:.6;font-size:14px;max-width:360px;text-align:center;margin:0}
   </style>
 </head>
 <body>
   <h1>12am</h1>
   <button id="go">Launch</button>
+  <select id="mirror"></select>
   <p id="msg"></p>
   <script>
-    var SITE = <?!= JSON.stringify(siteUrl) ?>;
-    document.getElementById('go').onclick = function () {
-      var w = window.open('about:blank', '_blank');
-      if (!w) {
-        document.getElementById('msg').textContent = 'Popup blocked. Allow popups for this page and click again.';
-        return;
+    // ---- Config (injected from Code.gs) ----
+    var CONFIG = <?!= JSON.stringify(config) ?>;
+    // CONFIG = { siteUrl, cdnRepo, cdnRef, entry, mirrors[] }
+
+    // ---- Shim injected into the about:blank page (runs before page scripts) ----
+    // Pages come from jsDelivr (static only). Root-relative app paths are mapped to the repo on the CDN,
+    // and API/proxy paths (/api, /music-api, ...) go to the real domain (siteUrl) so web/media proxying works.
+    var SHIM = (function shim(cfg) {
+      var MIRROR_HOSTS = cfg.mirrors.map(function (m) { return new URL(m).host; });
+      var BASE = cfg.base;
+      var API_PREFIXES = ['/api/', '/music-api/', '/tglsc-proxy/', '/assets/', '/textbooks/', '/share'];
+      window.__GAS_LAUNCHER__ = true;
+
+      function fix(u) {
+        try {
+          var a = new URL(String(u), document.baseURI || BASE);
+          if (MIRROR_HOSTS.indexOf(a.host) < 0) return String(u);
+          if (a.pathname.indexOf('/gh/') === 0 || a.pathname.indexOf('/npm/') === 0) {
+            // repo-internal path under /gh/<repo>: only API prefixes beneath the repo root need redirecting
+            var rootPath = new URL(BASE).pathname;
+            if (a.pathname.indexOf(rootPath) !== 0) return a.href;
+            var sub = '/' + a.pathname.slice(rootPath.length);
+            for (var i = 0; i < API_PREFIXES.length; i++)
+              if (sub.indexOf(API_PREFIXES[i]) === 0) return cfg.siteUrl + sub + a.search;
+            return a.href;
+          }
+          for (var j = 0; j < API_PREFIXES.length; j++)
+            if (a.pathname.indexOf(API_PREFIXES[j]) === 0) return cfg.siteUrl + a.pathname + a.search;
+          return BASE + a.pathname.slice(1) + a.search + a.hash;
+        } catch (e) { return String(u); }
       }
+
+      // fetch / XHR / beacon
+      var _fetch = window.fetch;
+      window.fetch = function (input, init) {
+        if (typeof input === 'string' || input instanceof URL) return _fetch.call(this, fix(input), init);
+        if (input && input.url) return _fetch.call(this, new Request(fix(input.url), input), init);
+        return _fetch.call(this, input, init);
+      };
+      var _open = XMLHttpRequest.prototype.open;
+      XMLHttpRequest.prototype.open = function (m, u) {
+        var args = Array.prototype.slice.call(arguments); args[1] = fix(u);
+        return _open.apply(this, args);
+      };
+      if (navigator.sendBeacon) {
+        var _sb = navigator.sendBeacon.bind(navigator);
+        navigator.sendBeacon = function (u, d) { return _sb(fix(u), d); };
+      }
+
+      // src/href setters + setAttribute
+      function patchProp(proto, prop) {
+        var d = Object.getOwnPropertyDescriptor(proto, prop);
+        if (!d || !d.set) return;
+        Object.defineProperty(proto, prop, {
+          configurable: true, enumerable: d.enumerable, get: d.get,
+          set: function (v) { d.set.call(this, fix(v)); }
+        });
+      }
+      [[HTMLImageElement, 'src'], [HTMLScriptElement, 'src'], [HTMLMediaElement, 'src'],
+       [HTMLSourceElement, 'src'], [HTMLIFrameElement, 'src'], [HTMLLinkElement, 'href'],
+       [HTMLEmbedElement, 'src']].forEach(function (p) { patchProp(p[0].prototype, p[1]); });
+      var _sa = Element.prototype.setAttribute;
+      Element.prototype.setAttribute = function (n, v) {
+        if ((n === 'src' || n === 'href') && !(this instanceof HTMLAnchorElement)) v = fix(v);
+        return _sa.call(this, n, v);
+      };
+
+      // Page navigation: jsDelivr serves HTML as text/plain, so fetch + document.write ourselves
+      function pageUrl(u) {
+        var a = new URL(fix(u), BASE);
+        if (a.href.indexOf(BASE) !== 0) return null;          // outside the app
+        var p = a.pathname;
+        if (/\/$/.test(p)) p += 'index.html';
+        else if (!/\.[a-z0-9]+$/i.test(p.split('/').pop())) p += '.html'; // vercel cleanUrls
+        else if (!/\.html?$/i.test(p)) return null;           // assets
+        a.pathname = p;
+        return a;
+      }
+      function build(html, base) {
+        var inject = '<base href="' + base + '"><script>(' + shim.toString() + ')(' + JSON.stringify(cfg) + ')<\/script>';
+        return /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, function (m) { return m + inject; }) : inject + html;
+      }
+      function go(u) {
+        var a = pageUrl(u);
+        if (!a) { window.open(fix(u), '_blank'); return; }
+        _fetch(a.href + (a.search ? '&' : '?') + 't=' + Date.now()).then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.text();
+        }).then(function (html) {
+          document.open(); document.write(build(html, BASE)); document.close();
+        }).catch(function (e) { alert('Navigation failed: ' + e.message); });
+      }
+      window.__gasNavigate = go;
+      document.addEventListener('click', function (e) {
+        var a = e.target.closest && e.target.closest('a[href]');
+        if (!a || e.defaultPrevented || e.button || e.ctrlKey || e.metaKey) return;
+        var h = a.getAttribute('href');
+        if (!h || h.charAt(0) === '#' || /^(javascript|mailto|tel|blob|data):/i.test(h)) return;
+        var abs = new URL(h, document.baseURI);
+        var external = abs.host !== new URL(BASE).host && MIRROR_HOSTS.indexOf(abs.host) < 0;
+        if (external) { return; }
+        if (a.target === '_blank') return;
+        e.preventDefault();
+        go(h);
+      }, true);
+    });
+
+    // ---- Launch ----
+    function msg(t) { document.getElementById('msg').textContent = t; }
+    var sel = document.getElementById('mirror');
+    CONFIG.mirrors.forEach(function (m) {
+      var o = document.createElement('option'); o.value = m; o.textContent = new URL(m).host; sel.appendChild(o);
+    });
+
+    function baseFor(mirror) { return mirror + '/gh/' + CONFIG.cdnRepo + '@' + CONFIG.cdnRef + '/'; }
+
+    function blankFrame(w, url) { // fallback: plain iframe of the real domain
       w.document.title = 'Home';
       w.document.body.style.cssText = 'margin:0;height:100vh;overflow:hidden';
       var f = w.document.createElement('iframe');
-      f.src = SITE;
-      f.style.cssText = 'border:none;width:100%;height:100%';
+      f.src = url; f.style.cssText = 'border:none;width:100%;height:100%';
       f.allow = 'fullscreen; autoplay; clipboard-write';
-      f.setAttribute('allowfullscreen', '');
       w.document.body.appendChild(f);
+    }
+
+    document.getElementById('go').onclick = async function () {
+      var btn = this; btn.disabled = true; msg('');
+      var w = window.open('about:blank', '_blank');
+      if (!w) { msg('Popup blocked. Allow popups for this page and click again.'); btn.disabled = false; return; }
+
+      // try selected mirror first, then the rest
+      var order = [sel.value].concat(CONFIG.mirrors.filter(function (m) { return m !== sel.value; }));
+      var html = null, usedMirror = null;
+      for (var i = 0; i < order.length && !html; i++) {
+        try {
+          var r = await fetch(baseFor(order[i]) + CONFIG.entry + '?t=' + Date.now());
+          if (r.ok) { html = await r.text(); usedMirror = order[i]; }
+        } catch (e) {}
+      }
+
+      if (!html) { // CDN unreachable/blocked: fall back to the domain itself
+        blankFrame(w, CONFIG.siteUrl);
+        btn.disabled = false; return;
+      }
+
+      var base = baseFor(usedMirror);
+      var cfg = { siteUrl: CONFIG.siteUrl, mirrors: CONFIG.mirrors, base: base };
+      var inject = '<base href="' + base + '"><script>(' + SHIM.toString() + ')(' + JSON.stringify(cfg) + ')<\/script>';
+      html = /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, function (m) { return m + inject; }) : inject + html;
+      w.document.open(); w.document.write(html); w.document.close();
+      btn.disabled = false;
     };
   </script>
 </body>

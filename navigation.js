@@ -942,10 +942,10 @@
                 } catch (_) {}
 
                 setTimeout(() => {
-                    window.location.href = targetUrl;
+                    (window.__gasNavigate ? window.__gasNavigate(targetUrl) : (window.location.href = targetUrl));
                 }, 260);
             } catch (_) {
-                window.location.href = targetUrl;
+                (window.__gasNavigate ? window.__gasNavigate(targetUrl) : (window.location.href = targetUrl));
             }
         }
 

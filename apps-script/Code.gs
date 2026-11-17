@@ -5,15 +5,23 @@
  * ?url=<target>            -> raw text body (text/plain)
  * ?url=<target>&b64=1      -> JSON {status, contentType, body(base64)} (binary-safe)
  */
-// Site opened in the about:blank launcher tab. Change this if the domain changes.
+// Domain that runs the API / proxy endpoints (web, media, music...). Also the fallback if the CDN is blocked.
 var SITE_URL = "https://twelveam.broshan.com.np";
+// Static site is served from jsDelivr: <mirror>/gh/<CDN_REPO>@<CDN_REF>/<ENTRY>  (repo must be PUBLIC)
+var CDN_REPO = "pinpoint-edu/12am";
+var CDN_REF = "main";
+var ENTRY = "index.html";
+var MIRRORS = [
+  "https://cdn.jsdelivr.net", "https://fastly.jsdelivr.net",
+  "https://gcore.jsdelivr.net", "https://testingcf.jsdelivr.net"
+];
 
 function doGet(e) {
   var targetUrl = e.parameter.url;
   if (!targetUrl) {
     // No ?url= -> serve the launcher page
     var t = HtmlService.createTemplateFromFile('Launcher');
-    t.siteUrl = SITE_URL;
+    t.config = { siteUrl: SITE_URL, cdnRepo: CDN_REPO, cdnRef: CDN_REF, entry: ENTRY, mirrors: MIRRORS };
     return t.evaluate()
       .setTitle('Home')
       .addMetaTag('viewport', 'width=device-width, initial-scale=1')
