@@ -4,46 +4,59 @@
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@200;300;400;500&display=swap" rel="stylesheet">
   <style>
-    *{box-sizing:border-box}
-    html,body{margin:0;height:100%}
-    body{display:flex;align-items:center;justify-content:center;color:#e8eaf0;
-         font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
-         background:radial-gradient(1200px 600px at 20% -10%,#1d2450 0%,transparent 60%),
-                    radial-gradient(900px 500px at 110% 110%,#3b1d5a 0%,transparent 55%),#0a0b12}
-    .card{width:min(420px,92vw);padding:44px 36px 30px;text-align:center;border-radius:24px;
-          background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);
-          box-shadow:0 30px 80px rgba(0,0,0,.55);backdrop-filter:blur(14px)}
-    .logo{font-size:56px;font-weight:800;letter-spacing:-2px;margin:0;
-          background:linear-gradient(135deg,#8ea2ff,#c58bff);-webkit-background-clip:text;background-clip:text;color:transparent}
-    .tag{margin:6px 0 30px;color:#9aa0b4;font-size:14px}
-    #go{width:100%;padding:15px 20px;font-size:16px;font-weight:600;color:#fff;border:0;border-radius:14px;cursor:pointer;
-        background:linear-gradient(135deg,#5b7cff,#9b5cff);box-shadow:0 10px 30px rgba(110,100,255,.35);
-        transition:transform .12s,box-shadow .12s,opacity .12s}
-    #go:hover{transform:translateY(-1px);box-shadow:0 14px 36px rgba(110,100,255,.5)}
-    #go:active{transform:translateY(0)}
-    #go:disabled{opacity:.55;cursor:default;transform:none}
-    #msg{min-height:20px;margin:16px 0 0;font-size:13px;color:#ff9aa8}
-    details{margin-top:18px;text-align:left;font-size:13px;color:#8d93a8}
-    summary{cursor:pointer;text-align:center;list-style:none;opacity:.8}
+    :root{--bg:#040404;--card:#0c0c0e;--text:#fff;--muted:#a1a1aa;--accent:#ff8800;
+          --glow:rgba(255,136,0,.4);--border:#1c1c20;--faint:rgba(255,255,255,.05)}
+    *{box-sizing:border-box;font-family:'Geist',-apple-system,BlinkMacSystemFont,sans-serif}
+    html,body{margin:0;min-height:100%}
+    body{min-height:100vh;display:flex;align-items:center;justify-content:flex-end;
+         padding:0 clamp(24px,8vw,120px);color:var(--text);font-weight:300;overflow:hidden;
+         background-color:var(--bg);
+         background-image:radial-gradient(var(--faint) 1.5px,transparent 0);background-size:48px 48px}
+    .bg{position:fixed;inset:0;pointer-events:none;opacity:.9;
+        background:radial-gradient(circle 360px at 92% 10%,var(--accent) 0%,var(--glow) 45%,transparent 75%),
+                   radial-gradient(circle 700px at 90% 14%,var(--glow) 0%,transparent 65%)}
+    main{position:relative;z-index:1;text-align:right;display:flex;flex-direction:column;align-items:flex-end;max-width:520px}
+    .eyebrow{margin:0 0 18px;font-size:12px;font-weight:400;letter-spacing:.18em;text-transform:uppercase;
+             color:var(--accent);opacity:.85}
+    h1{margin:0 0 14px;font-size:clamp(30px,5vw,44px);font-weight:300;letter-spacing:-.02em;line-height:1.15;
+       background-image:linear-gradient(90deg,var(--accent),var(--muted),var(--muted),var(--accent));
+       background-size:300% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
+       -webkit-text-fill-color:transparent;animation:shine 8s linear infinite}
+    @keyframes shine{to{background-position:300% center}}
+    .sub{margin:0 0 28px;font-size:14px;line-height:1.6;color:var(--muted)}
+    #go{display:inline-flex;align-items:center;gap:10px;padding:.65rem 1.4rem;font-size:.85rem;font-weight:400;
+        color:var(--accent);background:rgba(255,136,0,.12);border:1px solid var(--accent);outline:1px solid var(--glow);
+        border-radius:14px;cursor:pointer;transition:all .2s cubic-bezier(.16,1,.3,1)}
+    #go:hover{background:var(--accent);color:#fff;transform:translateY(-1px);box-shadow:0 12px 30px -8px var(--glow)}
+    #go:disabled{opacity:.5;cursor:default;transform:none;box-shadow:none}
+    #msg{min-height:18px;margin:14px 0 0;font-size:12px;color:#f87171}
+    details{margin-top:22px;font-size:12px;color:var(--muted)}
+    summary{cursor:pointer;list-style:none;opacity:.6;transition:opacity .2s}
+    summary:hover{opacity:1}
     summary::-webkit-details-marker{display:none}
-    .row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
-    select{flex:1;background:rgba(255,255,255,.06);color:#e8eaf0;border:1px solid rgba(255,255,255,.12);
-           border-radius:10px;padding:8px 10px;font-size:13px;outline:none}
-    select option{background:#14161f}
+    .row{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:10px}
+    select{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:10px;
+           padding:6px 10px;font-size:12px;font-weight:300;outline:none}
+    select:focus{border-color:var(--accent)}
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1 class="logo">12am</h1>
-    <p class="tag">Opens in a new cloaked tab</p>
+  <div class="bg"></div>
+  <main>
+    <p class="eyebrow">12AM</p>
+    <h1>A new era of focus.</h1>
+    <p class="sub">Opens in a new cloaked tab.</p>
     <button id="go">Launch</button>
     <p id="msg"></p>
     <details>
       <summary>Advanced</summary>
       <div class="row"><span>Mirror</span><select id="mirror"></select></div>
     </details>
-  </div>
+  </main>
 
   <script>
     // Config injected from Code.gs: { siteUrl, cdnRepo, cdnRef, entry, mirrors[] }
