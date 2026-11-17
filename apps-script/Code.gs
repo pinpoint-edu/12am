@@ -5,11 +5,19 @@
  * ?url=<target>            -> raw text body (text/plain)
  * ?url=<target>&b64=1      -> JSON {status, contentType, body(base64)} (binary-safe)
  */
+// Site opened in the about:blank launcher tab. Change this if the domain changes.
+var SITE_URL = "https://twelveam.broshan.com.np";
+
 function doGet(e) {
   var targetUrl = e.parameter.url;
   if (!targetUrl) {
-    return ContentService.createTextOutput("System Error: Missing Parameter Vector.")
-      .setMimeType(ContentService.MimeType.TEXT);
+    // No ?url= -> serve the launcher page
+    var t = HtmlService.createTemplateFromFile('Launcher');
+    t.siteUrl = SITE_URL;
+    return t.evaluate()
+      .setTitle('Home')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
   if (!/^https?:\/\//i.test(targetUrl)) {
     return ContentService.createTextOutput("System Error: Only http(s) targets allowed.")
