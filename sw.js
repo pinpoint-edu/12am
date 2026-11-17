@@ -17,7 +17,7 @@ const clientBases = new Map();
 const PASSTHROUGH_HOSTS = ["unpkg.com", "cdn.jsdelivr.net"]; // Ruffle (Flash emulator) assets
 const BLOCK_HOSTS = ["fuseplatform.net", "btloader.com", "doubleclick.net", "googlesyndication.com",
     "googletagmanager.com", "google-analytics.com", "adnxs.com", "amazon-adsystem.com", "pubmatic.com",
-    "rubiconproject.com", "criteo.com", "openx.net", "adsrvr.org", "ezoic.net", "taboola.com", "outbrain.com"];
+    "rubiconproject.com", "snigelweb.com", "adngin.com", "amazon-adsystem.com", "adsafeprotected.com", "moatads.com", "scorecardresearch.com", "quantserve.com", "permutive.com", "cloudflareinsights.com", "criteo.com", "openx.net", "adsrvr.org", "ezoic.net", "taboola.com", "outbrain.com"];
 const RUFFLE_INJECT = '<script>window.RufflePlayer=window.RufflePlayer||{};window.RufflePlayer.config={publicPath:"https://unpkg.com/@ruffle-rs/ruffle/",warnOnUnsupportedContent:false};<\/script>' +
     '<script src="https://unpkg.com/@ruffle-rs/ruffle"><\/script>';
 
@@ -39,9 +39,22 @@ function rewriteHTML(html, base) {
     return html.replace(/url\(\s*(["']?)(?!data:|#)(.*?)\1\s*\)/gi, (m, q, v) => "url(" + q + toVirtual(v, base) + q + ")");
 }
 
-async function handleVirtualRoute(requestUrl) {
+const NULL_BODY = [101, 204, 205, 304];
+function mk(body, status, headers) {
+    if (NULL_BODY.includes(status)) body = null;
+    if (status < 200 || status > 599) status = 502;
+    return new Response(body, { status, headers });
+}
+
+async function handleVirtualRoute(requestUrl, base) {
     const idx = requestUrl.indexOf(VIRTUAL_ROUTE);
-    const actualTarget = decodeURIComponent(requestUrl.slice(idx + VIRTUAL_ROUTE.length).split("#")[0]);
+    let rest = requestUrl.slice(idx + VIRTUAL_ROUTE.length).split("#")[0];
+    let actualTarget;
+    try {
+        if (/^https?(:|%3A)/i.test(rest)) actualTarget = decodeURIComponent(rest);
+        else if (base) actualTarget = new URL(decodeURIComponent(rest), base).href; // relative path built by page JS/HTML
+        else actualTarget = "";
+    } catch (e) { actualTarget = ""; }
     if (!/^https?:\/\//i.test(actualTarget)) {
         return new Response("Invalid target", { status: 400 });
     }
@@ -56,13 +69,13 @@ async function handleVirtualRoute(requestUrl) {
         if (/text\/html/i.test(type)) {
             let html = rewriteHTML(new TextDecoder().decode(bin), actualTarget);
             html = /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, m => m + RUFFLE_INJECT) : RUFFLE_INJECT + html;
-            return new Response(html, { status: data.status, headers: { "Content-Type": "text/html; charset=utf-8" } });
+            return mk(html, data.status, { "Content-Type": "text/html; charset=utf-8" });
         }
         if (/text\/css/i.test(type)) {
             const css = rewriteHTML(new TextDecoder().decode(bin), actualTarget);
-            return new Response(css, { status: data.status, headers: { "Content-Type": "text/css; charset=utf-8" } });
+            return mk(css, data.status, { "Content-Type": "text/css; charset=utf-8" });
         }
-        return new Response(bin, { status: data.status, headers: { "Content-Type": type } });
+        return mk(bin, data.status, { "Content-Type": type });
     } catch (err) {
         return new Response("Gateway Error: " + err, { status: 502 });
     }
@@ -160,9 +173,10 @@ self.addEventListener("fetch", (event) => {
     if (reqUrl.pathname.startsWith(VIRTUAL_ROUTE)) {
         if (event.resultingClientId) {
             const b = baseFromUrl(event.request.url);
-            if (b) clientBases.set(event.resultingClientId, b);
+            if (b && /^https?:/i.test(b)) clientBases.set(event.resultingClientId, b);
         }
-        event.respondWith(handleVirtualRoute(event.request.url));
+        const vbase = (event.clientId && clientBases.get(event.clientId)) || baseFromUrl(event.request.referrer || "");
+        event.respondWith(handleVirtualRoute(event.request.url, vbase));
         return;
     }
 
@@ -171,7 +185,7 @@ self.addEventListener("fetch", (event) => {
     if (frameBase && event.request.mode !== "navigate") {
         if (hostMatches(reqUrl.hostname, PASSTHROUGH_HOSTS)) return;
         if (hostMatches(reqUrl.hostname, BLOCK_HOSTS)) {
-            event.respondWith(new Response("", { status: 204 }));
+            event.respondWith(new Response(null, { status: 204 }));
             return;
         }
         let abs;
