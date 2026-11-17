@@ -3,58 +3,98 @@
 <head>
   <base target="_top">
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body{margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
-         background:#0f1115;color:#fff;font-family:system-ui,sans-serif;gap:12px}
-    button{padding:14px 32px;font-size:18px;border:0;border-radius:10px;background:#4f8cff;color:#fff;cursor:pointer}
-    button:disabled{opacity:.6}
-    select{background:#1a1d24;color:#fff;border:1px solid #333;border-radius:8px;padding:6px}
-    p{opacity:.6;font-size:14px;max-width:360px;text-align:center;margin:0}
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%}
+    body{display:flex;align-items:center;justify-content:center;color:#e8eaf0;
+         font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+         background:radial-gradient(1200px 600px at 20% -10%,#1d2450 0%,transparent 60%),
+                    radial-gradient(900px 500px at 110% 110%,#3b1d5a 0%,transparent 55%),#0a0b12}
+    .card{width:min(420px,92vw);padding:44px 36px 30px;text-align:center;border-radius:24px;
+          background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);
+          box-shadow:0 30px 80px rgba(0,0,0,.55);backdrop-filter:blur(14px)}
+    .logo{font-size:56px;font-weight:800;letter-spacing:-2px;margin:0;
+          background:linear-gradient(135deg,#8ea2ff,#c58bff);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .tag{margin:6px 0 30px;color:#9aa0b4;font-size:14px}
+    #go{width:100%;padding:15px 20px;font-size:16px;font-weight:600;color:#fff;border:0;border-radius:14px;cursor:pointer;
+        background:linear-gradient(135deg,#5b7cff,#9b5cff);box-shadow:0 10px 30px rgba(110,100,255,.35);
+        transition:transform .12s,box-shadow .12s,opacity .12s}
+    #go:hover{transform:translateY(-1px);box-shadow:0 14px 36px rgba(110,100,255,.5)}
+    #go:active{transform:translateY(0)}
+    #go:disabled{opacity:.55;cursor:default;transform:none}
+    #msg{min-height:20px;margin:16px 0 0;font-size:13px;color:#ff9aa8}
+    details{margin-top:18px;text-align:left;font-size:13px;color:#8d93a8}
+    summary{cursor:pointer;text-align:center;list-style:none;opacity:.8}
+    summary::-webkit-details-marker{display:none}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
+    select{flex:1;background:rgba(255,255,255,.06);color:#e8eaf0;border:1px solid rgba(255,255,255,.12);
+           border-radius:10px;padding:8px 10px;font-size:13px;outline:none}
+    select option{background:#14161f}
   </style>
 </head>
 <body>
-  <h1>12am</h1>
-  <button id="go">Launch</button>
-  <select id="mirror"></select>
-  <p id="msg"></p>
-  <script>
-    // ---- Config (injected from Code.gs) ----
-    var CONFIG = <?!= JSON.stringify(config) ?>;
-    // CONFIG = { siteUrl, cdnRepo, cdnRef, entry, mirrors[] }
+  <div class="card">
+    <h1 class="logo">12am</h1>
+    <p class="tag">Opens in a new cloaked tab</p>
+    <button id="go">Launch</button>
+    <p id="msg"></p>
+    <details>
+      <summary>Advanced</summary>
+      <div class="row"><span>Mirror</span><select id="mirror"></select></div>
+    </details>
+  </div>
 
-    // ---- Shim injected into the about:blank page (runs before page scripts) ----
-    // Pages come from jsDelivr (static only). Root-relative app paths are mapped to the repo on the CDN,
-    // and API/proxy paths (/api, /music-api, ...) go to the real domain (siteUrl) so web/media proxying works.
-    var SHIM = (function shim(cfg) {
-      var MIRROR_HOSTS = cfg.mirrors.map(function (m) { return new URL(m).host; });
+  <script>
+    // Config injected from Code.gs: { siteUrl, cdnRepo, cdnRef, entry, mirrors[] }
+    var CONFIG = <?!= JSON.stringify(config) ?>;
+
+    // ============ Runs INSIDE each page iframe, before the page's own scripts ============
+    function frameShim(cfg) {
       var BASE = cfg.base;
-      var API_PREFIXES = ['/api/', '/music-api/', '/tglsc-proxy/', '/assets/', '/textbooks/', '/share'];
+      var HOSTS = cfg.mirrors.map(function (m) { return new URL(m).host; });
+      try { if (location.origin && location.origin !== 'null') HOSTS.push(new URL(location.origin).host); } catch (e) {}
+      var API = ['/api/', '/music-api/', '/tglsc-proxy/', '/assets/', '/textbooks/', '/share'];
       window.__GAS_LAUNCHER__ = true;
 
+      // Storage can be blocked/partitioned in about:blank; fall back to memory so pages don't crash
+      ['localStorage', 'sessionStorage'].forEach(function (name) {
+        try { window[name].getItem('__t'); } catch (e) {
+          var mem = {};
+          var fake = {
+            getItem: function (k) { return Object.prototype.hasOwnProperty.call(mem, k) ? mem[k] : null; },
+            setItem: function (k, v) { mem[k] = String(v); },
+            removeItem: function (k) { delete mem[k]; },
+            clear: function () { mem = {}; },
+            key: function (i) { return Object.keys(mem)[i] || null; },
+            get length() { return Object.keys(mem).length; }
+          };
+          try { Object.defineProperty(window, name, { configurable: true, get: function () { return fake; } }); } catch (e2) {}
+        }
+      });
+
+      // Map any URL the page builds -> where it actually lives
       function fix(u) {
         try {
           var a = new URL(String(u), document.baseURI || BASE);
-          if (MIRROR_HOSTS.indexOf(a.host) < 0) return String(u);
-          if (a.pathname.indexOf('/gh/') === 0 || a.pathname.indexOf('/npm/') === 0) {
-            // repo-internal path under /gh/<repo>: only API prefixes beneath the repo root need redirecting
-            var rootPath = new URL(BASE).pathname;
-            if (a.pathname.indexOf(rootPath) !== 0) return a.href;
-            var sub = '/' + a.pathname.slice(rootPath.length);
-            for (var i = 0; i < API_PREFIXES.length; i++)
-              if (sub.indexOf(API_PREFIXES[i]) === 0) return cfg.siteUrl + sub + a.search;
-            return a.href;
-          }
-          for (var j = 0; j < API_PREFIXES.length; j++)
-            if (a.pathname.indexOf(API_PREFIXES[j]) === 0) return cfg.siteUrl + a.pathname + a.search;
-          return BASE + a.pathname.slice(1) + a.search + a.hash;
+          if (HOSTS.indexOf(a.host) < 0) return String(u);
+          var path = a.pathname, root = new URL(BASE).pathname, sub;
+          if (path.indexOf(root) === 0) sub = '/' + path.slice(root.length);
+          else if (path.indexOf('/gh/') === 0 || path.indexOf('/npm/') === 0) return a.href; // other CDN package
+          else sub = path;
+          for (var i = 0; i < API.length; i++)
+            if (sub.indexOf(API[i]) === 0) return cfg.siteUrl + sub + a.search;
+          return BASE + sub.slice(1) + a.search + a.hash;
         } catch (e) { return String(u); }
       }
+      window.__gasFix = fix;
 
-      // fetch / XHR / beacon
       var _fetch = window.fetch;
       window.fetch = function (input, init) {
-        if (typeof input === 'string' || input instanceof URL) return _fetch.call(this, fix(input), init);
-        if (input && input.url) return _fetch.call(this, new Request(fix(input.url), input), init);
+        try {
+          if (typeof input === 'string' || input instanceof URL) return _fetch.call(this, fix(input), init);
+          if (input && input.url) return _fetch.call(this, new Request(fix(input.url), input), init);
+        } catch (e) {}
         return _fetch.call(this, input, init);
       };
       var _open = XMLHttpRequest.prototype.open;
@@ -66,8 +106,11 @@
         var _sb = navigator.sendBeacon.bind(navigator);
         navigator.sendBeacon = function (u, d) { return _sb(fix(u), d); };
       }
+      if (window.EventSource) {
+        var _ES = window.EventSource;
+        window.EventSource = function (u, o) { return new _ES(fix(u), o); };
+      }
 
-      // src/href setters + setAttribute
       function patchProp(proto, prop) {
         var d = Object.getOwnPropertyDescriptor(proto, prop);
         if (!d || !d.set) return;
@@ -76,98 +119,145 @@
           set: function (v) { d.set.call(this, fix(v)); }
         });
       }
-      [[HTMLImageElement, 'src'], [HTMLScriptElement, 'src'], [HTMLMediaElement, 'src'],
-       [HTMLSourceElement, 'src'], [HTMLIFrameElement, 'src'], [HTMLLinkElement, 'href'],
-       [HTMLEmbedElement, 'src']].forEach(function (p) { patchProp(p[0].prototype, p[1]); });
+      [[HTMLImageElement, 'src'], [HTMLScriptElement, 'src'], [HTMLMediaElement, 'src'], [HTMLSourceElement, 'src'],
+       [HTMLEmbedElement, 'src'], [HTMLLinkElement, 'href'], [HTMLIFrameElement, 'src']].forEach(function (p) { patchProp(p[0].prototype, p[1]); });
       var _sa = Element.prototype.setAttribute;
       Element.prototype.setAttribute = function (n, v) {
-        if ((n === 'src' || n === 'href') && !(this instanceof HTMLAnchorElement)) v = fix(v);
+        if ((n === 'src' || n === 'href' || n === 'poster') && !(this instanceof HTMLAnchorElement)) v = fix(v);
         return _sa.call(this, n, v);
       };
 
-      // Page navigation: jsDelivr serves HTML as text/plain, so fetch + document.write ourselves
+      // ---- Navigation: hand every page change to the shell so we never leave about:blank ----
+      function go(u) { parent.__gasLoad(fix(new URL(String(u), document.baseURI).href)); }
+      window.__gasNavigate = go;
+
+      function isAppUrl(abs) { var a = new URL(abs); return HOSTS.indexOf(a.host) >= 0; }
+
+      document.addEventListener('click', function (e) {
+        var a = e.target && e.target.closest && e.target.closest('a[href]');
+        if (!a || e.defaultPrevented || e.button || e.ctrlKey || e.metaKey || e.shiftKey) return;
+        var h = a.getAttribute('href');
+        if (!h || h.charAt(0) === '#' || /^(javascript|mailto|tel|blob|data):/i.test(h)) return;
+        if (a.target && a.target !== '_self') return;
+        var abs; try { abs = new URL(h, document.baseURI).href; } catch (er) { return; }
+        if (!isAppUrl(abs)) return;
+        e.preventDefault();
+        go(abs);
+      }, true);
+
+      // Catches location.href=, location.assign/replace, window.open(_self), form posts, reload
+      if (window.navigation && navigation.addEventListener) {
+        navigation.addEventListener('navigate', function (e) {
+          if (e.hashChange || e.downloadRequest || !e.cancelable) return;
+          var dest = e.destination && e.destination.url;
+          if (!dest) return;
+          if (e.navigationType === 'reload') { e.preventDefault(); parent.__gasReload(); return; }
+          if (/^(about:|blob:|data:|javascript:)/i.test(dest)) return;
+          try { if (!isAppUrl(dest)) return; } catch (er) { return; }
+          e.preventDefault();
+          go(dest);
+        });
+      }
+    }
+
+    // ============ Runs in the about:blank TAB (the shell). One iframe per page. ============
+    function shellMain(cfg, shimSrc) {
+      var frame = document.getElementById('app');
+      var current = null;
+
       function pageUrl(u) {
-        var a = new URL(fix(u), BASE);
-        if (a.href.indexOf(BASE) !== 0) return null;          // outside the app
-        var p = a.pathname;
+        var a;
+        try { a = new URL(u, current || cfg.base); } catch (e) { return null; }
+        if (a.href.indexOf(cfg.base) !== 0) return null;
+        var p = a.pathname, last = p.split('/').pop();
         if (/\/$/.test(p)) p += 'index.html';
-        else if (!/\.[a-z0-9]+$/i.test(p.split('/').pop())) p += '.html'; // vercel cleanUrls
-        else if (!/\.html?$/i.test(p)) return null;           // assets
+        else if (!/\.[a-z0-9]+$/i.test(last)) p += '.html';      // cleanUrls: /games -> games.html
+        else if (!/\.html?$/i.test(last)) return null;           // an asset, not a page
         a.pathname = p;
         return a;
       }
-      function build(html, base) {
-        var inject = '<base href="' + base + '"><script>(' + shim.toString() + ')(' + JSON.stringify(cfg) + ')<\/script>';
+
+      function build(html, a) {
+        var dir = a.href.slice(0, a.href.lastIndexOf('/') + 1);
+        var inject = '<base href="' + dir + '"><script>(' + shimSrc + ')(' + JSON.stringify(cfg) + ')<\/script>';
         return /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, function (m) { return m + inject; }) : inject + html;
       }
-      function go(u) {
-        var a = pageUrl(u);
-        if (!a) { window.open(fix(u), '_blank'); return; }
-        _fetch(a.href + (a.search ? '&' : '?') + 't=' + Date.now()).then(function (r) {
-          if (!r.ok) throw new Error('HTTP ' + r.status);
-          return r.text();
-        }).then(function (html) {
-          document.open(); document.write(build(html, BASE)); document.close();
-        }).catch(function (e) { alert('Navigation failed: ' + e.message); });
-      }
-      window.__gasNavigate = go;
-      document.addEventListener('click', function (e) {
-        var a = e.target.closest && e.target.closest('a[href]');
-        if (!a || e.defaultPrevented || e.button || e.ctrlKey || e.metaKey) return;
-        var h = a.getAttribute('href');
-        if (!h || h.charAt(0) === '#' || /^(javascript|mailto|tel|blob|data):/i.test(h)) return;
-        var abs = new URL(h, document.baseURI);
-        var external = abs.host !== new URL(BASE).host && MIRROR_HOSTS.indexOf(abs.host) < 0;
-        if (external) { return; }
-        if (a.target === '_blank') return;
-        e.preventDefault();
-        go(h);
-      }, true);
-    });
 
-    // ---- Launch ----
-    function msg(t) { document.getElementById('msg').textContent = t; }
+      function showError(msg) {
+        frame.srcdoc = '<body style="background:#0a0b12;color:#e8eaf0;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center"><div><h3>Couldn\'t load page</h3><p style="opacity:.6">' + msg + '</p><button onclick="parent.__gasReload()" style="padding:10px 18px;border-radius:10px;border:0;background:#5b7cff;color:#fff;cursor:pointer">Retry</button></div></body>';
+      }
+
+      window.__gasLoad = function (u) {
+        var a = pageUrl(u);
+        if (!a) { window.open(u, '_blank'); return; }
+        current = a.href;
+        fetch(a.href + (a.search ? '&' : '?') + 't=' + Date.now())
+          .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+          .then(function (html) { frame.srcdoc = build(html, a); })
+          .catch(function (e) { showError(e.message); });
+      };
+      window.__gasReload = function () { if (current) window.__gasLoad(current); };
+
+      // Keep the tab title in sync with the page
+      setInterval(function () {
+        try { var t = frame.contentDocument.title; if (t && t !== document.title) document.title = t; } catch (e) {}
+      }, 800);
+
+      // top.location.* from inside pages
+      if (window.navigation && navigation.addEventListener) {
+        navigation.addEventListener('navigate', function (e) {
+          if (e.hashChange || !e.cancelable || e.downloadRequest) return;
+          var dest = e.destination && e.destination.url;
+          if (!dest || /^(about:|blob:|data:|javascript:)/i.test(dest)) return;
+          if (pageUrl(dest)) { e.preventDefault(); window.__gasLoad(dest); }
+        });
+      }
+
+      window.__gasLoad(cfg.base + cfg.entry);
+    }
+
+    // ============ Launcher UI ============
+    function msg(t) { document.getElementById('msg').textContent = t || ''; }
     var sel = document.getElementById('mirror');
     CONFIG.mirrors.forEach(function (m) {
       var o = document.createElement('option'); o.value = m; o.textContent = new URL(m).host; sel.appendChild(o);
     });
-
     function baseFor(mirror) { return mirror + '/gh/' + CONFIG.cdnRepo + '@' + CONFIG.cdnRef + '/'; }
 
-    function blankFrame(w, url) { // fallback: plain iframe of the real domain
-      w.document.title = 'Home';
-      w.document.body.style.cssText = 'margin:0;height:100vh;overflow:hidden';
-      var f = w.document.createElement('iframe');
-      f.src = url; f.style.cssText = 'border:none;width:100%;height:100%';
-      f.allow = 'fullscreen; autoplay; clipboard-write';
-      w.document.body.appendChild(f);
+    function shellHtml(cfg) {
+      return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Home</title>' +
+        '<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}' +
+        'iframe{border:0;width:100%;height:100%;display:block}</style></head><body>' +
+        '<iframe id="app" allow="fullscreen; autoplay; clipboard-read; clipboard-write; gamepad; microphone; camera; encrypted-media; ' +
+        'pointer-lock; web-share" allowfullscreen></iframe>' +
+        '<script>(' + shellMain.toString() + ')(' + JSON.stringify(cfg) + ',' + JSON.stringify(frameShim.toString()) + ')<\/script>' +
+        '</body></html>';
+    }
+
+    function fallbackFrame(w, url) {
+      w.document.open();
+      w.document.write('<!DOCTYPE html><title>Home</title><body style="margin:0;height:100vh;overflow:hidden">' +
+        '<iframe src="' + url + '" style="border:0;width:100%;height:100%" allow="fullscreen; autoplay; clipboard-write" allowfullscreen></iframe></body>');
+      w.document.close();
     }
 
     document.getElementById('go').onclick = async function () {
       var btn = this; btn.disabled = true; msg('');
       var w = window.open('about:blank', '_blank');
-      if (!w) { msg('Popup blocked. Allow popups for this page and click again.'); btn.disabled = false; return; }
+      if (!w) { msg('Popup blocked. Allow popups for this page, then click again.'); btn.disabled = false; return; }
 
-      // try selected mirror first, then the rest
       var order = [sel.value].concat(CONFIG.mirrors.filter(function (m) { return m !== sel.value; }));
-      var html = null, usedMirror = null;
-      for (var i = 0; i < order.length && !html; i++) {
+      var good = null;
+      for (var i = 0; i < order.length && !good; i++) {
         try {
           var r = await fetch(baseFor(order[i]) + CONFIG.entry + '?t=' + Date.now());
-          if (r.ok) { html = await r.text(); usedMirror = order[i]; }
+          if (r.ok) good = order[i];
         } catch (e) {}
       }
+      if (!good) { fallbackFrame(w, CONFIG.siteUrl); btn.disabled = false; return; }
 
-      if (!html) { // CDN unreachable/blocked: fall back to the domain itself
-        blankFrame(w, CONFIG.siteUrl);
-        btn.disabled = false; return;
-      }
-
-      var base = baseFor(usedMirror);
-      var cfg = { siteUrl: CONFIG.siteUrl, mirrors: CONFIG.mirrors, base: base };
-      var inject = '<base href="' + base + '"><script>(' + SHIM.toString() + ')(' + JSON.stringify(cfg) + ')<\/script>';
-      html = /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, function (m) { return m + inject; }) : inject + html;
-      w.document.open(); w.document.write(html); w.document.close();
+      var cfg = { siteUrl: CONFIG.siteUrl, mirrors: CONFIG.mirrors, base: baseFor(good), entry: CONFIG.entry };
+      w.document.open(); w.document.write(shellHtml(cfg)); w.document.close();
       btn.disabled = false;
     };
   </script>
