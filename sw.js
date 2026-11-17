@@ -12,6 +12,25 @@ function toVirtual(ref, base) {
     } catch (e) { return ref; }
 }
 
+// clientId -> target base URL for documents served through the virtual route
+const clientBases = new Map();
+const PASSTHROUGH_HOSTS = ["unpkg.com", "cdn.jsdelivr.net"]; // Ruffle (Flash emulator) assets
+const BLOCK_HOSTS = ["fuseplatform.net", "btloader.com", "doubleclick.net", "googlesyndication.com",
+    "googletagmanager.com", "google-analytics.com", "adnxs.com", "amazon-adsystem.com", "pubmatic.com",
+    "rubiconproject.com", "criteo.com", "openx.net", "adsrvr.org", "ezoic.net", "taboola.com", "outbrain.com"];
+const RUFFLE_INJECT = '<script>window.RufflePlayer=window.RufflePlayer||{};window.RufflePlayer.config={publicPath:"https://unpkg.com/@ruffle-rs/ruffle/",warnOnUnsupportedContent:false};<\/script>' +
+    '<script src="https://unpkg.com/@ruffle-rs/ruffle"><\/script>';
+
+function hostMatches(host, list) {
+    return list.some(h => host === h || host.endsWith("." + h));
+}
+
+function baseFromUrl(u) {
+    const i = u.indexOf(VIRTUAL_ROUTE);
+    if (i < 0) return null;
+    try { return decodeURIComponent(u.slice(i + VIRTUAL_ROUTE.length).split("#")[0]); } catch (e) { return null; }
+}
+
 function rewriteHTML(html, base) {
     html = html.replace(/(\s(?:src|href|action|poster)\s*=\s*)(["'])(.*?)\2/gi, (m, a, q, v) => {
         if (/^(#|data:|javascript:|blob:|mailto:)/i.test(v.trim())) return m;
@@ -35,7 +54,8 @@ async function handleVirtualRoute(requestUrl) {
         const bin = Uint8Array.from(atob(data.body), c => c.charCodeAt(0));
         const type = data.contentType || "application/octet-stream";
         if (/text\/html/i.test(type)) {
-            const html = rewriteHTML(new TextDecoder().decode(bin), actualTarget);
+            let html = rewriteHTML(new TextDecoder().decode(bin), actualTarget);
+            html = /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, m => m + RUFFLE_INJECT) : RUFFLE_INJECT + html;
             return new Response(html, { status: data.status, headers: { "Content-Type": "text/html; charset=utf-8" } });
         }
         if (/text\/css/i.test(type)) {
@@ -136,8 +156,31 @@ self.addEventListener("fetch", (event) => {
 
     if (event.request.method !== "GET") return;
 
-    if (new URL(event.request.url).pathname.startsWith(VIRTUAL_ROUTE)) {
+    const reqUrl = new URL(event.request.url);
+    if (reqUrl.pathname.startsWith(VIRTUAL_ROUTE)) {
+        if (event.resultingClientId) {
+            const b = baseFromUrl(event.request.url);
+            if (b) clientBases.set(event.resultingClientId, b);
+        }
         event.respondWith(handleVirtualRoute(event.request.url));
+        return;
+    }
+
+    // Subresource requests (incl. JS-built URLs) coming from a sandboxed frame
+    const frameBase = (event.clientId && clientBases.get(event.clientId)) || baseFromUrl(event.request.referrer || "");
+    if (frameBase && event.request.mode !== "navigate") {
+        if (hostMatches(reqUrl.hostname, PASSTHROUGH_HOSTS)) return;
+        if (hostMatches(reqUrl.hostname, BLOCK_HOSTS)) {
+            event.respondWith(new Response("", { status: 204 }));
+            return;
+        }
+        let abs;
+        try {
+            abs = reqUrl.origin === self.location.origin
+                ? new URL(reqUrl.pathname + reqUrl.search, frameBase).href
+                : reqUrl.href;
+        } catch (e) { return; }
+        event.respondWith(handleVirtualRoute(VIRTUAL_ROUTE + encodeURIComponent(abs)));
         return;
     }
 
