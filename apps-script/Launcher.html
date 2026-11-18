@@ -51,8 +51,14 @@
   </div>
 
   <script>
-    // Config injected from Code.gs: { siteUrl, cdnRepo, cdnRef, entry, mirrors[] }
-    var CONFIG = <?!= JSON.stringify(config) ?>;
+    // Config (edit here)
+    var CONFIG = {
+      siteUrl: "https://twelveam.broshan.com.np",   // API / proxy domain (also the fallback if the CDN is blocked)
+      cdnRepo: "pinpoint-edu/12am",                // public GitHub repo served by jsDelivr
+      cdnRef: "main",
+      entry: "index.html",
+      mirrors: ["https://cdn.jsdelivr.net", "https://fastly.jsdelivr.net", "https://gcore.jsdelivr.net", "https://testingcf.jsdelivr.net"]
+    };
 
     // ============ Runs INSIDE each page iframe, before the page's own scripts ============
     function frameShim(cfg) {
