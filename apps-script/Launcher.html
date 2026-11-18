@@ -21,8 +21,7 @@
           box-shadow:0 30px 80px rgba(0,0,0,.85),0 0 45px var(--glow);
           animation:fade .24s cubic-bezier(.16,1,.3,1)}
     @keyframes fade{from{opacity:0;transform:scale(.96) translateY(6px)}to{opacity:1;transform:none}}
-    .logo{height:36px;display:block;margin:0 auto 10px;object-fit:contain;opacity:.95}
-    .logo-text{display:none;font-size:22px;font-weight:500;letter-spacing:-.02em;margin-bottom:10px}
+    .logo{height:48px;width:48px;display:block;margin:0 auto 10px;object-fit:contain;opacity:.95}
     h2{margin:18px 0 4px;font-size:1.25rem;font-weight:500}
     .sub{margin:0 0 24px;font-size:.75rem;color:#71717a}
     #go{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:.85rem 1.25rem;
@@ -37,13 +36,13 @@
     select{background:#050508;color:var(--text);border:1px solid var(--border);border-radius:10px;
            padding:5px 8px;font-size:.75rem;outline:none;max-width:60%}
     select:focus{border-color:var(--accent)}
+    select option{background:#0c0c11;color:#fff}
   </style>
 </head>
 <body>
   <div class="glow"></div>
   <div class="card">
-    <img class="logo" id="logo" alt="12AM" onerror="this.style.display='none';document.getElementById('logoText').style.display='block'">
-    <div class="logo-text" id="logoText">12AM</div>
+    <img class="logo" id="logo" alt="12AM" src="data:image/png;base64,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">
     <h2>Welcome</h2>
     <p class="sub">Opens in a new cloaked tab.</p>
     <button id="go"><span>Launch</span><span style="font-size:.75rem">&rarr;</span></button>
@@ -225,7 +224,10 @@
     // ============ Launcher UI ============
     function msg(t) { document.getElementById('msg').textContent = t || ''; }
     var sel = document.getElementById('mirror');
-    document.getElementById('logo').src = CONFIG.mirrors[0] + '/gh/' + CONFIG.cdnRepo + '@' + CONFIG.cdnRef + '/images/logo-white.png';
+    if (!CONFIG || !CONFIG.mirrors || !CONFIG.mirrors.length) {
+      CONFIG = Object.assign({ siteUrl: 'https://twelveam.broshan.com.np', cdnRepo: 'pinpoint-edu/12am', cdnRef: 'main', entry: 'index.html' }, CONFIG || {},
+        { mirrors: ['https://cdn.jsdelivr.net', 'https://fastly.jsdelivr.net', 'https://gcore.jsdelivr.net', 'https://testingcf.jsdelivr.net'] });
+    }
     CONFIG.mirrors.forEach(function (m) {
       var o = document.createElement('option'); o.value = m; o.textContent = new URL(m).host; sel.appendChild(o);
     });
