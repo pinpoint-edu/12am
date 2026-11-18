@@ -244,7 +244,7 @@
         '<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}' +
         'iframe{border:0;width:100%;height:100%;display:block}</style></head><body>' +
         '<iframe id="app" allow="fullscreen; autoplay; clipboard-read; clipboard-write; gamepad; microphone; camera; encrypted-media; ' +
-        'pointer-lock; web-share" allowfullscreen></iframe>' +
+        'web-share"></iframe>' +
         '<script>(' + shellMain.toString() + ')(' + JSON.stringify(cfg) + ',' + JSON.stringify(frameShim.toString()) + ')<\/script>' +
         '</body></html>';
     }
@@ -252,7 +252,7 @@
     function fallbackFrame(w, url) {
       w.document.open();
       w.document.write('<!DOCTYPE html><title>Home</title><body style="margin:0;height:100vh;overflow:hidden">' +
-        '<iframe src="' + url + '" style="border:0;width:100%;height:100%" allow="fullscreen; autoplay; clipboard-write" allowfullscreen></iframe></body>');
+        '<iframe src="' + url + '" style="border:0;width:100%;height:100%" allow="fullscreen; autoplay; clipboard-write"></iframe></body>');
       w.document.close();
     }
 

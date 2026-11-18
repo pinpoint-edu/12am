@@ -412,6 +412,10 @@ function prepareGameHtml(html, fileUrl) {
   // Rewrite Ruffle scripts to self-hosted /textbooks/ruffle/ruffle.js (avoids broken 404 chunks on GitHub Pages)
   html = html.replace(/<script[^>]*src=["'](?:[^"']*\/)?ruffle\/ruffle\.js(?:[?#][^"']*)?["'][^>]*>\s*<\/script>/gi, `<script src="${ruffleScriptSrc}"><\/script>`);
 
+  // Games that ship their own Ruffle build (e.g. quiz/ruffle.js) must load chunks next to that script,
+  // so only force our self-hosted publicPath when the loader substituted its own ruffle.js.
+  const usesCustomRuffle = /<script[^>]*src=["'][^"']*ruffle[^"']*\.js/i.test(html) && html.indexOf(ruffleScriptSrc) === -1;
+
   // Fix Awesome Tanks and similar bundled game missing asset errors
   html = html.replace(
     /return\s+blobUrlss\[trimmed\]\s*\|\|\s*original;/g,
@@ -478,7 +482,9 @@ function prepareGameHtml(html, fileUrl) {
     'var _rufflePublicPath = HOST_ORIGIN ? (HOST_ORIGIN + "/textbooks/ruffle/") : "https://raw.githubusercontent.com/pinpoint-edu/12am/main/textbooks/ruffle/";',
     'try {',
     '  window.RufflePlayer = window.RufflePlayer || {};',
-    '  window.RufflePlayer.config = Object.assign({ publicPath: _rufflePublicPath, base: _gameBaseHref, autoplay: "on", unmuteOverlay: "visible" }, window.RufflePlayer.config || {});',
+    '  var _ruffleCfg = { base: _gameBaseHref, autoplay: "on", unmuteOverlay: "visible" };',
+    '  if (!' + JSON.stringify(usesCustomRuffle) + ') _ruffleCfg.publicPath = _rufflePublicPath;',
+    '  window.RufflePlayer.config = Object.assign(_ruffleCfg, window.RufflePlayer.config || {});',
     '} catch(e){}',
     'try {',
     '  if (!document.xURL) {',
